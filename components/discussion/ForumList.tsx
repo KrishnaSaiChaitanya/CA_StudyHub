@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Plus } from 
 import { motion, AnimatePresence } from "framer-motion";
 import { Post } from "./types";
 import { getVoterId } from "./forumUtils";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 const CATEGORIES = ["All", "Doubt", "Discussion", "Resource", "Articleship", "Exam Tips"];
 
@@ -18,98 +19,122 @@ interface Props {
   onProfileClick: (userId: string) => void;
 }
 
+const PAGE_SIZE = 10;
+
+const attachProfiles = async <T extends { user_id: string }>(rows: T[]): Promise<(T & { profiles: any })[]> => {
+  const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+  if (ids.length === 0) return [];
+  const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+  const profMap: Record<string, any> = {};
+  (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
+  return rows.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: "Anonymous" } }));
+};
+
+const fetchPostsQuery = async ({ pageParam = 0, category }: { pageParam?: number, category: string }) => {
+  const start = pageParam * PAGE_SIZE;
+  const end = start + PAGE_SIZE - 1;
+
+  let query = supabase.from("forum_posts").select("*").eq("status", "active").order("created_at", { ascending: false }).range(start, end);
+  if (category !== "All") query = query.eq("category", category);
+
+  const { data: postsData } = await query;
+
+  if (postsData && postsData.length > 0) {
+    const ids = postsData.map(p => p.id);
+    
+    const { data: replyCounts } = await supabase.from("forum_replies").select("post_id").in("post_id", ids);
+    const countMap: Record<string, number> = {};
+    replyCounts?.forEach((r: { post_id: string }) => { countMap[r.post_id] = (countMap[r.post_id] || 0) + 1; });
+
+    const { data: votes } = await supabase.from("forum_post_votes").select("post_id, user_id, vote").in("post_id", ids);
+    const voterId = getVoterId();
+    const upMap: Record<string, number> = {};
+    const downMap: Record<string, number> = {};
+    const myVoteMap: Record<string, number> = {};
+    (votes || []).forEach((v: any) => {
+      if (v.vote === 1) upMap[v.post_id] = (upMap[v.post_id] || 0) + 1;
+      else downMap[v.post_id] = (downMap[v.post_id] || 0) + 1;
+      if (v.user_id === voterId) myVoteMap[v.post_id] = v.vote;
+    });
+
+    const withProfiles = await attachProfiles(postsData);
+    const formatted = withProfiles.map((p: any) => ({
+      ...p,
+      reply_count: countMap[p.id] || 0,
+      upvotes: upMap[p.id] || 0,
+      downvotes: downMap[p.id] || 0,
+      myVote: myVoteMap[p.id] || 0,
+    })) as Post[];
+
+    return {
+      data: formatted,
+      nextCursor: postsData.length === PAGE_SIZE ? pageParam + 1 : undefined,
+    };
+  } else {
+    return { data: [], nextCursor: undefined };
+  }
+};
+
 export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick }: Props) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchPosts(0, true);
-  }, [category]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["forum-posts", category],
+    queryFn: ({ pageParam = 0 }) => fetchPostsQuery({ pageParam, category }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
 
-  const attachProfiles = async <T extends { user_id: string }>(rows: T[]): Promise<(T & { profiles: any })[]> => {
-    const ids = Array.from(new Set(rows.map((r) => r.user_id)));
-    if (ids.length === 0) return [];
-    const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-    const profMap: Record<string, any> = {};
-    (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
-    return rows.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: "Anonymous" } }));
-  };
-
-  const fetchPosts = async (pageIndex: number, reset = false) => {
-    setLoading(true);
-    const start = pageIndex * PAGE_SIZE;
-    const end = start + PAGE_SIZE - 1;
-
-    let query = supabase.from("forum_posts").select("*").eq("status", "active").order("created_at", { ascending: false }).range(start, end);
-    if (category !== "All") query = query.eq("category", category);
-
-    const { data: postsData } = await query;
-
-    if (postsData && postsData.length > 0) {
-      const ids = postsData.map(p => p.id);
-      
-      const { data: replyCounts } = await supabase.from("forum_replies").select("post_id").in("post_id", ids);
-      const countMap: Record<string, number> = {};
-      replyCounts?.forEach((r: { post_id: string }) => { countMap[r.post_id] = (countMap[r.post_id] || 0) + 1; });
-
-      const { data: votes } = await supabase.from("forum_post_votes").select("post_id, user_id, vote").in("post_id", ids);
-      const voterId = getVoterId();
-      const upMap: Record<string, number> = {};
-      const downMap: Record<string, number> = {};
-      const myVoteMap: Record<string, number> = {};
-      (votes || []).forEach((v: any) => {
-        if (v.vote === 1) upMap[v.post_id] = (upMap[v.post_id] || 0) + 1;
-        else downMap[v.post_id] = (downMap[v.post_id] || 0) + 1;
-        if (v.user_id === voterId) myVoteMap[v.post_id] = v.vote;
-      });
-
-      const withProfiles = await attachProfiles(postsData);
-      const formatted = withProfiles.map((p: any) => ({
-        ...p,
-        reply_count: countMap[p.id] || 0,
-        upvotes: upMap[p.id] || 0,
-        downvotes: downMap[p.id] || 0,
-        myVote: myVoteMap[p.id] || 0,
-      })) as Post[];
-
-      if (reset) setPosts(formatted);
-      else setPosts(prev => [...prev, ...formatted]);
-
-      setHasMore(postsData.length === PAGE_SIZE);
-    } else {
-      if (reset) setPosts([]);
-      setHasMore(false);
-    }
-    setLoading(false);
-  };
+  const posts = data?.pages.flatMap((page) => page.data) || [];
 
   const handleVote = async (postId: string, value: 1 | -1, e: React.MouseEvent) => {
     e.stopPropagation();
     const voterId = getVoterId();
-    const post = posts.find((p) => p.id === postId);
-    if (!post) return;
-    const current = post.myVote;
-    const next = current === value ? 0 : value;
+    let nextVote = 0;
 
-    setPosts((prev) => prev.map((p) => {
-      if (p.id !== postId) return p;
-      let up = p.upvotes, down = p.downvotes;
-      if (current === 1) up--;
-      if (current === -1) down--;
-      if (next === 1) up++;
-      if (next === -1) down++;
-      return { ...p, upvotes: up, downvotes: down, myVote: next };
-    }));
+    queryClient.setQueryData(["forum-posts", category], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          data: page.data.map((p: Post) => {
+            if (p.id !== postId) return p;
+            const current = p.myVote;
+            nextVote = current === value ? 0 : value;
+            let up = p.upvotes, down = p.downvotes;
+            if (current === 1) up--;
+            if (current === -1) down--;
+            if (nextVote === 1) up++;
+            if (nextVote === -1) down++;
+            return { ...p, upvotes: up, downvotes: down, myVote: nextVote };
+          }),
+        })),
+      };
+    });
 
-    if (next === 0) {
+    if (nextVote === 0) {
       await supabase.from("forum_post_votes").delete().eq("post_id", postId).eq("user_id", voterId);
     } else {
-      await supabase.from("forum_post_votes").upsert({ post_id: postId, user_id: voterId, vote: next }, { onConflict: "post_id,user_id" });
+      await supabase.from("forum_post_votes").upsert({ post_id: postId, user_id: voterId, vote: nextVote }, { onConflict: "post_id,user_id" });
     }
+  };
+
+  const prefetchCategory = (c: string) => {
+    if (c === category) return;
+    queryClient.prefetchInfiniteQuery({
+      queryKey: ["forum-posts", c],
+      queryFn: ({ pageParam = 0 }) => fetchPostsQuery({ pageParam, category: c }),
+      initialPageParam: 0,
+    });
   };
 
   const getInitials = (name: string | null) => (name ? name.slice(0, 2).toUpperCase() : "CA");
@@ -141,13 +166,14 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick }:
             variant={category === c ? "default" : "secondary"}
             className={`cursor-pointer text-xs ${category === c ? "bg-accent text-accent-foreground" : "hover:bg-secondary/80"}`}
             onClick={() => setCategory(c)}
+            onMouseEnter={() => prefetchCategory(c)}
           >
             {c}
           </Badge>
         ))}
       </div>
 
-      {loading && posts.length === 0 ? (
+      {isLoading && posts.length === 0 ? (
         <div className="text-center py-12 text-sm text-muted-foreground">Loading posts...</div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12">
@@ -203,10 +229,10 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick }:
               </motion.div>
             ))}
           </AnimatePresence>
-          {hasMore && (
+          {hasNextPage && (
             <div className="text-center pt-4">
-              <Button variant="outline" onClick={() => { setPage(p => p + 1); fetchPosts(page + 1); }} disabled={loading}>
-                {loading ? "Loading..." : "Load more posts"}
+              <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? "Loading..." : "Load more posts"}
               </Button>
             </div>
           )}

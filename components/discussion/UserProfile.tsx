@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post, Profile } from "./types";
+import { useQuery } from "@tanstack/react-query";
 
 interface Props {
   userId: string;
@@ -16,47 +16,39 @@ interface Props {
 }
 
 export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEditClick }: Props) => {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, [userId]);
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("id", userId)
+        .single();
+      return (data || { full_name: "Anonymous" }) as Profile;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const fetchProfileData = async () => {
-    setLoading(true);
-    // Fetch profile
-    const { data: profData } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .eq("id", userId)
-      .single();
-    
-    if (profData) {
-      setProfile(profData as Profile);
-    } else {
-      setProfile({ full_name: "Anonymous" });
-    }
+  const { data: rawPosts, isLoading: postsLoading } = useQuery({
+    queryKey: ["user-posts", userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("forum_posts")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-    // Fetch posts by user
-    const { data: postsData } = await supabase
-      .from("forum_posts")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false });
-
-    if (postsData) {
-      // Need to attach vote counts etc. For simplicity, just showing base posts.
-      setPosts(postsData.map((p: any) => ({
-        ...p,
-        profiles: profData || { full_name: "Anonymous" },
-        reply_count: 0, upvotes: 0, downvotes: 0, myVote: 0
-      })) as Post[]);
-    }
-    setLoading(false);
-  };
+  const posts = rawPosts?.map((p: any) => ({
+    ...p,
+    profiles: profile || { full_name: "Anonymous" },
+    reply_count: 0, upvotes: 0, downvotes: 0, myVote: 0
+  })) as Post[] || [];
 
   const getInitials = (name: string | null) => (name ? name.slice(0, 2).toUpperCase() : "CA");
   const timeAgo = (dateStr: string) => {
@@ -69,7 +61,7 @@ export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEdit
     return `${days}d ago`;
   };
 
-  if (loading) {
+  if (profileLoading || postsLoading) {
     return <div className="p-6 text-center text-muted-foreground">Loading profile...</div>;
   }
 

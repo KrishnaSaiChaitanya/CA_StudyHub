@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { TipTapEditor } from "./TipTapEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Share2 } from "lucide-react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -49,6 +50,52 @@ const ReplyNode = ({ reply, depth = 0, onProfileClick, setReplyingTo }: { reply:
   </motion.div>
 );
 
+const PAGE_SIZE = 10;
+
+const attachProfiles = async <T extends { user_id: string }>(rows: T[]): Promise<(T & { profiles: any })[]> => {
+  const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+  if (ids.length === 0) return [];
+  const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+  const profMap: Record<string, any> = {};
+  (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
+  return rows.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: "Anonymous" } }));
+};
+
+const fetchRepliesQuery = async ({ pageParam = 0, postId }: { pageParam?: number, postId: string }) => {
+  const start = pageParam * PAGE_SIZE;
+  const end = start + PAGE_SIZE - 1;
+
+  const { data, error } = await supabase
+    .from("forum_replies")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true })
+    .range(start, end);
+
+  if (!error && data && data.length > 0) {
+    const withProfiles = await attachProfiles(data);
+    return {
+      data: withProfiles as Reply[],
+      nextCursor: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
+    };
+  }
+  return { data: [], nextCursor: undefined };
+};
+
+const buildReplyTree = (flatReplies: Reply[]): Reply[] => {
+  const map: Record<string, Reply> = {};
+  const roots: Reply[] = [];
+  flatReplies.forEach(r => map[r.id] = { ...r, replies: [] });
+  flatReplies.forEach(r => {
+    if (r.parent_reply_id && map[r.parent_reply_id]) {
+      map[r.parent_reply_id].replies!.push(map[r.id]);
+    } else {
+      roots.push(map[r.id]);
+    }
+  });
+  return roots;
+};
+
 interface Props {
   post: Post;
   userId: string | null;
@@ -58,85 +105,35 @@ interface Props {
 }
 
 export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Props) => {
-  const [replies, setReplies] = useState<Reply[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [replyContent, setReplyContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<Reply | null>(null);
   const [posting, setPosting] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
 
   // Report State
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reporting, setReporting] = useState(false);
 
-  useEffect(() => {
-    fetchReplies(0, true);
-  }, [post.id]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch
+  } = useInfiniteQuery({
+    queryKey: ["forum-replies", post.id],
+    queryFn: ({ pageParam = 0 }) => fetchRepliesQuery({ pageParam, postId: post.id }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
 
-  const attachProfiles = async <T extends { user_id: string }>(rows: T[]): Promise<(T & { profiles: any })[]> => {
-    const ids = Array.from(new Set(rows.map((r) => r.user_id)));
-    if (ids.length === 0) return [];
-    const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", ids);
-    const profMap: Record<string, any> = {};
-    (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
-    return rows.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: "Anonymous" } }));
-  };
-
-  const fetchReplies = async (pageIndex: number, reset = false) => {
-    setLoading(true);
-    const start = pageIndex * PAGE_SIZE;
-    const end = start + PAGE_SIZE - 1;
-
-    const { data, error } = await supabase
-      .from("forum_replies")
-      .select("*")
-      .eq("post_id", post.id)
-      .order("created_at", { ascending: true })
-      .range(start, end);
-
-    if (!error && data) {
-      const withProfiles = await attachProfiles(data);
-      const newReplies = withProfiles as Reply[];
-      
-      if (reset) {
-        setReplies(buildReplyTree(newReplies));
-      } else {
-        // Simple merge for tree is complex if paginating flat list, but we assume replies to root load first.
-        // For production, a more sophisticated recursive query or nested loading is better.
-        // Here we just append and rebuild the tree.
-        const flatCurrent = flattenTree(replies);
-        const merged = [...flatCurrent, ...newReplies].filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
-        setReplies(buildReplyTree(merged));
-      }
-      setHasMore(data.length === PAGE_SIZE);
-    }
-    setLoading(false);
-  };
-
-  const flattenTree = (nodes: Reply[]): Reply[] => {
-    return nodes.reduce((acc: Reply[], node) => {
-      acc.push(node);
-      if (node.replies) acc.push(...flattenTree(node.replies));
-      return acc;
-    }, []);
-  };
-
-  const buildReplyTree = (flatReplies: Reply[]): Reply[] => {
-    const map: Record<string, Reply> = {};
-    const roots: Reply[] = [];
-    flatReplies.forEach(r => map[r.id] = { ...r, replies: [] });
-    flatReplies.forEach(r => {
-      if (r.parent_reply_id && map[r.parent_reply_id]) {
-        map[r.parent_reply_id].replies!.push(map[r.id]);
-      } else {
-        roots.push(map[r.id]);
-      }
-    });
-    return roots;
-  };
+  const flatReplies = data?.pages.flatMap((page) => page.data) || [];
+  // Using a unique filter for when pages might overlap slightly
+  const uniqueFlatReplies = flatReplies.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
+  const replies = buildReplyTree(uniqueFlatReplies);
 
   const handleReply = async () => {
     const effectiveUserId = userId || DEMO_USER_ID;
@@ -157,7 +154,11 @@ export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Pro
       // Add a small delay to ensure React state and TipTap sync
       setTimeout(() => setReplyContent(""), 50);
       setReplyingTo(null);
-      fetchReplies(0, true);
+      
+      // Instead of waiting for cache invalidation, just invalidate the query
+      queryClient.invalidateQueries({ queryKey: ["forum-replies", post.id] });
+      // We can also optimistically update, but refetching is okay for a simple reply action
+      refetch();
     }
     setPosting(false);
   };
@@ -255,11 +256,11 @@ export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Pro
         
         <div className="space-y-6 mb-8">
           {replies.map((r) => <ReplyNode key={r.id} reply={r} onProfileClick={onProfileClick} setReplyingTo={setReplyingTo} />)}
-          {replies.length === 0 && !loading && <p className="text-sm text-muted-foreground text-center py-6">No replies yet. Be the first to start the discussion!</p>}
-          {hasMore && replies.length > 0 && (
+          {replies.length === 0 && !isLoading && <p className="text-sm text-muted-foreground text-center py-6">No replies yet. Be the first to start the discussion!</p>}
+          {hasNextPage && replies.length > 0 && (
             <div className="text-center">
-              <Button variant="ghost" size="sm" onClick={() => { setPage(p => p + 1); fetchReplies(page + 1); }} disabled={loading}>
-                {loading ? "Loading..." : "Load more replies"}
+              <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                {isFetchingNextPage ? "Loading..." : "Load more replies"}
               </Button>
             </div>
           )}
