@@ -206,7 +206,7 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick }:
                   </div>
                   
                   <h3 className="text-base font-bold text-card-foreground mb-1 line-clamp-1">{post.title}</h3>
-                  <div className="text-sm text-muted-foreground line-clamp-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+                  <div className="text-sm text-muted-foreground line-clamp-2 prose prose-sm max-w-none whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: post.content }} />
                   
                   <div className="mt-4 flex items-center gap-4">
                     <div className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/50 px-1 py-0.5" onClick={e => e.stopPropagation()}>

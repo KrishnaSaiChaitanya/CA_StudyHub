@@ -89,6 +89,10 @@
     pointer-events: none;
     height: 0;
   }
+
+  .prose p:empty::before {
+    content: "\00a0";
+  }
 }
 
 @layer utilities {

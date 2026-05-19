@@ -39,7 +39,7 @@ const ReplyNode = ({ reply, depth = 0, onProfileClick, setReplyingTo }: { reply:
         </p>
         <p className="text-[10px] text-muted-foreground">{timeAgo(reply.created_at)}</p>
       </div>
-      <div className="mt-1 text-sm text-card-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: reply.content }} />
+      <div className="mt-1 text-sm text-card-foreground prose prose-sm max-w-none whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: reply.content }} />
       <div className="mt-2 flex items-center gap-2">
         <button onClick={() => setReplyingTo(reply)} className="text-xs text-muted-foreground hover:text-accent flex items-center gap-1 font-medium">
           <ReplyIcon className="h-3 w-3" /> Reply
@@ -231,7 +231,7 @@ export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Pro
         </div>
 
         <h2 className="text-xl font-bold text-card-foreground mb-3">{post.title}</h2>
-        <div className="text-sm text-card-foreground prose prose-sm max-w-none mb-4" dangerouslySetInnerHTML={{ __html: post.content }} />
+        <div className="text-sm text-card-foreground prose prose-sm max-w-none whitespace-pre-wrap mb-4" dangerouslySetInnerHTML={{ __html: post.content }} />
 
         <div className="mt-6 flex items-center gap-4 pt-4 border-t border-border">
           <div className="inline-flex items-center rounded-full border border-border bg-secondary/50 p-1">
