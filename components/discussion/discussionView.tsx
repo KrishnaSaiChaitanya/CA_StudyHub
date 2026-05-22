@@ -8,7 +8,7 @@ import { UserProfile } from "./UserProfile";
 import { EditPost } from "./EditPost";
 import { Post } from "./types";
 
-const DiscussionForumView = ({ onBack }: { onBack: () => void }) => {
+const DiscussionForumView = ({ onBack, groupId }: { onBack: () => void, groupId?: string }) => {
   const [view, setView] = useState<"list" | "post" | "create" | "profile" | "edit">("list");
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -66,7 +66,7 @@ const DiscussionForumView = ({ onBack }: { onBack: () => void }) => {
   };
 
   if (view === "create") {
-    return <CreatePost onBack={handleBackToList} onSuccess={handleBackToList} userId={userId} />;
+    return <CreatePost onBack={handleBackToList} onSuccess={handleBackToList} userId={userId} initialGroupId={groupId} />;
   }
 
   if (view === "post" && selectedPost) {
@@ -90,6 +90,7 @@ const DiscussionForumView = ({ onBack }: { onBack: () => void }) => {
       onCreatePost={() => setView("create")}
       onPostClick={handlePostClick}
       onProfileClick={handleProfileClick}
+      groupId={groupId}
     />
   );
 };

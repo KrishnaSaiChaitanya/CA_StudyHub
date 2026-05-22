@@ -36,6 +36,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getVoterId } from "./discussion/forumUtils";
+
+const DEMO_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 type Tab = "overview" | "materials" | "faqs" | "observations";
 
@@ -49,49 +53,7 @@ interface Observation {
   replies: { id: string; author: string; body: string; isAppeared: boolean }[];
 }
 
-const OBSERVATIONS: Observation[] = [
-  {
-    id: "obs-1",
-    author: "Aarav K. (Cleared all 4)",
-    set: "Set A",
-    attemptedOn: "Jan 2025",
-    body: "Set A is heavily case-study driven. Don't just mug up — practise reading 2-page caselets and identifying the issue across FR/Audit/Tax/SM in one go. The MCQs feel deceptively simple but options are very close. Took me ~75 min for 100 Qs.",
-    likes: 42,
-    replies: [
-      { id: "r1", author: "Priya S.", body: "Did you use ICAI module only or also referred to RTPs?", isAppeared: false },
-      { id: "r2", author: "Aarav K.", body: "Mostly ICAI module + 1 round of past MCQs from study circles. Don't over-prepare from outside material.", isAppeared: true },
-    ],
-  },
-  {
-    id: "obs-2",
-    author: "Meera T. (Cleared Set B & C)",
-    set: "Set B",
-    attemptedOn: "Mar 2025",
-    body: "For Set B (Strategic Cost & Performance Mgmt), focus on practical numericals — TP, ABC, Throughput, and Decision-making. Theory weightage is lower than I expected. The proctored UI is smooth, but keep ID + good lighting ready 30 min before.",
-    likes: 31,
-    replies: [
-      { id: "r1", author: "Rohan M.", body: "How strict was the proctoring? Heard about random checks.", isAppeared: false },
-    ],
-  },
-  {
-    id: "obs-3",
-    author: "Siddharth R. (Cleared Set D)",
-    set: "Set D",
-    attemptedOn: "Feb 2025",
-    body: "Set D (ESG / Sustainable Finance) is the easiest if you read once thoroughly. Lots of definition-based + framework-based MCQs (BRSR, GRI, TCFD). I gave it on day 3 of registration — minimal prep needed if you've followed current affairs.",
-    likes: 56,
-    replies: [],
-  },
-  {
-    id: "obs-4",
-    author: "Neha P. (Re-attempted Set C)",
-    set: "Set C",
-    attemptedOn: "Apr 2025",
-    body: "Cleared Set C in 2nd attempt. First time I underestimated Risk Management theory. Make sure you cover COSO ERM, ISO 31000, and the corporate governance chapters from Companies Act in detail. Negative marking isn't there but options trick you.",
-    likes: 24,
-    replies: [],
-  },
-];
+// OBSERVATIONS dummy data removed, now fetched from Supabase
 
 interface PaperMaterial {
   id: string;
@@ -432,52 +394,99 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
 };
 
 const ObservationsTab = () => {
-  const [posts, setPosts] = useState<Observation[]>(OBSERVATIONS);
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+  
   const [shareOpen, setShareOpen] = useState(false);
   const [shareBody, setShareBody] = useState("");
   const [shareSet, setShareSet] = useState<Observation["set"]>("Set A");
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
+  
+  const { data: posts = [], isLoading } = useQuery({
+    queryKey: ["spom-observations"],
+    queryFn: async () => {
+      const { data: postsData } = await supabase
+        .from("forum_posts")
+        .select("*")
+        .eq("is_spom_observation", true)
+        .order("created_at", { ascending: false });
 
-  const submitShare = () => {
+      if (!postsData || postsData.length === 0) return [];
+
+      const ids = postsData.map(p => p.id);
+      const { data: replies } = await supabase.from("forum_replies").select("*").in("post_id", ids).order("created_at", { ascending: true });
+
+      const userIds = new Set([...postsData.map(p => p.user_id), ...(replies || []).map(r => r.user_id)]);
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", Array.from(userIds));
+      const profMap: Record<string, string> = {};
+      (profs || []).forEach(p => { profMap[p.id] = p.full_name || "Anonymous"; });
+
+      const { data: votes } = await supabase.from("forum_post_votes").select("post_id, vote").in("post_id", ids);
+      const upMap: Record<string, number> = {};
+      (votes || []).forEach(v => {
+        if (v.vote === 1) upMap[v.post_id] = (upMap[v.post_id] || 0) + 1;
+      });
+
+      return postsData.map((p): Observation => ({
+        id: p.id,
+        author: profMap[p.user_id] || "Anonymous",
+        set: p.category as any,
+        attemptedOn: p.title || "Recently",
+        body: p.content,
+        likes: upMap[p.id] || 0,
+        replies: (replies || []).filter(r => r.post_id === p.id).map(r => ({
+          id: r.id,
+          author: profMap[r.user_id] || "Anonymous",
+          body: r.content,
+          isAppeared: false
+        }))
+      }));
+    }
+  });
+
+  const submitShare = async () => {
     if (!shareBody.trim()) return;
-    setPosts((p) => [
-      {
-        id: `obs-${Date.now()}`,
-        author: "You (Appeared)",
-        set: shareSet,
-        attemptedOn: "Just now",
-        body: shareBody.trim(),
-        likes: 0,
-        replies: [],
-      },
-      ...p,
-    ]);
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id || DEMO_USER_ID;
+    
+    await supabase.from("forum_posts").insert({
+      user_id: userId,
+      title: "Just now",
+      content: shareBody.trim(),
+      category: shareSet,
+      is_spom_observation: true,
+    });
+    
     setShareBody("");
     setShareOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
     toast({ title: "Observation shared!", description: "Thanks for helping fellow students." });
   };
 
-  const submitReply = (postId: string, isAppeared: boolean) => {
+  const submitReply = async (postId: string, isAppeared: boolean) => {
     const text = (replyDraft[postId] ?? "").trim();
     if (!text) return;
-    setPosts((p) =>
-      p.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              replies: [
-                ...post.replies,
-                { id: `r-${Date.now()}`, author: "You", body: text, isAppeared },
-              ],
-            }
-          : post
-      )
-    );
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData.user?.id || DEMO_USER_ID;
+
+    await supabase.from("forum_replies").insert({
+      post_id: postId,
+      user_id: userId,
+      content: text,
+    });
+    
     setReplyDraft((d) => ({ ...d, [postId]: "" }));
+    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
   };
 
-  const like = (id: string) =>
-    setPosts((p) => p.map((post) => (post.id === id ? { ...post, likes: post.likes + 1 } : post)));
+  const like = async (id: string) => {
+    const voterId = getVoterId();
+    await supabase.from("forum_post_votes").upsert(
+      { post_id: id, user_id: voterId, vote: 1 },
+      { onConflict: "post_id,user_id" }
+    );
+    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+  };
 
   return (
     <div className="mt-6 space-y-5">
