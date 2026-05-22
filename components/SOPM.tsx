@@ -528,7 +528,7 @@ const ObservationsTab = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-card-foreground">{post.author}</p>
-                <p className="text-[11px] text-muted-foreground">Attempted {post.attemptedOn}</p>
+                <p className="text-[11px] text-muted-foreground">Created {post.attemptedOn}</p>
               </div>
             </div>
             <Badge variant="secondary" className="text-[10px]">{post.set}</Badge>
