@@ -42,6 +42,7 @@ const typeIcon = {
   pyq: HelpCircle,
   mtp: ClipboardList,
   question: HelpCircle,
+  spom: FileText,
 };
 
 const typeLabel = {
@@ -50,6 +51,7 @@ const typeLabel = {
   pyq: "PYQ",
   mtp: "MTP",
   question: "Question",
+  spom: "SPOM",
 };
 
 const typeBadgeClass = {
@@ -58,6 +60,7 @@ const typeBadgeClass = {
   pyq: "bg-violet-500/10 text-violet-600",
   mtp: "bg-amber-500/10 text-amber-600",
   question: "bg-rose-500/10 text-rose-600",
+  spom: "bg-blue-500/10 text-blue-600",
 };
 
 interface BookmarksClientProps {
@@ -88,6 +91,10 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
       
       setIsLoading(true);
       try {
+        // Fetch SPOM content first to map SPOM bookmarks
+        const { data: spomData } = await supabase.from("spom_content").select("materials").limit(1).single();
+        const spomMaterials = spomData?.materials || [];
+
         const { data: bookmarksData, error } = await supabase
           .from("user_bookmarks")
           .select(`
@@ -95,7 +102,8 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
             created_at,
             study_planners ( title, category, pdf_url ),
             practice_papers ( title, subject, type, pdf_url, exam_year ),
-            questions ( id, question_text, test_id, tests ( name, category, test_no ) )
+            questions ( id, question_text, test_id, tests ( name, category, test_no ) ),
+            spom_material_id
           `)
           .eq("user_id", userId)
           .order("created_at", { ascending: false });
@@ -138,6 +146,19 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                 subject: q.tests?.category,
                 test_no: q.tests?.test_no
               };
+            } else if (b.spom_material_id) {
+              const mat = spomMaterials.find((m: any) => m.id === b.spom_material_id);
+              if (mat) {
+                return {
+                  id: b.id,
+                  title: mat.title,
+                  type: "spom" as const,
+                  source: `SPOM • ${mat.paper} (${mat.type})`,
+                  savedAt: b.created_at,
+                  url: mat.url,
+                  spom_material_id: b.spom_material_id
+                };
+              }
             }
             return null;
           }).filter(Boolean) as BookmarkItem[];
@@ -353,7 +374,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                   />
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {["all", "pdf", "rtp", "pyq", "mtp", "question"].map((type) => (
+                  {["all", "pdf", "rtp", "pyq", "mtp", "question", "spom"].map((type) => (
                     <Button
                       key={type}
                       size="sm"
