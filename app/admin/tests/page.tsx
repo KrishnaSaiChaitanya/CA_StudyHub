@@ -185,7 +185,7 @@ Exam twist 🤔 -`
       toast({ title: `Error ${editingQuestionId ? 'updating' : 'adding'} question`, description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Question ${editingQuestionId ? 'updated' : 'added'}!` });
-      setQuestionText(""); setOptionA(""); setOptionB(""); setOptionC(""); setOptionD(""); setCorrectAnswer(""); setQuestionNotes("");
+      setQuestionText(""); setOptionA(""); setOptionB(""); setOptionC(""); setOptionD(""); setCorrectAnswer(""); setQuestionNotes("Page reference 📄 -\nExam tip 💡 -\nExam twist 🤔 -");;
       setEditingQuestionId(null);
       setShowAddQuestion(false);
       fetchQuestions(selectedTest.id);
@@ -208,7 +208,8 @@ Exam twist 🤔 -`
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => setSelectedTest(null)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" onClick={() => {setSelectedTest(null); setQuestionText(""); setOptionA(""); setOptionB(""); setOptionC(""); setOptionD(""); setCorrectAnswer(""); setQuestionNotes("Page reference 📄 -\nExam tip 💡 -\nExam twist 🤔 -");
+      setEditingQuestionId(null); setShowAddQuestion(false); }}><ChevronLeft className="h-4 w-4" /></Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Manage Questions</h1>
             <p className="text-muted-foreground mt-1">Test: {selectedTest.name} ({formatSubjectName(selectedTest.category as any)})</p>
@@ -367,7 +368,7 @@ Exam twist 🤔 -`
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={fetchTests}><RefreshCw className="h-4 w-4" /></Button>
-          <Button onClick={() => { setEditingTestId(null); setTestName(""); setTestCategory(""); setTestDuration(""); setTestLevel("standard"); setTestDescription(""); setTestNo(""); setShowAddTest(true); }} className="gap-2">
+          <Button onClick={() => { setEditingTestId(null); setTestName(""); setTestCategory(""); setTestDuration(""); setTestLevel("standard"); setTestDescription(""); setTestNo(""); setShowAddTest(!showAddTest); }} className="gap-2">
             <Plus className="h-4 w-4" /> {showAddTest ? "Cancel" : "Add Test"}
           </Button>
         </div>
