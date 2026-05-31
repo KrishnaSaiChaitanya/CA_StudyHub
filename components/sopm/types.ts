@@ -7,7 +7,9 @@ export interface Observation {
   attemptedOn: string;
   body: string;
   likes: number;
+  hasLiked?: boolean;
   replies: { id: string; author: string; body: string; isAppeared: boolean }[];
+  createdAt: string;
 }
 
 export interface PaperMaterial {

@@ -213,9 +213,14 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
         <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
-        <Button size="sm" className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={onCreatePost}>
-          <Plus className="h-4 w-4" /> New Post
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 text-muted-foreground" onClick={() => router.push("/community/forum/profile")}>
+            <Users className="h-4 w-4" /> Profile
+          </Button>
+          <Button size="sm" className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={onCreatePost}>
+            <Plus className="h-4 w-4" /> New Post
+          </Button>
+        </div>
       </div>
 
       {/* Groups Section (Only show if not in a specific group view) */}
@@ -409,10 +414,10 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <Avatar className="h-6 w-6 cursor-pointer" onClick={(e) => { e.stopPropagation(); onProfileClick(post.user_id); }}>
+                    <Avatar className="h-6 w-6 cursor-pointer" onClick={(e) => { e.stopPropagation(); router.push(`/community/forum/profile/${post.user_id}`); }}>
                       <AvatarFallback className="bg-secondary text-[10px]">{getInitials(post.profiles.full_name)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-muted-foreground hover:text-card-foreground cursor-pointer" onClick={(e) => { e.stopPropagation(); onProfileClick(post.user_id); }}>
+                    <span className="text-xs font-semibold text-muted-foreground hover:text-card-foreground cursor-pointer" onClick={(e) => { e.stopPropagation(); router.push(`/community/forum/profile/${post.user_id}`); }}>
                       {post.profiles.full_name || "Anonymous"}
                     </span>
                     <span className="text-muted-foreground text-xs">•</span>
@@ -421,7 +426,46 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
                   </div>
                   
                   <h3 className="text-base font-bold text-card-foreground mb-1 line-clamp-1">{post.title}</h3>
-                  <div className="text-sm text-muted-foreground line-clamp-2 prose prose-sm max-w-none whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: post.content }} />
+<div
+  className="
+    text-sm text-muted-foreground
+    prose prose-sm max-w-none
+    whitespace-pre-wrap mb-2
+  "
+  dangerouslySetInnerHTML={{
+    __html: post.content.replace(
+      /<img[^>]*>/gi,
+      `
+      <div style="
+        width:100%;
+        height:220px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#f3f4f6;
+        border-radius:12px;
+        margin:8px 0;
+      ">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/8136/8136031.png"
+          alt=""
+          style="
+            width:204px;
+            height:204px;
+            object-fit:contain;
+          "
+        />
+      </div>
+      `
+    ),
+  }}
+/>
+                  
+                  {post.image_url && (
+                    <div className="relative w-full max-h-48 rounded-lg overflow-hidden border border-border bg-muted/30 mb-3 flex items-center justify-center">
+                      <img src={post.image_url} alt={post.title} className="max-w-full max-h-48 object-contain" />
+                    </div>
+                  )}
                   
                   <div className="mt-4 flex items-center gap-4">
                     <div className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/50 px-1 py-0.5" onClick={e => e.stopPropagation()}>

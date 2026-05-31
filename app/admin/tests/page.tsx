@@ -48,7 +48,11 @@ export default function TestsDashboard() {
   const [optionC, setOptionC] = useState("");
   const [optionD, setOptionD] = useState("");
   const [correctAnswer, setCorrectAnswer] = useState("");
-  const [questionNotes, setQuestionNotes] = useState("");
+const [questionNotes, setQuestionNotes] = useState(
+  `Page reference 📄 -
+Exam tip 💡 -
+Exam twist 🤔 -`
+);
 
   const allSubjects = [
     ...SUBJECT_MAPPING.foundation,

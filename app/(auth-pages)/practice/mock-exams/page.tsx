@@ -37,6 +37,7 @@ export default function MockExamsPage() {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const supabase = createClient();
   const { subjects, loading: studentLoading } = useStudent();
@@ -132,7 +133,16 @@ export default function MockExamsPage() {
               <h2 className="text-2xl font-bold text-card-foreground">All Tests</h2>
               <p className="text-sm text-muted-foreground mt-1">Choose from our curated list of ICAI-aligned mock exams</p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+              <div className="w-full sm:w-[250px]">
+                <input 
+                  type="text"
+                  placeholder="Search exams..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
               <div className="w-[200px]">
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                   <SelectTrigger className="bg-card">
@@ -146,9 +156,12 @@ export default function MockExamsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {/* <Button variant="outline" onClick={() => router.push('/practice')} className="hover:border-primary">
-                Back to Practice Center
-              </Button> */}
+              <Button 
+                onClick={() => router.push('/practice/performance')}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                View Performance
+              </Button>
             </div>
           </div>
 
@@ -167,7 +180,11 @@ export default function MockExamsPage() {
                 </div>
                 <p className="mt-4 text-muted-foreground text-sm font-medium">Loading premium tests...</p>
               </motion.div>
-            ) : tests.filter(t => selectedSubject === "all" || t.category === selectedSubject).length === 0 ? (
+            ) : tests.filter(t => {
+                const matchesSubject = selectedSubject === "all" || t.category === selectedSubject;
+                const matchesQuery = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.category.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesSubject && matchesQuery;
+              }).length === 0 ? (
               <motion.div 
                 key="empty"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -190,7 +207,11 @@ export default function MockExamsPage() {
                 className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
               >
                 {tests
-                  .filter(t => selectedSubject === "all" || t.category === selectedSubject)
+                  .filter(t => {
+                    const matchesSubject = selectedSubject === "all" || t.category === selectedSubject;
+                    const matchesQuery = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.category.toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchesSubject && matchesQuery;
+                  })
                   .map((test, i) => {
                   const lastAttempt = test.attempts && test.attempts.length > 0 ? test.attempts[0] : null;
                   const isAttempted = !!lastAttempt;

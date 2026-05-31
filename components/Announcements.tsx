@@ -22,6 +22,7 @@ interface Announcement {
 }
 
 const tagColors: Record<string, string> = {
+  "general": "bg-slate-500/10 text-slate-400",
   "Exam Schedule": "bg-blue-500/10 text-blue-400",
   "Syllabus": "bg-purple-500/10 text-purple-400",
   "Registration": "bg-green-500/10 text-green-400",
@@ -43,9 +44,8 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
       let query = supabase.from('announcements').select('*').order('created_at', { ascending: false });
 
       if (studentLevel) {
-        // You could filter by level or keep it generic if null. Assuming we want to show based on student_level
-        // But some announcements might be for all? For now strict match.
-        query = query.eq('student_level', studentLevel);
+        // Fetch announcements that match user's student level OR have null student level (visible to all)
+        query = query.or(`student_level.eq.${studentLevel},student_level.is.null`);
       }
 
       const { data, error } = await query;
@@ -111,9 +111,11 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${tagColors[item.tag] || "bg-muted text-muted-foreground"}`}>
                       {item.tag}
                     </span>
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <Calendar className="h-3 w-3" /> {item.date}
-                    </span>
+                    {item.date && (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Calendar className="h-3 w-3" /> {item.date}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-sm font-semibold text-card-foreground group-hover:text-accent transition-colors">{item.title}</h3>
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{item.summary}</p>
@@ -125,7 +127,7 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
         )}
 
         <div className="mt-10 text-center">
-          <a href="https://www.icai.org" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.icai.org/category/announcements" target="_blank" rel="noopener noreferrer">
             <Button variant="outline" className="gap-2">
               Visit ICAI Official Website <ExternalLink className="h-3.5 w-3.5" />
             </Button>

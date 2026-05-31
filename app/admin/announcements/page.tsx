@@ -28,11 +28,11 @@ export default function AnnouncementsDashboard() {
   const [date, setDate] = useState("");
   const [summary, setSummary] = useState("");
   const [url, setUrl] = useState("");
-  const [tag, setTag] = useState("Exam Schedule");
-  const [studentLevel, setStudentLevel] = useState<string>("foundation");
+  const [tag, setTag] = useState("general");
+  const [studentLevel, setStudentLevel] = useState<string>("all");
 
-  const STUDENT_LEVELS = ["foundation", "intermediate", "final"] as const;
-  const TAGS = ["Exam Schedule", "Syllabus", "Registration", "Event", "Results", "Study Material"];
+  const STUDENT_LEVELS = ["all", "foundation", "intermediate", "final"] as const;
+  const TAGS = ["general", "Exam Schedule", "Syllabus", "Registration", "Event", "Results", "Study Material"];
 
   const fetchData = async () => {
     setLoading(true);
@@ -49,11 +49,11 @@ export default function AnnouncementsDashboard() {
 
   const handleEdit = (announcement: any) => {
     setTitle(announcement.title);
-    setDate(announcement.date);
+    setDate(announcement.date || "");
     setSummary(announcement.summary);
     setUrl(announcement.url);
     setTag(announcement.tag);
-    setStudentLevel(announcement.student_level || "foundation");
+    setStudentLevel(announcement.student_level || "all");
     setEditingId(announcement.id);
     setShowAdd(true);
   };
@@ -64,11 +64,11 @@ export default function AnnouncementsDashboard() {
 
     const payload = {
       title,
-      date,
+      date: date || null,
       summary,
       url,
       tag,
-      student_level: studentLevel
+      student_level: studentLevel === "all" ? null : studentLevel
     };
 
     let error;
@@ -102,8 +102,8 @@ export default function AnnouncementsDashboard() {
     setDate("");
     setSummary("");
     setUrl("");
-    setTag("Exam Schedule");
-    setStudentLevel("foundation");
+    setTag("general");
+    setStudentLevel("all");
     setShowAdd(false);
   };
 
@@ -148,8 +148,8 @@ export default function AnnouncementsDashboard() {
               <Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Announcement Title" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Date (String)</label>
-              <Input required value={date} onChange={e => setDate(e.target.value)} placeholder="e.g., March 15, 2025" />
+              <label className="text-sm font-medium">Date (String, Optional)</label>
+              <Input value={date} onChange={e => setDate(e.target.value)} placeholder="e.g., March 15, 2025" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">URL</label>
@@ -173,7 +173,7 @@ export default function AnnouncementsDashboard() {
                 <SelectContent>
                   {STUDENT_LEVELS.map(level => (
                     <SelectItem key={level} value={level}>
-                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                      {level === "all" ? "All Users" : level.charAt(0).toUpperCase() + level.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -230,7 +230,7 @@ export default function AnnouncementsDashboard() {
                       {e.tag}
                     </span>
                   </TableCell>
-                  <TableCell className="capitalize">{e.student_level}</TableCell>
+                  <TableCell className="capitalize">{e.student_level || "All Users"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(e)} className="text-muted-foreground hover:text-primary">

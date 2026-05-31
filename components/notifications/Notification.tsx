@@ -414,7 +414,7 @@ const NotificationsBell = () => {
           <button
             onClick={() => {
               setOpen(false);
-              router.push(tab === "replies" ? "/community" : "/study");
+              router.push(tab === "replies" ? "/community/forum" : "/study/announcements");
             }}
             className="w-full text-center text-xs font-medium text-accent hover:underline"
           >

@@ -46,10 +46,13 @@ export const ObservationsTab = () => {
       const profMap: Record<string, string> = {};
       (profs || []).forEach(p => { profMap[p.id] = p.full_name || "Anonymous"; });
 
-      const { data: votes } = await supabase.from("forum_post_votes").select("post_id, vote").in("post_id", ids);
+      const voterId = getVoterId();
+      const { data: votes } = await supabase.from("forum_post_votes").select("post_id, user_id, vote").in("post_id", ids);
       const upMap: Record<string, number> = {};
+      const myVoteMap: Record<string, number> = {};
       (votes || []).forEach(v => {
         if (v.vote === 1) upMap[v.post_id] = (upMap[v.post_id] || 0) + 1;
+        if (v.user_id === voterId) myVoteMap[v.post_id] = v.vote;
       });
 
       return postsData.map((p): Observation => ({
@@ -58,7 +61,9 @@ export const ObservationsTab = () => {
         set: p.category as any,
         attemptedOn: p.title || "Recently",
         body: p.content,
+        createdAt: p.created_at,
         likes: upMap[p.id] || 0,
+        hasLiked: myVoteMap[p.id] === 1,
         replies: (replies || []).filter(r => r.post_id === p.id).map(r => ({
           id: r.id,
           author: profMap[r.user_id] || "Anonymous",
@@ -74,6 +79,7 @@ export const ObservationsTab = () => {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData.user?.id || DEMO_USER_ID;
     
+    // Optimistic or fast update: insert then invalidate & refetch immediately
     await supabase.from("forum_posts").insert({
       user_id: userId,
       title: "Just now",
@@ -84,7 +90,8 @@ export const ObservationsTab = () => {
     
     setShareBody("");
     setShareOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    await queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    await queryClient.refetchQueries({ queryKey: ["spom-observations"] });
     toast({ title: "Observation shared!", description: "Thanks for helping fellow students." });
   };
 
@@ -101,17 +108,51 @@ export const ObservationsTab = () => {
     });
     
     setReplyDraft((d) => ({ ...d, [postId]: "" }));
-    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    await queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    await queryClient.refetchQueries({ queryKey: ["spom-observations"] });
   };
 
   const like = async (id: string) => {
     const voterId = getVoterId();
-    await supabase.from("forum_post_votes").upsert(
-      { post_id: id, user_id: voterId, vote: 1 },
-      { onConflict: "post_id,user_id" }
-    );
-    queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    let nextLiked = false;
+
+    // Optimistically update query data
+    queryClient.setQueryData(["spom-observations"], (old: Observation[] | undefined) => {
+      if (!old) return old;
+      return old.map((p) => {
+        if (p.id !== id) return p;
+        const currentLiked = !!p.hasLiked;
+        nextLiked = !currentLiked;
+        const nextLikes = nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1);
+        return {
+          ...p,
+          likes: nextLikes,
+          hasLiked: nextLiked,
+        };
+      });
+    });
+
+    if (nextLiked) {
+      await supabase.from("forum_post_votes").upsert(
+        { post_id: id, user_id: voterId, vote: 1 },
+        { onConflict: "post_id,user_id" }
+      );
+    } else {
+      await supabase.from("forum_post_votes").delete().eq("post_id", id).eq("user_id", voterId);
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["spom-observations"] });
+    await queryClient.refetchQueries({ queryKey: ["spom-observations"] });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading observations...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 space-y-5">
@@ -153,15 +194,18 @@ export const ObservationsTab = () => {
               </div>
               <div>
                 <p className="text-sm font-semibold text-card-foreground">{post.author}</p>
-                <p className="text-[11px] text-muted-foreground">Created {post.attemptedOn}</p>
+                <p className="text-[11px] text-muted-foreground">Created on {new Date(post.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
             <Badge variant="secondary" className="text-[10px]">{post.set}</Badge>
           </div>
           <p className="mt-3 text-sm text-card-foreground leading-relaxed">{post.body}</p>
           <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
-            <button onClick={() => like(post.id)} className="flex items-center gap-1 hover:text-accent transition-colors">
-              <ThumbsUp className="h-3.5 w-3.5" /> {post.likes}
+            <button 
+              onClick={() => like(post.id)} 
+              className={`flex items-center gap-1 transition-colors ${post.hasLiked ? "text-accent font-semibold" : "hover:text-accent"}`}
+            >
+              <ThumbsUp className="h-3.5 w-3.5" fill={post.hasLiked ? "currentColor" : "none"} /> {post.likes}
             </button>
             <span>•</span>
             <span>{post.replies.length} {post.replies.length === 1 ? "reply" : "replies"}</span>

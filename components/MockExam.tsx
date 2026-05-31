@@ -301,13 +301,14 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
           <h2 className="text-2xl font-semibold text-card-foreground">Exam Complete</h2>
           <p className="mt-2 text-sm text-muted-foreground">Here&apos;s how you performed</p>
           <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-            <div className="rounded-lg bg-secondary p-4">
-              <p className="text-2xl font-bold text-accent">{score}/{questions.length}</p>
-              <p className="text-xs text-muted-foreground">Score</p>
-            </div>
+           
             <div className="rounded-lg bg-secondary p-4">
               <p className="text-2xl font-bold text-card-foreground">{answered}/{questions.length}</p>
               <p className="text-xs text-muted-foreground">Attempted</p>
+            </div>
+             <div className="rounded-lg bg-secondary p-4">
+              <p className="text-2xl font-bold text-accent">{score}/{questions.length}</p>
+              <p className="text-xs text-muted-foreground">Score</p>
             </div>
             <div className="rounded-lg bg-secondary p-4">
               <p className="text-2xl font-bold text-card-foreground">

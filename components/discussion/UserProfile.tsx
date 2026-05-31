@@ -103,11 +103,33 @@ export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEdit
                       <span className="rounded-full bg-secondary px-2 py-0.5">{post.category}</span>
                     </div>
                   </div>
-                  {currentUserId === userId && (
-                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEditClick(post); }}>
-                      Edit
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {currentUserId === userId && (
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onEditClick(post); }}>
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={async (e) => { 
+                            e.stopPropagation(); 
+                            if (confirm("Are you sure you want to delete this post?")) {
+                              const { error } = await supabase
+                                .from("forum_posts")
+                                .update({ status: "inactive" })
+                                .eq("id", post.id);
+                              if (!error) {
+                                window.location.reload();
+                              }
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>
