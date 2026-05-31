@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  BookOpen, Users, FileText, LayoutDashboard, Mail, 
+  BookOpen, Users, FileText, LayoutDashboard, Mail, Trophy, 
   CalendarDays, Video, Menu, X, ArrowLeft, Settings, GraduationCap, Megaphone, MessageSquare, Layers
 } from "lucide-react";
 import { ReactNode, useState } from "react";
@@ -14,6 +14,7 @@ const navGroups = [
     group: "Overview",
     items: [
       { href: "/admin", exact: true, icon: LayoutDashboard, label: "Dashboard" },
+      { href: "/admin/leaderboard", exact: false, icon: Trophy, label: "Leaderboard Rules" },
       { href: "/admin/contact-us", exact: false, icon: Mail, label: "Contact Us" },
     ]
   },

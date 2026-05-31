@@ -222,6 +222,26 @@ export interface FlashcardRequest {
   created_at: string;
 }
 
+export interface LeaderboardConfig {
+  key: string;
+  weight: number;
+  label: string;
+  description: string | null;
+  updated_at: string;
+}
+
+export interface LeaderboardEntry {
+  user_id: string;
+  full_name: string | null;
+  streak: number;
+  test_attempts_count: number;
+  test_correct_answers: number;
+  forum_posts_count: number;
+  forum_replies_count: number;
+  total_xp: number;
+  rank: number;
+}
+
 // ==========================================
 // 3. SUPABASE DATABASE INTERFACE
 // ==========================================
@@ -250,6 +270,11 @@ export interface Database {
       flashcards: { Row: Flashcard; Insert: Partial<Flashcard>; Update: Partial<Flashcard> };
       flashcard_folder_sets: { Row: FlashcardFolderSet; Insert: Partial<FlashcardFolderSet>; Update: Partial<FlashcardFolderSet> };
       flashcard_requests: { Row: FlashcardRequest; Insert: Partial<FlashcardRequest>; Update: Partial<FlashcardRequest> };
+      leaderboard_config: { Row: LeaderboardConfig; Insert: Partial<LeaderboardConfig>; Update: Partial<LeaderboardConfig> };
+      user_leaderboard: { Row: LeaderboardEntry; Insert: never; Update: never };
+    };
+    Views: {
+      user_leaderboard: { Row: LeaderboardEntry };
     };
     Enums: {
       student_level: StudentLevel;
