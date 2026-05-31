@@ -428,7 +428,7 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
                   <h3 className="text-base font-bold text-card-foreground mb-1 line-clamp-1">{post.title}</h3>
 <div
   className="
-    text-sm text-muted-foreground
+    text-sm text-muted-foreground line-clamp-2
     prose prose-sm max-w-none
     whitespace-pre-wrap mb-2
   "
