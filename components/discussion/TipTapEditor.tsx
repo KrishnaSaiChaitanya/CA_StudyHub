@@ -6,7 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { Button } from "@/components/ui/button"
 import { Bold, Italic, List, ListOrdered, Heading2, ImageIcon } from "lucide-react"
 
-export const TipTapEditor = ({ content, onChange, onImageUpload }: { content: string, onChange: (html: string) => void, onImageUpload: (file: File) => Promise<string | null> }) => {
+export const TipTapEditor = ({ content, onChange, onImageUpload, placeholder = 'Write your post here...' }: { content: string, onChange: (html: string) => void, onImageUpload: (file: File) => Promise<string | null>, placeholder?: string }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -15,7 +15,7 @@ export const TipTapEditor = ({ content, onChange, onImageUpload }: { content: st
         allowBase64: true,
       }),
       Placeholder.configure({
-        placeholder: 'Write your post here...',
+        placeholder,
       }),
     ],
     content,
