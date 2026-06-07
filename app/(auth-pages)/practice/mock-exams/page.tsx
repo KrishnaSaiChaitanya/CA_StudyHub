@@ -182,8 +182,16 @@ export default function MockExamsPage() {
               </motion.div>
             ) : tests.filter(t => {
                 const matchesSubject = selectedSubject === "all" || t.category === selectedSubject;
-                const matchesQuery = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.category.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesSubject && matchesQuery;
+                if (!matchesSubject) return false;
+                if (!searchQuery) return true;
+                const sq = searchQuery.toLowerCase();
+                return (
+                  t.name.toLowerCase().includes(sq) ||
+                  t.category.toLowerCase().includes(sq) ||
+                  (t.description && t.description.toLowerCase().includes(sq)) ||
+                  (t.test_no && t.test_no.toLowerCase().includes(sq)) ||
+                  (t.level && t.level.toLowerCase().includes(sq))
+                );
               }).length === 0 ? (
               <motion.div 
                 key="empty"
@@ -209,8 +217,16 @@ export default function MockExamsPage() {
                 {tests
                   .filter(t => {
                     const matchesSubject = selectedSubject === "all" || t.category === selectedSubject;
-                    const matchesQuery = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.category.toLowerCase().includes(searchQuery.toLowerCase());
-                    return matchesSubject && matchesQuery;
+                    if (!matchesSubject) return false;
+                    if (!searchQuery) return true;
+                    const sq = searchQuery.toLowerCase();
+                    return (
+                      t.name.toLowerCase().includes(sq) ||
+                      t.category.toLowerCase().includes(sq) ||
+                      (t.description && t.description.toLowerCase().includes(sq)) ||
+                      (t.test_no && t.test_no.toLowerCase().includes(sq)) ||
+                      (t.level && t.level.toLowerCase().includes(sq))
+                    );
                   })
                   .map((test, i) => {
                   const lastAttempt = test.attempts && test.attempts.length > 0 ? test.attempts[0] : null;

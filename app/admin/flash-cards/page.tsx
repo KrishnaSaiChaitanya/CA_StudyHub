@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Plus, Trash2, Loader2, RefreshCw, Layers, Send, Inbox, ArrowUpRight } from "lucide-react";
+import { Plus, Trash2, Loader2, RefreshCw, Layers, Send, Inbox, ArrowUpRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 import { formatSubjectName } from "@/utils/subjects";
 import { Badge } from "@/components/ui/badge";
@@ -178,8 +179,22 @@ export default function AdminFlashcardsPage() {
                         {req.profiles?.full_name || "Anonymous"}
                       </TableCell>
                       <TableCell className="font-medium text-sm text-foreground">{req.topic}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={req.notes || ""}>
-                        {req.notes || "—"}
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                        {req.notes ? (
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{req.notes}</span>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0">
+                                  <Info className="h-3 w-3" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 text-sm whitespace-pre-wrap">
+                                {req.notes}
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        ) : "—"}
                       </TableCell>
                       <TableCell className="text-xs">
                         {new Date(req.created_at).toLocaleDateString()}

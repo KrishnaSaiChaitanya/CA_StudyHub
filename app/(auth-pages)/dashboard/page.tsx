@@ -434,9 +434,9 @@ const Home = () => {
           ))}
         </motion.div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-3">
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
           {/* Left Column — Quick Access */}
-          <div className="lg:col-span-2">
+          <div className="">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-base font-semibold text-foreground">Quick Access</h2>
@@ -560,7 +560,7 @@ const Home = () => {
               </Link>
             </div>
             <Card className="mt-4 border-border">
-              <CardContent className="divide-y divide-border p-0 min-h-[200px]">
+              <CardContent className="divide-y divide-border p-0 min-h-[220px]">
                 {isLoading ? (
                   <div className="flex h-[220px] items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

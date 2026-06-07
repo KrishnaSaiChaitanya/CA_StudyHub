@@ -428,7 +428,7 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
                   <h3 className="text-base font-bold text-card-foreground mb-1 line-clamp-1">{post.title}</h3>
 <div
   className="
-    text-sm text-muted-foreground line-clamp-2
+    text-sm text-muted-foreground line-clamp-3
     prose prose-sm max-w-none
     whitespace-pre-wrap mb-2
   "
@@ -437,24 +437,24 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
       /<img[^>]*>/gi,
       `
       <div style="
-        width:100%;
-        height:220px;
-        display:flex;
+        display:inline-flex;
         align-items:center;
-        justify-content:center;
+        gap:6px;
         background:#f3f4f6;
-        border-radius:12px;
-        margin:8px 0;
+        color:#6b7280;
+        font-size:12px;
+        font-weight:600;
+        padding:4px 10px;
+        border-radius:9999px;
+        margin:4px 0;
+        border: 1px solid #e5e7eb;
       ">
         <img
           src="https://cdn-icons-png.flaticon.com/512/8136/8136031.png"
-          alt=""
-          style="
-            width:204px;
-            height:204px;
-            object-fit:contain;
-          "
+          alt="Image attached"
+          style="width:14px; height:14px; object-fit:contain;"
         />
+        <span>Image attached</span>
       </div>
       `
     ),

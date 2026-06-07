@@ -13,9 +13,10 @@ import { toast } from "sonner";
 
 export default function DashboardOverview() {
   const [counts, setCounts] = useState({ planners: 0, tests: 0, faculty: 0 });
-  const [recentStats, setRecentStats] = useState({ contact: 0, submissions: 0 });
+  const [recentStats, setRecentStats] = useState({ contact: 0, submissions: 0, flashcards: 0 });
   const [recentContactData, setRecentContactData] = useState<any[]>([]);
   const [recentSubmissionData, setRecentSubmissionData] = useState<any[]>([]);
+  const [recentFlashcardData, setRecentFlashcardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -35,14 +36,16 @@ export default function DashboardOverview() {
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
       try {
-        const [pRes, tRes, fRes, cRes, sRes, contactRes, submissionRes, tickerRes] = await Promise.all([
+        const [pRes, tRes, fRes, cRes, sRes, flashReqRes, contactRes, submissionRes, flashDataRes, tickerRes] = await Promise.all([
           supabase.from('study_planners').select('*', { count: 'exact', head: true }),
           supabase.from('tests').select('*', { count: 'exact', head: true }),
           supabase.from('faculty').select('*', { count: 'exact', head: true }),
           supabase.from('contact_submissions').select('*', { count: 'exact', head: true }).gte('created_at', twoDaysAgo),
           supabase.from('community_submissions').select('*', { count: 'exact', head: true }).gte('created_at', twoDaysAgo),
+          supabase.from('flashcard_requests').select('*', { count: 'exact', head: true }).gte('created_at', twoDaysAgo),
           supabase.from('contact_submissions').select('*').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('community_submissions').select('*').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
+          supabase.from('flashcard_requests').select('*, profiles(full_name)').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('site_content').select('*').eq('page_id', 'dashboard_ticker').maybeSingle()
         ]);
 
@@ -53,10 +56,12 @@ export default function DashboardOverview() {
         });
         setRecentStats({
           contact: cRes.count || 0,
-          submissions: sRes.count || 0
+          submissions: sRes.count || 0,
+          flashcards: flashReqRes.count || 0
         });
         setRecentContactData(contactRes.data || []);
         setRecentSubmissionData(submissionRes.data || []);
+        setRecentFlashcardData(flashDataRes.data || []);
 
         if (tickerRes?.data && tickerRes.data.content && Array.isArray(tickerRes.data.content.messages)) {
           setTickerMessages(tickerRes.data.content.messages);
@@ -232,7 +237,7 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Contact Us Submissions */}
         <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm flex flex-col">
           <div className="p-6 border-b border-border/50 bg-muted/5 flex items-center justify-between">
@@ -350,6 +355,68 @@ export default function DashboardOverview() {
           <div className="p-4 border-t border-border/50 bg-muted/5">
             <a href="/admin/community-submissions" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5">
               Review Submissions <ArrowUpRight className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+
+        {/* Recent Flashcard Requests */}
+        <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <div className="p-6 border-b border-border/50 bg-muted/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-accent/10 text-accent shadow-inner">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Flashcard Requests</h2>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Last 48 Hours</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-2xl font-black text-accent">{(recentStats as any).flashcards || 0}</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">New Requests</span>
+            </div>
+          </div>
+          
+          <div className="p-4 flex-1 space-y-3">
+            {loading ? (
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-16 rounded-xl bg-muted/20 animate-pulse" />
+              ))
+            ) : recentFlashcardData.length > 0 ? (
+              recentFlashcardData.map((req) => (
+                <div key={req.id} className="group p-4 rounded-xl border border-transparent hover:border-border/50 hover:bg-muted/30 transition-all flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-accent/10 group-hover:text-accent transition-colors">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-foreground line-clamp-1">{req.topic}</h4>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-muted-foreground italic truncate">by {req.profiles?.full_name || 'Anonymous'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-[10px] font-bold text-muted-foreground inline-flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {formatDate(req.created_at)}
+                    </span>
+                    <Badge variant="outline" className="text-[9px] font-extrabold uppercase px-1.5 h-4 bg-background border-muted">
+                      Pending
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-40 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-muted/10 rounded-xl border border-dashed">
+                <BookOpen className="w-8 h-8 opacity-20" />
+                <p className="text-sm font-medium">No new requests in the last 2 days</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 border-t border-border/50 bg-muted/5">
+            <a href="/admin/flash-cards" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5">
+              Review Requests <ArrowUpRight className="w-3 h-3" />
             </a>
           </div>
         </div>

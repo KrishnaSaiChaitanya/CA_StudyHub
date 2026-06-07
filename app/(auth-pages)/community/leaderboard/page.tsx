@@ -13,8 +13,9 @@ import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Flame, Target, MessageSquare, Info, 
-  Loader2, Crown, Medal, Award, Star, Zap, X, HelpCircle 
+  Loader2, Crown, Medal, Award, Star, Zap, X, HelpCircle, ArrowLeft
 } from "lucide-react";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -206,6 +207,7 @@ export default function LeaderboardPage() {
       {/* Hero Header */}
       <section className="relative overflow-hidden bg-primary py-16 text-primary-foreground">
         <div className="container relative z-10 flex flex-col items-center text-center">
+         
           <motion.div 
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -214,7 +216,9 @@ export default function LeaderboardPage() {
           >
             <Trophy className="h-8 w-8 text-accent animate-pulse" />
           </motion.div>
-          
+          <Link href="/community" className=" md:left-8 flex items-center gap-1.5 text-xs text-primary-foreground/50 my-2 hover:text-primary-foreground transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Community
+          </Link>
           <motion.h1 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -222,7 +226,7 @@ export default function LeaderboardPage() {
           >
             Study <span className="text-gradient-blue">Leaderboard</span>
           </motion.h1>
-          
+         
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

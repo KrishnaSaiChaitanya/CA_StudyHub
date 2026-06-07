@@ -13,8 +13,8 @@ const tools = [
   { icon: ClipboardList, title: "Notes & Bookmarks", description: "Save notes, bookmark resources, and organize materials.", path: "/bookmarks" },
   { icon: Layers, title: "Flashcards", description: "Master concepts faster with digital flashcards organized by folders.", path: "/study/flash-cards" },
 
-  { icon: Bell, title: "Announcements", description: "Stay updated with the latest ICAI announcements and official notices.", path: "/study/announcements" },
-  { icon: Bot, title: "AI Chatbot", description: "Instant AI-powered doubt solving and personalized study assistance.", comingSoon: true },
+  { icon: Bell, title: "Announcements", description: "Stay updated with the latest ICAI announcements and official notices.", path: "/study/announcements", comingSoon: false  },
+  // { icon: Bot, title: "AI Chatbot", description: "Instant AI-powered doubt solving and personalized study assistance.", comingSoon: true },
 ];
 
 const Study = () => {
@@ -22,11 +22,12 @@ const Study = () => {
 
   const studyTools = [...tools];
 if (studentLevel === "final") {
-  studyTools.splice(Math.max(studyTools.length - 1, 0), 0, {
+  studyTools.splice(Math.max(studyTools.length, 0), 0, {
     icon: Award,
     title: "SPOM (Self-Paced)",
     description: "Access Set A–D papers, study materials, and peer observations.",
-    path: "/study/spom"
+    path: "/study/spom",
+    comingSoon: true 
   });
 }
 

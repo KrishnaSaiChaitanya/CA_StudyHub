@@ -18,8 +18,9 @@ const sections = [
     disabled: false 
   },
   { icon: MessageCircle, title: "Discussion Forum", description: "Post questions, share insights, and get answers from peers and mentors.", cta: "Go to Forum", href: "/community/forum", disabled: false },
+   { icon: TrendingUp, title: "Leaderboard", description: "Compete on mock tests, study streaks, and community contributions.", cta: "View Leaderboard", href: "/community/leaderboard", disabled: false },
   { icon: Compass, title: "Career Guidance", description: "Get mentorship from qualified CAs. Explore articleship and career paths.", cta: "Coming Soon", disabled: true },
-  { icon: TrendingUp, title: "Leaderboard", description: "Compete on mock tests, study streaks, and community contributions.", cta: "View Leaderboard", href: "/community/leaderboard", disabled: false },
+ 
 ];
 
 import { ProFeatureLock } from "@/components/ProFeatureLock";

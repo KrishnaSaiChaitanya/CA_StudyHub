@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { FolderHeart, Check, Plus, Loader2, FolderPlus } from "lucide-react";
+import { FolderHeart, Check, Plus, Loader2, FolderPlus, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SaveToFolderPopoverProps {
@@ -180,15 +180,20 @@ export default function SaveToFolderPopover({ setId }: SaveToFolderPopoverProps)
                       key={folder.id}
                       onClick={() => handleToggleFolder(folder.id)}
                       className={cn(
-                        "w-full flex items-center justify-between text-left px-2.5 py-2 rounded-lg text-xs font-medium hover:bg-secondary/70 transition-colors group",
-                        isSaved ? "text-accent bg-accent/5 font-semibold" : "text-muted-foreground"
+                        "w-full flex items-center justify-between text-left px-3 py-2.5 mb-1.5 rounded-xl text-xs font-medium transition-all group border shadow-sm",
+                        isSaved 
+                          ? "bg-accent text-accent-foreground border-accent shadow-accent/20" 
+                          : "bg-card text-muted-foreground border-border hover:bg-secondary/80 hover:border-border/80 hover:shadow-md"
                       )}
                     >
-                      <span className="truncate pr-2">{folder.name}</span>
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        <Folder className={cn("h-4 w-4 shrink-0", isSaved ? "fill-accent-foreground/20 text-accent-foreground" : "fill-muted/20 text-muted-foreground")} />
+                        <span className="truncate">{folder.name}</span>
+                      </div>
                       {isSaved ? (
-                        <Check className="h-3.5 w-3.5 text-accent shrink-0" />
+                        <Check className="h-4 w-4 shrink-0" />
                       ) : (
-                        <Plus className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground shrink-0" />
+                        <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       )}
                     </button>
                   );
