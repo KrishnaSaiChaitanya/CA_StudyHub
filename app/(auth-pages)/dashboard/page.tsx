@@ -155,7 +155,7 @@ const Home = () => {
       const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
       const todayStr = new Date().toISOString().split('T')[0];
 
-      // Fetch Stats, Events, Papers, and Exam Dates concurrently
+      // Fetch Stats, Events, Papers, Exam Dates, Planners, and Ticker concurrently
       const [
         profileRes,
         sessionsRes,
@@ -163,7 +163,8 @@ const Home = () => {
         eventsRes,
         papersRes,
         examDatesRes,
-        plannersRes
+        plannersRes,
+        tickerRes
       ] = await Promise.all([
         supabase.from('profiles').select('current_streak, quick_access_preference').eq('id', user.id).single(),
         supabase.from('study_sessions').select('duration_seconds').eq('user_id', user.id).eq('session_date', todayStr),
@@ -177,6 +178,7 @@ const Home = () => {
           .limit(5),
         supabase.from('exam_dates').select('*'),
         supabase.from('study_planners').select('*').in('category', subjects).order('created_at', { ascending: false }).limit(5),
+        supabase.from('site_content').select('*').eq('page_id', 'dashboard_ticker').maybeSingle(),
       ]);
 
       // Process Stats
@@ -206,6 +208,11 @@ const Home = () => {
           .slice(0, 3) as DbEvent[];
       }
 
+      let tickerMessages: string[] = [];
+      if (tickerRes?.data && tickerRes.data.content && Array.isArray(tickerRes.data.content.messages)) {
+        tickerMessages = tickerRes.data.content.messages;
+      }
+
       return {
         userName: name,
         stats: {
@@ -219,6 +226,7 @@ const Home = () => {
         targetDate: format(targetDate, "MMMM dd, yyyy"),
         userLevel: userLevel.charAt(0).toUpperCase() + userLevel.slice(1),
         quickAccessPreference: profileRes.data?.quick_access_preference || null,
+        tickerMessages,
       };
     }
   });
@@ -273,32 +281,39 @@ const Home = () => {
     recentPapers = [],
     daysLeft = 0,
     targetDate = "...",
-    userLevel = "..."
+    userLevel = "...",
+    tickerMessages = []
   } = data || {};
+
+  const defaultAnnouncements = [
+    "🚀 New: Practice Planner is live — track question-wise revision",
+    "📅 Exam attempts now available: Nov 2026, May 2027, Nov 2027, May 2028",
+    "🤖 AI Chatbot upgraded with faster responses",
+    "🏆 Climb the new Leaderboard — earn XP daily",
+    "📚 Fresh ICAI announcements added every week"
+  ];
+
+  const announcementsList = tickerMessages.length > 0 ? tickerMessages : defaultAnnouncements;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* <Navbar /> */}
 
 
-       {/* <div className="overflow-hidden bg-black py-1.5 border-y border-black/10">
+       <div className="overflow-hidden bg-black py-1.5 border-y border-black/10">
         <div className="flex w-max animate-marquee whitespace-nowrap">
           {[0, 1].map((dup) => (
             <div key={dup} className="flex items-center gap-12 px-6 text-xs font-medium text-white">
-              <span>🚀 New: Practice Planner is live — track question-wise revision</span>
-              <span>•</span>
-              <span>📅 Exam attempts now available: Nov 2026, May 2027, Nov 2027, May 2028</span>
-              <span>•</span>
-              <span>🤖 AI Chatbot upgraded with faster responses</span>
-              <span>•</span>
-              <span>🏆 Climb the new Leaderboard — earn XP daily</span>
-              <span>•</span>
-              <span>📚 Fresh ICAI announcements added every week</span>
-              <span>•</span>
+              {announcementsList.map((ann: string, idx: number) => (
+                <span key={idx} className="flex items-center gap-12">
+                  <span>{ann}</span>
+                  <span>•</span>
+                </span>
+              ))}
             </div>
           ))}
         </div>
-      </div> */}
+      </div>
 
       <main className="container max-w-5xl py-10 lg:py-16 flex-1">
         {/* Greeting */}

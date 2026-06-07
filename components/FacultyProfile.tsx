@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Phone, Globe, MapPin, Star, Users, BookOpen, Play, Clock, Calendar, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 
@@ -121,33 +122,41 @@ const FacultyProfile = ({ faculty, onBack }: FacultyProfileProps) => {
           {planners.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mt-8">
               <h2 className="mb-4 text-lg font-semibold text-card-foreground">Study Planners</h2>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {planners.map((plan) => (
-                  <Card key={plan.id} className="border-border bg-card p-4 transition-all hover:border-accent/30 flex flex-col justify-between">
-                    <div>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
-                        <Calendar className="h-4 w-4 text-accent" />
-                      </div>
-                      <h3 className="mt-3 text-sm font-semibold text-card-foreground">{plan.title}</h3>
-                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-                        <span className="rounded-full bg-secondary px-2 py-0.5">{plan.pages} Pages</span>
-                        {/* <span className="rounded-full bg-secondary px-2 py-0.5 flex items-center gap-1">
-                          <Star className="h-2.5 w-2.5 fill-muted-foreground" /> {plan.rating}
-                        </span> */}
-                        <span className="rounded-full bg-secondary px-2 py-0.5">{plan.downloads} DLs</span>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-4 w-full text-xs"
-                      onClick={() => window.open(plan.pdf_url, '_blank')}
-                    >
-                      View Plan
-                    </Button>
-                  </Card>
-                ))}
-              </div>
+              <Carousel opts={{ align: "start" }} className="w-full">
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {planners.map((plan) => (
+                    <CarouselItem key={plan.id} className="pl-2 md:pl-4 sm:basis-1/2 md:basis-1/3">
+                      <Card className="h-full border-border bg-card p-4 transition-all hover:border-accent/30 flex flex-col justify-between">
+                        <div>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                            <Calendar className="h-4 w-4 text-accent" />
+                          </div>
+                          <h3 className="mt-3 text-sm font-semibold text-card-foreground">{plan.title}</h3>
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                            <span className="rounded-full bg-secondary px-2 py-0.5">{plan.pages} Pages</span>
+                            {/* <span className="rounded-full bg-secondary px-2 py-0.5 flex items-center gap-1">
+                              <Star className="h-2.5 w-2.5 fill-muted-foreground" /> {plan.rating}
+                            </span> */}
+                            <span className="rounded-full bg-secondary px-2 py-0.5">{plan.downloads} DLs</span>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-4 w-full text-xs"
+                          onClick={() => window.open(plan.pdf_url, '_blank')}
+                        >
+                          View Plan
+                        </Button>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className={`hidden ${planners.length > 2 ? 'sm:block' : ''} ${planners.length <= 3 ? 'md:hidden' : ''}`}>
+                  <CarouselPrevious className="-left-4 h-8 w-8" />
+                  <CarouselNext className="-right-4 h-8 w-8" />
+                </div>
+              </Carousel>
             </motion.div>
           )}
 
@@ -155,35 +164,42 @@ const FacultyProfile = ({ faculty, onBack }: FacultyProfileProps) => {
           {videos.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-8">
               <h2 className="mb-4 text-lg font-semibold text-card-foreground">Popular Videos</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {videos.map((video) => (
-                  <Card 
-                    key={video.id} 
-                    className="group flex cursor-pointer items-center gap-4 border-border bg-card p-4 transition-all hover:border-accent/30"
-                    onClick={() => window.open(video.url, '_blank')}
-                  >
-                    <div className="relative flex h-16 w-24 shrink-0 items-center justify-center rounded-lg bg-primary overflow-hidden">
-                      {video.thumbnail_url ? (
-                        <img src={video.thumbnail_url} alt={video.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-xs font-bold text-primary-foreground/60">{getThumbnailText(video.name)}</span>
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-all group-hover:opacity-100">
-                        <Play className="h-5 w-5 text-white" />
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-medium text-card-foreground">{video.name}</h3>
-                      <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />
-                           {video.duration_minutes || 'Unknown'}
-                        </span>
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                  </Card>
-                ))}
-              </div>
+              <Carousel opts={{ align: "start" }} className="w-full">
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {videos.map((video) => (
+                    <CarouselItem key={video.id} className="pl-2 md:pl-4 sm:basis-1/2">
+                      <Card 
+                        className="group flex cursor-pointer items-center gap-4 border-border bg-card p-4 transition-all hover:border-accent/30 h-full"
+                        onClick={() => window.open(video.url, '_blank')}
+                      >
+                        <div className="relative flex h-16 w-24 shrink-0 items-center justify-center rounded-lg bg-primary overflow-hidden">
+                          {video.thumbnail_url ? (
+                            <img src={video.thumbnail_url} alt={video.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-bold text-primary-foreground/60">{getThumbnailText(video.name)}</span>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-all group-hover:opacity-100">
+                            <Play className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-sm font-medium text-card-foreground">{video.name}</h3>
+                          <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />
+                               {video.duration_minutes || 'Unknown'}
+                            </span>
+                          </div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className={`hidden ${videos.length > 2 ? 'sm:block' : ''}`}>
+                  <CarouselPrevious className="-left-4 h-8 w-8" />
+                  <CarouselNext className="-right-4 h-8 w-8" />
+                </div>
+              </Carousel>
             </motion.div>
           )}
 
