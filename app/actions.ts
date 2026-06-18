@@ -99,11 +99,15 @@ export const signInAction = async (formData: FormData) => {
 };
 export const signInWithGoogle = async (formData: FormData) => {
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  const protocol = headersList.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const origin = `${protocol}://${host}`;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?redirect_to=/dashboard`,
     },
   })
 

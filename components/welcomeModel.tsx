@@ -10,8 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-
+import { createClient } from "@/utils/supabase/client";
 
 const STORAGE_KEY = "lumos_welcome_seen";
 
@@ -20,14 +19,35 @@ const WelcomeModal = () => {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    const checkWelcome = () => {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      if (!seen) {
-        setOpen(true);
+    const supabase = createClient();
+
+    const checkWelcome = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const seen = localStorage.getItem(STORAGE_KEY);
+        if (!seen) {
+          setOpen(true);
+        }
       }
       setChecked(true);
     };
+
     checkWelcome();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const seen = localStorage.getItem(STORAGE_KEY);
+        if (!seen) {
+          setOpen(true);
+        }
+      } else {
+        setOpen(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleContinue = () => {
