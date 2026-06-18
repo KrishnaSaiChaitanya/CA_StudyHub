@@ -9,7 +9,7 @@ import { useStudent } from "@/components/StudentTypeProvider";
 const tools = [
   { icon: BookOpen, title: "Study Resources", description: "Study planners, key questions, and mnemonics from faculty & community", path: "/study/planner" },
   { icon: BarChart3, title: "Progress dashboard", description: "Track study time, maintain streaks, manage tasks, and view detailed analytics.", path: "/study/progress" },
-  { icon: CalendarDays, title: "Exam Calendar", description: "ICAI exam dates, registration deadlines, and reminders.", path: "/study/events" },
+  { icon: CalendarDays, title: "Calendar", description: "ICAI exam dates, registration deadlines, and reminders.", path: "/study/events" },
   { icon: ClipboardList, title: "Notes & Bookmarks", description: "Save notes, bookmark resources, and organize materials.", path: "/bookmarks" },
   { icon: Layers, title: "Flashcards", description: "Master concepts faster with digital flashcards organized by folders.", path: "/study/flash-cards" },
 
