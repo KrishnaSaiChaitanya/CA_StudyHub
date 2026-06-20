@@ -16,6 +16,7 @@ export interface FacultyDisplayData {
   students: string;
   level: string;
   profile_picture?: string | null;
+  telegram_link?: string;
 }
 
 const formatNameToSubject = (subject: string | null) => {
@@ -57,6 +58,7 @@ const Faculty = () => {
           email: f.email,
           phone: f.phone,
           website: f.website,
+          telegram_link: f.telegram_link,
           experience: f.experience,
           location: f.location,
         }));

@@ -1,12 +1,16 @@
 "use client"
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink, Check, Trash2, Pencil, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/utils/supabase/client"; // Adjust to your Supabase client path
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { useStudent } from "@/components/StudentTypeProvider";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import { toast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 
 type DbCalendarEvent = {
@@ -55,6 +59,15 @@ const ExamCalendarView = () => {
   const { studentLevel, subjects, loading: studentLoading } = useStudent();
   const [events, setEvents] = useState<DbCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Todo management state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<DbCalendarEvent | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   // Use a ref to handle closing the popup when clicking outside
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -76,6 +89,7 @@ const ExamCalendarView = () => {
 
         // 2. Fetch User's Todos
         const { data: { user } } = await supabase.auth.getUser();
+        if (user) setUserId(user.id);
         let userTodos: any[] = [];
         if (user) {
           const { data: fetchedTodos } = await supabase
@@ -174,6 +188,86 @@ const ExamCalendarView = () => {
 
     fetchData();
   }, [supabase, subjects, studentLoading, studentLevel]);
+
+  // --- Todo action handlers ---
+  const handleMarkComplete = async (todoId: string) => {
+    const { error } = await supabase
+      .from("todos")
+      .update({ done: true })
+      .eq("id", todoId);
+    if (error) {
+      toast({ title: "Failed to mark as complete", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Task marked as complete!" });
+      setEvents(prev => prev.map(e => 
+        e.id === todoId ? { ...e, done: true, event_time: "Completed" } : e
+      ));
+    }
+  };
+
+  const handleDeleteTodo = async () => {
+    if (!todoToDelete) return;
+    const { error } = await supabase
+      .from("todos")
+      .delete()
+      .eq("id", todoToDelete);
+    if (error) {
+      toast({ title: "Failed to delete task", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Task deleted" });
+      setEvents(prev => prev.filter(e => e.id !== todoToDelete));
+    }
+    setTodoToDelete(null);
+    setDeleteConfirmOpen(false);
+  };
+
+  const openEditDialog = (ev: DbCalendarEvent) => {
+    setEditingTodo(ev);
+    setEditText(ev.title.replace(/^To-Do: /, ""));
+    const d = new Date(ev.event_year, ev.event_month - 1, ev.event_date);
+    setEditDate(d.toISOString().split("T")[0]);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditTodo = async () => {
+    if (!editingTodo || !editText.trim() || !editDate) return;
+    const dateObj = new Date(editDate);
+    const { error } = await supabase
+      .from("todos")
+      .update({
+        text: editText.trim(),
+        todo_date: editDate,
+      })
+      .eq("id", editingTodo.id);
+    if (error) {
+      toast({ title: "Failed to update task", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Task updated" });
+      setEvents(prev => prev.map(e =>
+        e.id === editingTodo.id
+          ? {
+              ...e,
+              title: `To-Do: ${editText.trim()}`,
+              event_month: dateObj.getMonth() + 1,
+              event_year: dateObj.getFullYear(),
+              event_date: dateObj.getDate(),
+            }
+          : e
+      ));
+    }
+    setEditDialogOpen(false);
+    setEditingTodo(null);
+  };
+
+  // Compute overdue todos
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const overdueTodos = events.filter(e => {
+    if (e.type !== "todo" || e.done) return false;
+    const eventDate = new Date(e.event_year, e.event_month - 1, e.event_date);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  });
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1; // 1-12 matching DB schema (event_month)
@@ -375,6 +469,37 @@ const ExamCalendarView = () => {
                                       View Announcement <ExternalLink className="h-2.5 w-2.5" />
                                     </a>
                                   )}
+                                  {/* Todo action buttons */}
+                                  {ev.type === "todo" && (
+                                    <div className="mt-2 flex items-center gap-1.5">
+                                      {!ev.done && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                                          onClick={(e) => { e.stopPropagation(); handleMarkComplete(ev.id); }}
+                                        >
+                                          <Check className="h-3 w-3" /> Done
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-2 text-[10px] gap-1"
+                                        onClick={(e) => { e.stopPropagation(); openEditDialog(ev); }}
+                                      >
+                                        <Pencil className="h-3 w-3" /> Edit
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                        onClick={(e) => { e.stopPropagation(); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
+                                      >
+                                        <Trash2 className="h-3 w-3" /> Delete
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
                               ))
                             )}
@@ -389,8 +514,59 @@ const ExamCalendarView = () => {
           </CardContent>
         </Card>
 
-        {/* Sidebar - Quick Upcoming Events */}
+        {/* Sidebar - Quick Upcoming Events + Overdue */}
         <div className="space-y-4">
+          {/* Overdue Tasks */}
+          {overdueTodos.length > 0 && (
+            <Card className="shadow-card border-destructive/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-1.5 text-destructive">
+                  <AlertTriangle className="h-4 w-4" /> Overdue Tasks ({overdueTodos.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {overdueTodos.slice(0, 8).map((ev) => (
+                  <div key={ev.id} className="flex items-start gap-3 group">
+                    <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS["Todo"]}`}>
+                      <span className="text-[10px] font-bold leading-none">{MONTHS[ev.event_month - 1]?.slice(0, 3)}</span>
+                      <span className="text-xs font-bold leading-none">{ev.event_date}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
+                      <p className="truncate text-[10px] text-muted-foreground">{ev.description}</p>
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-5 px-1.5 text-[9px] gap-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                          onClick={() => handleMarkComplete(ev.id)}
+                        >
+                          <Check className="h-2.5 w-2.5" /> Complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-5 px-1.5 text-[9px] gap-0.5"
+                          onClick={() => openEditDialog(ev)}
+                        >
+                          <Pencil className="h-2.5 w-2.5" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-5 px-1.5 text-[9px] gap-0.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
+                        >
+                          <Trash2 className="h-2.5 w-2.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="shadow-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Upcoming This Month</CardTitle>
@@ -421,6 +597,50 @@ const ExamCalendarView = () => {
         </div>
       </div>
     </motion.div>
+
+    {/* Delete confirmation modal */}
+    <ConfirmModal
+      isOpen={deleteConfirmOpen}
+      onClose={() => { setDeleteConfirmOpen(false); setTodoToDelete(null); }}
+      onConfirm={handleDeleteTodo}
+      title="Delete Task?"
+      description="Are you sure you want to delete this to-do task? This action cannot be undone."
+      confirmText="Delete"
+      variant="destructive"
+    />
+
+    {/* Edit todo dialog */}
+    <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Task</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Task Description</label>
+            <Input
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              placeholder="Task description..."
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Due Date</label>
+            <Input
+              type="date"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditTodo} disabled={!editText.trim() || !editDate}>
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Star, Users, BookOpen, Play, Clock, Calendar, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Star, Users, BookOpen, Play, Clock, Calendar, ExternalLink, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -14,6 +14,7 @@ interface FacultyData {
   rating: number;
   students: string;
   website?: string;
+  telegram_link?: string;
   experience?: string;
   level: string;
   profile_picture?: string | null;
@@ -101,10 +102,32 @@ const FacultyProfile = ({ faculty, onBack }: FacultyProfileProps) => {
                 <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{faculty.experience}</span>
               </div>
               <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-accent" />{faculty.email ?? "xxxxx@gmail.com"}</span>
-                <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-accent" />( {faculty.phone ?? "+91 XXXXX XXXXX"} ) </span>
-              
-                <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-accent" />{faculty.website ?? "xxxxx"}</span>
+                {faculty.email ? (
+                  <a href={`mailto:${faculty.email}`} className="flex items-center gap-1.5 hover:text-accent transition-colors">
+                    <Mail className="h-3.5 w-3.5 text-accent" />{faculty.email}
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-accent" />xxxxx@gmail.com</span>
+                )}
+                {faculty.phone ? (
+                  <a href={`tel:${faculty.phone}`} className="flex items-center gap-1.5 hover:text-accent transition-colors">
+                    <Phone className="h-3.5 w-3.5 text-accent" />( {faculty.phone} )
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-accent" />( +91 XXXXX XXXXX )</span>
+                )}
+                {faculty.website ? (
+                  <a href={faculty.website.startsWith("http") ? faculty.website : `https://${faculty.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-accent transition-colors">
+                    <Globe className="h-3.5 w-3.5 text-accent" />{faculty.website} <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-accent" />xxxxx</span>
+                )}
+                {faculty.telegram_link && (
+                  <a href={faculty.telegram_link.startsWith("http") ? faculty.telegram_link : `https://${faculty.telegram_link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-accent transition-colors">
+                    <Send className="h-3.5 w-3.5 text-accent" />Telegram <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                )}
               </div>
             </div>
             {/* <Button className="bg-accent text-accent-foreground hover:bg-accent/90" size="sm">Follow</Button> */}

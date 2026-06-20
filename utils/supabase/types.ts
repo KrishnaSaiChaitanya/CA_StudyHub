@@ -67,6 +67,7 @@ export interface Faculty {
   phone: string | null;
   location: string | null;
   website: string | null;
+  telegram_link: string | null;
   created_at: string;
   updated_at: string;
 }

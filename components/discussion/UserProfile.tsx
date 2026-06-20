@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post, Profile } from "./types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import { toast } from "@/hooks/use-toast";
 
 interface Props {
   userId: string;
@@ -16,6 +19,10 @@ interface Props {
 }
 
 export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEditClick }: Props) => {
+  const queryClient = useQueryClient();
+  const [deletePostId, setDeletePostId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", userId],
@@ -49,6 +56,27 @@ export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEdit
     profiles: profile || { full_name: "Anonymous" },
     reply_count: 0, upvotes: 0, downvotes: 0, myVote: 0
   })) as Post[] || [];
+
+  const handleDeletePost = async () => {
+    if (!deletePostId) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from("forum_posts")
+      .update({ status: "inactive" })
+      .eq("id", deletePostId)
+      .eq("user_id", userId);
+    
+    if (error) {
+      toast({ title: "Failed to delete post", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Post deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["user-posts", userId] });
+      queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
+    }
+    setDeleting(false);
+    setDeletePostId(null);
+    setIsDeleteModalOpen(false);
+  };
 
   const getInitials = (name: string | null) => (name ? name.slice(0, 2).toUpperCase() : "CA");
   const timeAgo = (dateStr: string) => {
@@ -112,17 +140,11 @@ export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEdit
                         <Button 
                           variant="destructive" 
                           size="sm" 
-                          onClick={async (e) => { 
+                          disabled={deleting}
+                          onClick={(e) => { 
                             e.stopPropagation(); 
-                            if (confirm("Are you sure you want to delete this post?")) {
-                              const { error } = await supabase
-                                .from("forum_posts")
-                                .update({ status: "inactive" })
-                                .eq("id", post.id);
-                              if (!error) {
-                                window.location.reload();
-                              }
-                            }
+                            setDeletePostId(post.id);
+                            setIsDeleteModalOpen(true);
                           }}
                         >
                           Delete
@@ -136,6 +158,20 @@ export const UserProfile = ({ userId, currentUserId, onBack, onPostClick, onEdit
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeletePostId(null);
+        }}
+        onConfirm={handleDeletePost}
+        title="Delete Post?"
+        description="Are you sure you want to delete this post? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 };
+

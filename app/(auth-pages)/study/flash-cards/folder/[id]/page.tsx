@@ -206,7 +206,7 @@ export default function FolderDetailsPage({ params }: FolderDetailsPageProps) {
                 size="icon"
                 disabled={removingId === s.id}
                 onClick={(e) => handleRemoveSet(e, s.id)}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive opacity-0 group-hover/container:opacity-100 transition-opacity shadow-sm z-10"
+                className="absolute top-2 left-2 h-7 w-7 rounded-full bg-background border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive opacity-0 group-hover/container:opacity-100 transition-opacity shadow-sm z-10"
               >
                 {removingId === s.id ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
