@@ -358,20 +358,28 @@ const Home = () => {
       {/* <Navbar /> */}
 
 
-    {announcementsList?.length> 0 && <div className="overflow-hidden bg-black py-1.5 border-y border-black/10">
-        <div className="flex w-max animate-marquee whitespace-nowrap">
-          {[0, 1].map((dup) => (
-            <div key={dup} className="flex items-center gap-12 px-6 text-xs font-medium text-white">
-              {announcementsList?.map((ann: string, idx: number) => (
-                <span key={idx} className="flex items-center gap-12">
-                  <span>{ann}</span>
-                  <span>•</span>
-                </span>
-              ))}
+    {announcementsList?.length > 0 && (() => {
+        const repeatCount = Math.max(10, Math.ceil(20 / announcementsList.length));
+        const singleSet = Array.from({ length: repeatCount }, (_, setIdx) =>
+          announcementsList.map((ann: string, idx: number) => (
+            <span key={`${setIdx}-${idx}`} className="flex items-center gap-8 shrink-0">
+              <span>{ann}</span>
+              <span className="text-white/40">•</span>
+            </span>
+          ))
+        ).flat();
+        return (
+          <div className="overflow-hidden bg-black py-1.5 border-y border-black/10 text-xs font-medium text-white">
+            <div
+              className="flex items-center gap-8 whitespace-nowrap animate-marquee"
+              style={{ animationDuration: `${Math.max(10, repeatCount * announcementsList.length * 1)}s` }}
+            >
+              {singleSet}
+              {singleSet}
             </div>
-          ))}
-        </div>
-      </div>}
+          </div>
+        );
+      })()}
 
       <main className="container max-w-5xl py-10 lg:py-16 flex-1">
         {/* Greeting */}

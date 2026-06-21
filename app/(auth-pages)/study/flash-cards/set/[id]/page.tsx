@@ -284,7 +284,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 onClick={handleNext}
                 className="h-10 px-3 flex items-center gap-1 text-xs"
               >
-                Skip <ChevronRight className="h-4 w-4" />
+                Next <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </motion.div>
