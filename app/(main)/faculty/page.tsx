@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import FacultyProfile from "@/components/FacultyProfile";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, User, Loader2 } from "lucide-react";
+import { Star, User, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import Footer from "@/components/Footer";
 import { useStudent } from "@/components/StudentTypeProvider";
@@ -36,7 +37,14 @@ const Faculty = () => {
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyDisplayData | null>(null);
   const { studentLevel, subjects, loading: studentLoading } = useStudent();
   const [facultyList, setFacultyList] = useState<FacultyDisplayData[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const filteredFaculty = facultyList.filter(f => 
+    f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    f.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    f.level.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchFaculty = async () => {
@@ -87,14 +95,26 @@ const Faculty = () => {
               </motion.div>
             </div>
           </section>
-          <section className="container py-16">
+          <section className="container py-8">
+            <div className="mb-8 flex justify-center">
+              <div className="relative w-full max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name, subject, or level..."
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
             {loading ? (
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : facultyList.length > 0 ? (
+            ) : filteredFaculty.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {facultyList.map((f, i) => (
+                {filteredFaculty.map((f, i) => (
                   <motion.div
                     key={f.id || f.name}
                     initial={{ opacity: 0, y: 16 }}

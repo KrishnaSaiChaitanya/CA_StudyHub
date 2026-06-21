@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Flag, Trash2, Check, ShieldAlert, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { handleReportAction } from "./actions";
 
 interface Report {
   id: string;
@@ -50,18 +51,10 @@ export default function ForumReportsPage() {
   const handleAction = async (reportId: string, postId: string, action: "dismiss" | "block") => {
     setActionLoading(reportId);
     
-    if (action === "block") {
-      const { error: postErr } = await supabase.from("forum_posts").update({ status: "blocked" }).eq("id", postId);
-      if (postErr) {
-        toast({ title: "Error blocking post", description: postErr.message, variant: "destructive" });
-        setActionLoading(null);
-        return;
-      }
-    }
+    const result = await handleReportAction(reportId, postId, action);
 
-    const { error: repErr } = await supabase.from("forum_reports").update({ status: action === "block" ? "blocked" : "dismissed" }).eq("id", reportId);
-    if (repErr) {
-      toast({ title: "Error updating report", description: repErr.message, variant: "destructive" });
+    if (!result.success) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
     } else {
       toast({ title: `Report ${action === "block" ? "blocked" : "dismissed"}` });
       setReports(prev => prev.filter(r => r.id !== reportId));
