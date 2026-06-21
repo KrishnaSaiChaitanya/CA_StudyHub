@@ -153,7 +153,7 @@ const ComingSoon = () => {
             Join the waitlist to get <span className="text-accent font-medium">Pro access free for 1 month</span> when we launch.
           </p> */}
            <p className="text-xs text-primary-foreground/40 mt-3">
-            Join the waitlist to get <span className="text-accent font-medium">free Pro access till the end of August</span> when we launch.
+            Join the waitlist to get <span className="text-accent font-medium">free Pro access till the end of November</span> when we launch.
           </p>
         </motion.div>
       </div>
