@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
-import { SubjectCategory, Todo as TodoType } from "@/utils/supabase/types";
+import { SubjectCategory, Todo as TodoType } from "@/types/database.types";
 import { useToast } from "@/components/ui/use-toast";
 import { useStudent } from "./StudentTypeProvider";
 import { useStudyTimer } from "./StudyTimerProvider";

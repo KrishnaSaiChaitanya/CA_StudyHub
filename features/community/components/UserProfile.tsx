@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Post, Profile } from "./types";
+import { Post, Profile } from "@/types/features.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ConfirmModal } from "@/components/ConfirmModal";

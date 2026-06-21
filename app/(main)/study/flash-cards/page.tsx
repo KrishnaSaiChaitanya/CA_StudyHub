@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FolderPlus, Plus, Search, Layers, Send, Sparkles, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import FolderCard from "@/components/flash-cards/FolderCard";
-import SetCard from "@/components/flash-cards/SetCard";
-import CreateFolderDialog from "@/components/flash-cards/CreateFolderDialog";
-import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
-import RequestTopicDialog from "@/components/flash-cards/RequestTopicDialog";
+import FolderCard from "@/features/flashcards/components/FolderCard";
+import SetCard from "@/features/flashcards/components/SetCard";
+import CreateFolderDialog from "@/features/flashcards/components/CreateFolderDialog";
+import CreateSetDialog from "@/features/flashcards/components/CreateSetDialog";
+import RequestTopicDialog from "@/features/flashcards/components/RequestTopicDialog";
+import { getFlashcardFolders, getFlashcardSets } from "@/features/flashcards/actions";
 import { cn } from "@/lib/utils";
 
 // Global cache variables for SWR caching
@@ -52,23 +53,22 @@ export default function FlashcardsDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [foldersRes, linksRes, setsRes] = await Promise.all([
-        supabase.from("flashcard_folders").select("*").order("created_at", { ascending: false }),
-        supabase.from("flashcard_folder_sets").select("folder_id"),
-        supabase.from("flashcard_sets").select("*, flashcards(count)").or(`user_id.eq.${user.id},is_admin.eq.true`).order("created_at", { ascending: false })
+      const [foldersData, setsData] = await Promise.all([
+        getFlashcardFolders(user.id),
+        getFlashcardSets(user.id)
       ]);
 
-      const folderCounts = (linksRes.data || []).reduce((acc: Record<string, number>, item) => {
+      const folderCounts = (foldersData.links || []).reduce((acc: Record<string, number>, item) => {
         acc[item.folder_id] = (acc[item.folder_id] || 0) + 1;
         return acc;
       }, {});
 
-      const processedFolders = (foldersRes.data || []).map((f) => ({
+      const processedFolders = (foldersData.folders || []).map((f) => ({
         ...f,
         setCount: folderCounts[f.id] || 0,
       }));
 
-      const processedSets = (setsRes.data || []).map((s) => ({
+      const processedSets = (setsData || []).map((s) => ({
         ...s,
         cardCount: s.flashcards?.[0]?.count || 0,
       }));

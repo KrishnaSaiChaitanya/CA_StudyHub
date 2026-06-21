@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Post } from "@/components/discussion/types";
-import { PostDetail } from "@/components/discussion/PostDetail";
-import { UserProfile } from "@/components/discussion/UserProfile";
+import { Post } from "@/types/features.types";
+import { PostDetail } from "@/features/community/components/PostDetail";
+import { UserProfile } from "@/features/community/components/UserProfile";
 import { Loader2 } from "lucide-react";
-import { getVoterId } from "@/components/discussion/forumUtils";
+import { getVoterId } from "@/features/community/components/forumUtils";
 
 export default function SinglePostPage() {
   const { id } = useParams();

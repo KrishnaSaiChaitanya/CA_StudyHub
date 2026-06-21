@@ -1,5 +1,5 @@
 import { Message } from "@/components/form-message";
-import SignUpView from "./view";
+import SignUpView from "@/features/auth/components/SignUpView";
 
 export default async function SignUp(props: {
   searchParams: Promise<Message>;

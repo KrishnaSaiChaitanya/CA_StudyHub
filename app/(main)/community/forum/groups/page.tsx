@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Group } from "@/components/discussion/types";
-import { getVoterId } from "@/components/discussion/forumUtils";
+import { Group } from "@/types/features.types";
+import { getVoterId } from "@/features/community/components/forumUtils";
 
 export default function GroupsListingPage() {
   const router = useRouter();

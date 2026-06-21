@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
-import { Group } from "@/components/discussion/types";
+import { Group } from "@/types/features.types";
 
 export default function AdminGroupsPage() {
   const supabase = createClient();

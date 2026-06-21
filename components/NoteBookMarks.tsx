@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import BookmarksClient from "@/app/(main)/bookmarks/BookmarksClient";
+import BookmarksClient from "@/features/bookmarks/components/BookmarksClient";
 import { Loader2 } from "lucide-react";
 
 const NotesBookmarks = () => {

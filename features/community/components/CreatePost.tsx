@@ -10,7 +10,7 @@ import { TipTapEditor } from "./TipTapEditor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { getVoterId } from "./forumUtils";
-import { Group } from "./types";
+import { Group } from "@/types/features.types";
 
 const CATEGORIES = ["Doubt", "Discussion", "Resource", "Articleship", "Exam Tips"];
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000000";

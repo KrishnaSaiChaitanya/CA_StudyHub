@@ -26,7 +26,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import { ObservationsTab } from "./ObservationsTab";
-import { Tab, PAPER_FILTERS, PaperMaterial } from "./types";
+import { Tab, PAPER_FILTERS, PaperMaterial } from "@/types/features.types";
 
 const SPOMView = ({ onBack }: { onBack: () => void }) => {
   const supabase = createClient();

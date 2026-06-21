@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Flag, Reply as ReplyIcon, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Post, Reply } from "./types";
+import { Post, Reply } from "@/types/features.types";
 import { TipTapEditor } from "./TipTapEditor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import DiscussionForumView from "@/components/discussion/discussionView";
+import DiscussionForumView from "@/features/community/components/discussionView";
 
 export default function ForumPage() {
   const router = useRouter();

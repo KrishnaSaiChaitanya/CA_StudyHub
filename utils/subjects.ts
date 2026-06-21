@@ -1,4 +1,4 @@
-import { StudentLevel, SubjectCategory } from "./supabase/types";
+import { StudentLevel, SubjectCategory } from "@/types/database.types";
 
 export const SUBJECT_MAPPING: Record<StudentLevel, SubjectCategory[]> = {
   foundation: [

@@ -6,7 +6,7 @@ import { PostDetail } from "./PostDetail";
 import { CreatePost } from "./CreatePost";
 import { UserProfile } from "./UserProfile";
 import { EditPost } from "./EditPost";
-import { Post } from "./types";
+import { Post } from "@/types/features.types";
 
 const DiscussionForumView = ({ onBack, groupId }: { onBack: () => void, groupId?: string }) => {
   const [view, setView] = useState<"list" | "post" | "create" | "profile" | "edit">("list");

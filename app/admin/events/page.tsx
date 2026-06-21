@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
-import { SubjectCategory } from "@/utils/supabase/types";
+import { SubjectCategory } from "@/types/database.types";
 import { TableFilters } from "@/components/admin/TableFilters";
 
 export default function EventsDashboard() {
