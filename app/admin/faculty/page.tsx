@@ -36,6 +36,7 @@ export default function FacultyDashboard() {
   const [students, setStudents] = useState("");
   const [website, setWebsite] = useState("");
   const [experience, setExperience] = useState("");
+  const [telegramLink, setTelegramLink] = useState("");
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState("");
 
@@ -64,6 +65,7 @@ export default function FacultyDashboard() {
     setPhone(facultyData.phone || "");
     setStudents(facultyData.students || "");
     setWebsite(facultyData.website || "");
+    setTelegramLink(facultyData.telegram_link || "");
     setExperience(facultyData.experience || "");
     setProfilePictureUrl(facultyData.profile_picture || "");
     setProfilePictureFile(null);
@@ -83,6 +85,7 @@ export default function FacultyDashboard() {
       phone: phone || null,
       students: students || null,
       website: website || null,
+      telegram_link: telegramLink || null,
       experience: experience || null,
     };
 
@@ -127,7 +130,7 @@ export default function FacultyDashboard() {
     } else {
       toast({ title: `Faculty ${editingId ? 'updated' : 'added'}!` });
       setName(""); setEmail(""); setLevel(""); setSubject(""); setPhone("");
-      setStudents(""); setWebsite(""); setExperience("");
+      setStudents(""); setWebsite(""); setExperience(""); setTelegramLink("");
       setEditingId(null);
       setShowAdd(false);
       fetchData();
@@ -157,7 +160,7 @@ export default function FacultyDashboard() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="h-4 w-4" /></Button>
-          <Button onClick={() => { setEditingId(null); setName(""); setEmail(""); setLevel(""); setSubject(""); setPhone(""); setStudents(""); setWebsite(""); setExperience(""); setProfilePictureFile(null); setProfilePictureUrl(""); setShowAdd(true); }} className="gap-2">
+          <Button onClick={() => { setEditingId(null); setName(""); setEmail(""); setLevel(""); setSubject(""); setPhone(""); setStudents(""); setWebsite(""); setExperience(""); setTelegramLink(""); setProfilePictureFile(null); setProfilePictureUrl(""); setShowAdd(true); }} className="gap-2">
             <Plus className="h-4 w-4" /> Add Faculty
           </Button>
         </div>
@@ -180,7 +183,7 @@ export default function FacultyDashboard() {
         if (!open) {
           setEditingId(null);
           setName(""); setEmail(""); setLevel(""); setSubject(""); setPhone("");
-          setStudents(""); setWebsite(""); setExperience("");
+          setStudents(""); setWebsite(""); setExperience(""); setTelegramLink("");
           setProfilePictureFile(null);
           setProfilePictureUrl("");
         }
@@ -250,6 +253,10 @@ export default function FacultyDashboard() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Website</label>
               <Input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://..." />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Telegram Link</label>
+              <Input value={telegramLink} onChange={e => setTelegramLink(e.target.value)} placeholder="https://t.me/..." />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Experience (Years)</label>

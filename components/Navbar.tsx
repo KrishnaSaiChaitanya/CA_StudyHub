@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -32,6 +32,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { isSubscribed: isPro, planName, expiryDate } = useSubscription();
   const { studentLevel, refreshProfile } = useStudent();
   const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === 'true';
@@ -39,12 +40,14 @@ const Navbar = () => {
   const [editName, setEditName] = useState("");
   const [editStudentType, setEditStudentType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const prevPathname = useRef(pathname);
   
   const supabase = createClient();
   const router = useRouter();
 
   const handleSignOut = async () => {
     try {
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
@@ -52,6 +55,7 @@ const Navbar = () => {
     } catch (err) {
       console.error("Sign out failed:", err);
     } finally {
+      setUser(null);
       clearAuthCache();
       router.push("/sign-in");
     }
@@ -91,6 +95,7 @@ const Navbar = () => {
     if (cachedUser) {
       setUser(cachedUser);
       setEditName(cachedUser.user_metadata?.full_name || "");
+      setIsLoading(false);
     }
 
     const hydrateUser = async () => {
@@ -100,11 +105,49 @@ const Navbar = () => {
         setEditName(authUser.user_metadata?.full_name || "");
       } else {
         clearAuthCache();
+        setUser(null);
       }
+      setIsLoading(false);
     };
 
     hydrateUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
+        hydrateUser();
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        clearAuthCache();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
+
+  useEffect(() => {
+    const wasAuthRoute = authRoutes.includes(prevPathname.current);
+    const isAuthRoute = authRoutes.includes(pathname);
+
+    if (wasAuthRoute && !isAuthRoute) {
+      const hydrateUser = async () => {
+        setIsLoading(true);
+        const { user: authUser } = await fetchAndCacheAuthState(supabase);
+        if (authUser) {
+          setUser(authUser);
+          setEditName(authUser.user_metadata?.full_name || "");
+        } else {
+          clearAuthCache();
+          setUser(null);
+        }
+        setIsLoading(false);
+      };
+      hydrateUser();
+    }
+    
+    prevPathname.current = pathname;
+  }, [pathname, supabase]);
 
   useEffect(() => {
     if (studentLevel) {
@@ -233,7 +276,12 @@ const Navbar = () => {
 
         <div className="hidden items-center gap-3 md:flex !font-semibold">
        
-          {user ? (
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-24 bg-secondary/50 animate-pulse rounded-full"></div>
+              <div className="h-8 w-24 bg-accent/20 animate-pulse rounded-md"></div>
+            </div>
+          ) : user ? (
             <>
               {requirePayment && isPro && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent-foreground bg-accent rounded-full shadow-sm whitespace-nowrap">
@@ -288,7 +336,12 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-          {user ? (
+          {isLoading ? (
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="h-10 w-full bg-secondary/50 animate-pulse rounded-lg"></div>
+              <div className="h-10 w-full bg-accent/20 animate-pulse rounded-lg"></div>
+            </div>
+          ) : user ? (
             <>
               {requirePayment && isPro && (
                 <div className="mt-4 flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-accent-foreground bg-accent rounded-lg shadow-sm justify-center">

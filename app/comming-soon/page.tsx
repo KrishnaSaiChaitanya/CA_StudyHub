@@ -88,7 +88,8 @@ const ComingSoon = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mt-6 text-lg text-primary-foreground/60 max-w-xl mx-auto"
         >
-          We're building the ultimate platform to help CA aspirants crack their exams. Stay tuned for further updates!
+          We're building the ultimate platform to help CA aspirants crack their exams. Stay tuned for further updates! 
+          Here's a glimpse of what's coming
         </motion.p>
 
         {/* Perks */}

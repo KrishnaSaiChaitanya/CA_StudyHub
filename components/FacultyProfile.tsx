@@ -7,6 +7,12 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 
+const TelegramIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.116l-6.4 4.024-2.77-.867c-.602-.188-.616-.602.126-.893l10.826-4.17c.504-.188.943.116.828.91z"/>
+  </svg>
+);
+
 interface FacultyData {
   id?: string;
   name: string;
@@ -95,12 +101,18 @@ const FacultyProfile = ({ faculty, onBack }: FacultyProfileProps) => {
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-card-foreground">{faculty.name}</h1>
               <p className="mt-1 text-sm text-accent">{faculty.subject} · {faculty.level}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                {/* <span className="flex items-center gap-1"> */}
-                  {/* <Star className="h-3.5 w-3.5 fill-accent text-accent" />{faculty.rating} Rating</span> */}
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{faculty.students}</span>
-                <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{faculty.experience}</span>
-              </div>
+              {(faculty.students || faculty.experience) && (
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  {/* <span className="flex items-center gap-1"> */}
+                    {/* <Star className="h-3.5 w-3.5 fill-accent text-accent" />{faculty.rating} Rating</span> */}
+                  {faculty.students && (
+                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{faculty.students}</span>
+                  )}
+                  {faculty.experience && (
+                    <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{faculty.experience}</span>
+                  )}
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {faculty.email ? (
                   <a href={`mailto:${faculty.email}`} className="flex items-center gap-1.5 hover:text-accent transition-colors">
@@ -117,15 +129,19 @@ const FacultyProfile = ({ faculty, onBack }: FacultyProfileProps) => {
                   <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-accent" />( +91 XXXXX XXXXX )</span>
                 )}
                 {faculty.website ? (
-                  <a href={faculty.website.startsWith("http") ? faculty.website : `https://${faculty.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-accent transition-colors">
-                    <Globe className="h-3.5 w-3.5 text-accent" />{faculty.website} <ExternalLink className="h-2.5 w-2.5" />
+                  <a href={faculty.website.startsWith("http") ? faculty.website : `https://${faculty.website}`} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1.5 transition-colors hover:text-accent">
+                    <Globe className="h-3.5 w-3.5 text-accent shrink-0" />
+                    <span className="underline decoration-transparent underline-offset-4 transition-colors group-hover:decoration-accent">
+                      {faculty.website.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]}
+                    </span>
+                    <ExternalLink className="h-2.5 w-2.5 opacity-0 -ml-1 transition-all group-hover:opacity-100 group-hover:ml-0 shrink-0" />
                   </a>
                 ) : (
-                  <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-accent" />xxxxx</span>
+                  <span className="flex items-center gap-1.5 opacity-60"><Globe className="h-3.5 w-3.5 text-accent" />Not provided</span>
                 )}
                 {faculty.telegram_link && (
-                  <a href={faculty.telegram_link.startsWith("http") ? faculty.telegram_link : `https://${faculty.telegram_link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-accent transition-colors">
-                    <Send className="h-3.5 w-3.5 text-accent" />Telegram <ExternalLink className="h-2.5 w-2.5" />
+                  <a href={faculty.telegram_link.startsWith("http") ? faculty.telegram_link : `https://${faculty.telegram_link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-[#0088cc] transition-colors">
+                    <TelegramIcon className="h-3.5 w-3.5 text-[#0088cc]" />Telegram <ExternalLink className="h-2.5 w-2.5" />
                   </a>
                 )}
               </div>

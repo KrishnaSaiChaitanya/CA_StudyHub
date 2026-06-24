@@ -59,10 +59,10 @@ const WelcomeModal = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent hideClose className="max-w-3xl p-0 overflow-y-auto overflow-hidden gap-0 border-border bg-background">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent hideClose className="w-[95vw] sm:w-full max-w-3xl p-0 max-h-[90vh] overflow-y-auto overflow-x-hidden gap-0 border-border bg-background rounded-xl">
+        <DialogHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold text-foreground">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-foreground">
               Welcome to CA Study Hub!
             </DialogTitle>
             <button
@@ -75,30 +75,30 @@ const WelcomeModal = () => {
           </div>
         </DialogHeader>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Section 1 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="rounded-xl border border-accent/20 bg-accent/5 p-5"
+            className="rounded-xl border border-accent/20 bg-accent/5 p-4 sm:p-5"
           >
-            <div className="flex items-start gap-3">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                 <Hand className="h-5 w-5 text-accent" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                  A Note from the Team
+                  Welcome to CA Study Hub
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  CA Study Hub is being built by a small team with the goal of making the CA journey simpler and more organized for students. While the platform&apos;s features are fully functional and ready to use, our content library is still growing and will continue to improve over time.
+                  CA Study Hub is built by a small team with a mission to make the CA journey simpler and more organized. While all major features are live, our content library is still growing and will continue to improve over time.
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground mt-3">
-                  We&apos;re constantly adding new resources, refining existing ones, and listening to feedback from the community. If you&apos;d like to contribute resources, suggest improvements, or volunteer in any way, we&apos;d be delighted to hear from you.
+                  We&apos;re constantly adding resources and refining the platform based on community feedback. If you&apos;d like to contribute resources, suggest improvements, or volunteer, we&apos;d love to hear from you.
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground mt-3">
-                  Thank you for joining us at this early stage and being a part of the journey.
+                  Thank you for being an early part of our journey.
                 </p>
               </div>
             </div>
@@ -109,24 +109,21 @@ const WelcomeModal = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="rounded-xl border border-border bg-muted/30 p-5"
+            className="rounded-xl border border-border bg-muted/30 p-4 sm:p-5"
           >
-            <div className="flex items-start gap-3">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                 <Lightbulb className="h-5 w-5 text-accent" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                  A Quick Note on Pricing
+                  A Note on Pricing
                 </h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Running and improving CA Study Hub involves ongoing development, maintenance, and operating costs. To keep the platform sustainable, we may introduce a nominal subscription fee in the future.
+                  To support ongoing development and maintenance, we may introduce a small subscription fee in the future. However, our goal is to keep core features and essential resources free, with only select advanced features potentially becoming premium.
                 </p>
                 <p className="text-sm leading-relaxed text-muted-foreground mt-3">
-                  However, our intention is not to place the entire platform behind a paywall. Core features and essential resources will continue to remain free, while only a limited set of advanced features may become part of a paid plan.
-                </p>
-                <p className="text-sm leading-relaxed text-muted-foreground mt-3">
-                  Any such changes will always be communicated well in advance, and our priority will remain keeping the platform affordable and accessible for students.
+                  Any changes will be communicated well in advance, and affordability for students will remain a priority.
                 </p>
               </div>
             </div>
