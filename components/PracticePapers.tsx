@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client"; // Adjust based on your setup
-import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
+import { StudentLevel, SubjectCategory } from "@/types/database.types";
 import { useSearchParams } from "next/navigation";
 
 

@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { UserProfile } from "@/components/discussion/UserProfile";
+import { UserProfile } from "@/features/community/components/UserProfile";
 
 export default function UserProfilePageRoute() {
   const params = useParams();

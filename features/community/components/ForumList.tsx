@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Plus, Users, Check, ChevronRight, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Post, Group } from "./types";
+import { Post, Group } from "@/types/features.types";
 import { getVoterId } from "./forumUtils";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

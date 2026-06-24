@@ -1,4 +1,4 @@
-import MockExamClientWrapper from "./MockExamClientWrapper";
+import MockExamClientWrapper from "@/features/mock-exams/components/MockExamClientWrapper";
 import Footer from "@/components/Footer";
 import { use } from "react";
 

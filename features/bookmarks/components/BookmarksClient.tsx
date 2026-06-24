@@ -31,12 +31,12 @@ import {
 import { ProFeatureLock } from "@/components/ProFeatureLock";
 import { createClient } from "@/utils/supabase/client";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { BookmarkItem, DbNote } from "./types";
+import { BookmarkItem, DbNote } from "@/types/features.types";
 import { useStudent } from "@/components/StudentTypeProvider";
 import { formatSubjectName } from "@/utils/subjects";
 import { useRouter } from "next/navigation";
 
-const typeIcon = {
+const typeIcon: Record<string, any> = {
   pdf: FileText,
   rtp: BookOpen,
   pyq: HelpCircle,
@@ -45,7 +45,7 @@ const typeIcon = {
   spom: FileText,
 };
 
-const typeLabel = {
+const typeLabel: Record<string, string> = {
   pdf: "Study Material",
   rtp: "RTP",
   pyq: "PYQ",
@@ -54,7 +54,7 @@ const typeLabel = {
   spom: "SPOM",
 };
 
-const typeBadgeClass = {
+const typeBadgeClass: Record<string, string> = {
   pdf: "bg-accent/10 text-accent",
   rtp: "bg-emerald-500/10 text-emerald-600",
   pyq: "bg-violet-500/10 text-violet-600",
@@ -76,7 +76,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
   const [activeTab, setActiveTab] = useState("bookmarks");
   
   const [notes, setNotes] = useState<DbNote[]>([]);
-  const [rawBookmarks, setRawBookmarks] = useState<BookmarkItem[]>([]);
+  const [rawBookmarks, setRawBookmarks] = useState<any[]>([]);
   
   const [isBookmarksLoaded, setIsBookmarksLoaded] = useState(false);
   const [isNotesLoaded, setIsNotesLoaded] = useState(false);
@@ -111,7 +111,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
         if (error) throw error;
 
         if (bookmarksData) {
-          const formatted: BookmarkItem[] = bookmarksData.map((b: any) => {
+          const formatted: any[] = bookmarksData.map((b: any) => {
             if (b.study_planners) {
               return {
                 id: b.id,
@@ -161,7 +161,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
               }
             }
             return null;
-          }).filter(Boolean) as BookmarkItem[];
+          }).filter(Boolean) as any[];
 
           setRawBookmarks(formatted);
           setIsBookmarksLoaded(true);
@@ -539,7 +539,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                               {note.content}
                             </p>
                             <p className="mt-3 text-[11px] text-muted-foreground/60">
-                              Updated {new Date(note.updated_at).toLocaleDateString()}
+                              Updated {new Date(note.updated_at || note.created_at).toLocaleDateString()}
                             </p>
                           </CardContent>
                         </Card>

@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Plus, Folder, Layers, Loader2, Trash2, Tag, Library } from "lucide-react";
-import SetCard from "@/components/flash-cards/SetCard";
-import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
-import AddToFolderDialog from "@/components/flash-cards/AddToFolderDialog";
+import SetCard from "@/features/flashcards/components/SetCard";
+import CreateSetDialog from "@/features/flashcards/components/CreateSetDialog";
+import AddToFolderDialog from "@/features/flashcards/components/AddToFolderDialog";
 
 // Global cache variables for SWR caching
 const cacheFolderDetails: Record<string, any> = {};

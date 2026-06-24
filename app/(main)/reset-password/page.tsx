@@ -1,5 +1,5 @@
 import { Message } from "@/components/form-message";
-import ResetPasswordView from "./view";
+import ResetPasswordView from "@/features/auth/components/ResetPasswordView";
 
 export default async function ResetPassword(props: {
   searchParams: Promise<Message>;

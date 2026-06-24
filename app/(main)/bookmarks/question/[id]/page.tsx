@@ -1,4 +1,4 @@
-import BookmarkQuestionClient from "./BookmarkQuestionClient";
+import BookmarkQuestionClient from "@/features/bookmarks/components/BookmarkQuestionClient";
 
 export default async function BookmarkQuestionPage({ 
   params 

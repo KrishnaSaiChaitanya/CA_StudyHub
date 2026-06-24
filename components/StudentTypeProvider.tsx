@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
+import { StudentLevel, SubjectCategory } from "@/types/database.types";
 import { syncUserActivity } from "@/utils/supabase/profile";
 import { SUBJECT_MAPPING } from "@/utils/subjects";
 import { motion, AnimatePresence } from "framer-motion";

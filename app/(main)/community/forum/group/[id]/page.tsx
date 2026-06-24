@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import DiscussionForumView from "@/components/discussion/discussionView";
+import DiscussionForumView from "@/features/community/components/discussionView";
 
 export default function GroupPage() {
   const params = useParams();

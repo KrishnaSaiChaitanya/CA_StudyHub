@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import dynamic from "next/dynamic";
 import { BookmarkItem, DbNote } from "./types";
 import { redirect } from "next/navigation";
-import type { StudentLevel } from "@/utils/supabase/types";
+import type { StudentLevel } from "@/types/database.types";
 import { SUBJECT_MAPPING } from "@/utils/subjects";
 
-const BookmarksClient = dynamic(() => import("./BookmarksClient"), { ssr: true });
+const BookmarksClient = dynamic(() => import("@/features/bookmarks/components/BookmarksClient"), { ssr: true });
 
 const formatSubjectName = (subject: string) => {
   if (!subject) return "";

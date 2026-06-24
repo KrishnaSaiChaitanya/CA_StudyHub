@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useStudent } from "@/components/StudentTypeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { formatSubjectName } from "@/utils/subjects";
-import { SubjectCategory } from "@/utils/supabase/types";
+import { SubjectCategory } from "@/types/database.types";
 
 interface SubjectWithLink {
   title: string;

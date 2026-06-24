@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { TipTapEditor } from "./TipTapEditor";
-import { Post } from "./types";
+import { Post } from "@/types/features.types";
 
 const CATEGORIES = ["Doubt", "Discussion", "Resource", "Articleship", "Exam Tips"];
 

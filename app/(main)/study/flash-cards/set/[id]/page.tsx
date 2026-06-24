@@ -18,7 +18,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { formatSubjectName } from "@/utils/subjects";
-import SaveToFolderPopover from "@/components/flash-cards/SaveToFolderPopover";
+import SaveToFolderPopover from "@/features/flashcards/components/SaveToFolderPopover";
 
 // Global cache variables for SWR caching
 const cacheSetDetails: Record<string, any> = {};

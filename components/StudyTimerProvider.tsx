@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { SubjectCategory } from "@/utils/supabase/types";
+import { SubjectCategory } from "@/types/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useStudent } from "./StudentTypeProvider";

@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
-import { getVoterId } from "../discussion/forumUtils";
-import { Observation, DEMO_USER_ID } from "./types";
+import { getVoterId } from "@/features/community/components/forumUtils";
+import { Observation, DEMO_USER_ID } from "@/types/features.types";
 
 export const ObservationsTab = () => {
   const queryClient = useQueryClient();
@@ -123,7 +123,7 @@ export const ObservationsTab = () => {
         if (p.id !== id) return p;
         const currentLiked = !!p.hasLiked;
         nextLiked = !currentLiked;
-        const nextLikes = nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1);
+        const nextLikes = nextLiked ? (p.likes || 0) + 1 : Math.max(0, (p.likes || 0) - 1);
         return {
           ...p,
           likes: nextLikes,
@@ -190,11 +190,11 @@ export const ObservationsTab = () => {
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-semibold">
-                {post.author.charAt(0)}
+                  {(post.author || "A").charAt(0)}
               </div>
               <div>
-                <p className="text-sm font-semibold text-card-foreground">{post.author}</p>
-                <p className="text-[11px] text-muted-foreground">Created on {new Date(post.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm font-semibold text-card-foreground">{post.author || "Anonymous"}</p>
+                <p className="text-[11px] text-muted-foreground">Created on {new Date(post.createdAt || post.created_at || new Date()).toLocaleDateString()}</p>
               </div>
             </div>
             <Badge variant="secondary" className="text-[10px]">{post.set}</Badge>
@@ -208,12 +208,12 @@ export const ObservationsTab = () => {
               <ThumbsUp className="h-3.5 w-3.5" fill={post.hasLiked ? "currentColor" : "none"} /> {post.likes}
             </button>
             <span>•</span>
-            <span>{post.replies.length} {post.replies.length === 1 ? "reply" : "replies"}</span>
+            <span>{(post.replies || []).length} {(post.replies || []).length === 1 ? "reply" : "replies"}</span>
           </div>
 
-          {post.replies.length > 0 && (
+          {(post.replies || []).length > 0 && (
             <div className="mt-4 space-y-2 border-l-2 border-border pl-3">
-              {post.replies.map((r) => (
+              {(post.replies || []).map((r: any) => (
                 <div key={r.id} className="rounded-lg bg-secondary/40 p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-semibold text-card-foreground">{r.author}</span>
