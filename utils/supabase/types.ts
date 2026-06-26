@@ -6,6 +6,8 @@ export type StudentLevel = 'foundation' | 'intermediate' | 'final';
 
 export type TodoStatus = 'pending' | 'completed';
 
+export type ContentState = 'draft' | 'published';
+
 export type McqOption = 'A' | 'B' | 'C' | 'D';
 
 export type SubjectCategory = 
@@ -139,6 +141,7 @@ export interface Test {
   name: string;
   category: SubjectCategory;
   questions_count: number;
+  state: ContentState;
   created_at: string;
   updated_at: string;
 }
@@ -195,6 +198,7 @@ export interface FlashcardSet {
   title: string;
   subject: SubjectCategory;
   is_admin: boolean;
+  state: ContentState;
   created_at: string;
   updated_at: string;
 }

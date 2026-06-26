@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Plus, Trash2, Loader2, RefreshCw, ChevronLeft, ListChecks, Pencil } from "lucide-react";
+import { Plus, Trash2, Loader2, RefreshCw, ChevronLeft, ListChecks, Pencil, UploadCloud, Globe, FileSignature } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import BulkUploadStepper from "@/components/admin/BulkUploadStepper";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,6 +26,7 @@ export default function TestsDashboard() {
   const [savingTest, setSavingTest] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
   const [testFilters, setTestFilters] = useState({ column: "name", value: "" });
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Selected test for managing questions
   const [selectedTest, setSelectedTest] = useState<any>(null);
@@ -79,6 +83,158 @@ Exam twist 🤔 -`
     setLoadingQuestions(false);
   };
 
+  const testInstructions = (
+    <div className="space-y-2">
+      <p>Please provide a JSON array of test objects. Each test must follow this structure:</p>
+      <pre className="text-[10px] bg-muted p-2 rounded-md overflow-auto">
+{`[
+  {
+    "name": "Accounting Basics",
+    "category": "principles_and_practice_of_accounting",
+    "duration": 60,
+    "level": "standard",
+    "description": "Basic concepts",
+    "questions": [
+      {
+        "question_text": "What is the equation?",
+        "option_a": "A",
+        "option_b": "B",
+        "option_c": "C",
+        "option_d": "D",
+        "correct_answer": "A",
+        "notes": "Explanation"
+      }
+    ]
+  }
+]`}
+      </pre>
+    </div>
+  );
+
+  const handleBulkUploadParse = (jsonStr: string) => {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (!Array.isArray(data)) throw new Error("Root must be an array of tests.");
+      if (data.length === 0) throw new Error("No tests found in the array.");
+      
+      let totalQuestions = 0;
+      data.forEach((test: any, i: number) => {
+        if (!test.name) throw new Error(`Test at index ${i} is missing 'name'.`);
+        if (!test.category) throw new Error(`Test at index ${i} is missing 'category'.`);
+        if (!test.questions || !Array.isArray(test.questions)) throw new Error(`Test at index ${i} is missing 'questions' array.`);
+        
+        test.questions.forEach((q: any, qi: number) => {
+          if (!q.question_text) throw new Error(`Test ${i}, Question ${qi} missing 'question_text'.`);
+          if (!q.option_a) throw new Error(`Test ${i}, Question ${qi} missing 'option_a'.`);
+          if (!q.correct_answer) throw new Error(`Test ${i}, Question ${qi} missing 'correct_answer'.`);
+        });
+        totalQuestions += test.questions.length;
+      });
+
+      return { data: { tests: data, totalTests: data.length, totalQuestions }, error: null };
+    } catch (e: any) {
+      return { data: null, error: e.message };
+    }
+  };
+
+  const handleBulkUploadPreview = (data: any) => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-background p-4 rounded-lg border shadow-sm">
+          <div className="text-2xl font-bold text-primary">{data.totalTests}</div>
+          <div className="text-sm text-muted-foreground font-medium uppercase">Tests to Add</div>
+        </div>
+        <div className="bg-background p-4 rounded-lg border shadow-sm">
+          <div className="text-2xl font-bold text-primary">{data.totalQuestions}</div>
+          <div className="text-sm text-muted-foreground font-medium uppercase">Total Questions</div>
+        </div>
+      </div>
+      <div className="space-y-2 pt-2">
+        <h4 className="text-sm font-semibold">Content Details:</h4>
+        <Accordion type="multiple" className="w-full space-y-2">
+          {data.tests.map((t: any, i: number) => (
+            <AccordionItem value={`item-${i}`} key={i} className="bg-background border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center justify-between w-full pr-4">
+                  <span className="font-semibold text-sm text-left line-clamp-1 flex-1 pr-2">{t.name}</span>
+                  <Badge variant="secondary" className="shrink-0">{t.questions.length} questions</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-4 text-sm text-muted-foreground border-t mt-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4 text-xs">
+                  <div><strong>Category:</strong> {formatSubjectName(t.category as any) || t.category}</div>
+                  <div><strong>Duration:</strong> {t.duration ? `${t.duration} mins` : 'N/A'}</div>
+                  <div><strong>Level:</strong> {t.level || 'standard'}</div>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground">Questions Preview:</p>
+                  {t.questions.slice(0, 5).map((q: any, qi: number) => (
+                    <div key={qi} className="p-2 bg-muted/30 rounded border text-xs">
+                      <span className="font-medium">{qi + 1}. {q.question_text}</span>
+                      <div className="mt-1 text-muted-foreground flex gap-3 flex-wrap">
+                        <span className={q.correct_answer === 'A' ? 'text-green-600 font-bold' : ''}>A. {q.option_a}</span>
+                        {q.option_b && <span className={q.correct_answer === 'B' ? 'text-green-600 font-bold' : ''}>B. {q.option_b}</span>}
+                        {q.option_c && <span className={q.correct_answer === 'C' ? 'text-green-600 font-bold' : ''}>C. {q.option_c}</span>}
+                        {q.option_d && <span className={q.correct_answer === 'D' ? 'text-green-600 font-bold' : ''}>D. {q.option_d}</span>}
+                      </div>
+                    </div>
+                  ))}
+                  {t.questions.length > 5 && (
+                    <div className="text-xs italic mt-2 text-center text-muted-foreground bg-muted/10 p-2 rounded">
+                      + {t.questions.length - 5} more questions
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </div>
+  );
+
+  const handleBulkUploadSubmit = async (data: any, state: 'draft' | 'published') => {
+    for (const test of data.tests) {
+      const { data: testRow, error: testErr } = await supabase.from('tests').insert({
+        name: test.name,
+        category: test.category,
+        duration: test.duration || null,
+        level: test.level || 'standard',
+        description: test.description || null,
+        test_no: test.test_no || null,
+        state: state
+      }).select().single();
+
+      if (testErr) throw testErr;
+
+      if (test.questions && test.questions.length > 0) {
+        const qs = test.questions.map((q: any) => ({
+          test_id: testRow.id,
+          question_text: q.question_text,
+          option_a: q.option_a,
+          option_b: q.option_b || "",
+          option_c: q.option_c || "",
+          option_d: q.option_d || "",
+          correct_answer: q.correct_answer,
+          notes: q.notes || "",
+          is_active: true
+        }));
+        const { error: qErr } = await supabase.from('questions').insert(qs);
+        if (qErr) throw qErr;
+      }
+    }
+  };
+
+  const handlePublishTest = async (id: string) => {
+    const { error } = await supabase.from('tests').update({ state: 'published' }).eq('id', id);
+    if (!error) {
+      toast({ title: "Test Published!" });
+      fetchTests();
+    } else {
+      toast({ title: "Error publishing test", description: error.message, variant: "destructive" });
+    }
+  };
+
   useEffect(() => {
     fetchTests();
   }, []);
@@ -105,6 +261,7 @@ Exam twist 🤔 -`
       level: testLevel,
       description: testDescription,
       test_no: testNo || null,
+      state: 'published' as const // Manual creates are published by default here, or could be drafts. Let's make them published for backward compat.
     };
 
     let error;
@@ -368,6 +525,9 @@ Exam twist 🤔 -`
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={fetchTests}><RefreshCw className="h-4 w-4" /></Button>
+          <Button variant="secondary" onClick={() => setShowBulkUpload(true)} className="gap-2">
+            <UploadCloud className="h-4 w-4" /> Bulk Upload
+          </Button>
           <Button onClick={() => { setEditingTestId(null); setTestName(""); setTestCategory(""); setTestDuration(""); setTestLevel("standard"); setTestDescription(""); setTestNo(""); setShowAddTest(!showAddTest); }} className="gap-2">
             <Plus className="h-4 w-4" /> {showAddTest ? "Cancel" : "Add Test"}
           </Button>
@@ -458,7 +618,7 @@ Exam twist 🤔 -`
                 <TableHead>Category</TableHead>
                 <TableHead>Level</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead>Test No</TableHead>
+                <TableHead>State</TableHead>
                 <TableHead>Questions</TableHead>
                 <TableHead className="w-[150px]">Actions</TableHead>
           </TableRow>
@@ -488,15 +648,32 @@ Exam twist 🤔 -`
                 return field?.toString().toLowerCase().includes(testFilters.value.toLowerCase());
               }).map(t => (
                 <TableRow key={t.id}>
-                  <TableCell className="font-medium">{t.name}</TableCell>
+                  <TableCell className="font-medium max-w-[250px]">
+                    <div className="line-clamp-2" title={t.name}>{t.name}</div>
+                  </TableCell>
                   <TableCell>{formatSubjectName(t.category as any)}</TableCell>
                   <TableCell className="capitalize">{t.level || 'standard'}</TableCell>
                   <TableCell>{t.duration ? `${t.duration}m` : '-'}</TableCell>
-                  <TableCell>{t.test_no || '-'}</TableCell>
+                  <TableCell>
+                    {t.state === 'published' ? (
+                      <Badge variant="outline" className="border-green-500/30 text-green-600 bg-green-50/50 gap-1">
+                        <Globe className="h-3 w-3" /> Published
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-amber-500/30 text-amber-600 bg-amber-50/50 gap-1">
+                        <FileSignature className="h-3 w-3" /> Draft
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{t.questions_count}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => { setSelectedTest(t); fetchQuestions(t.id); }} className="gap-2">
+                        {t.state === 'draft' && (
+                          <Button variant="outline" size="sm" onClick={() => handlePublishTest(t.id)} className="h-8 gap-1 border-primary/20 hover:bg-primary/5 text-primary">
+                            Publish
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedTest(t); fetchQuestions(t.id); }} className="gap-2 h-8">
                             <ListChecks className="h-4 w-4" /> Manage
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleEditTest(t)} className="text-muted-foreground hover:text-primary">
@@ -513,6 +690,17 @@ Exam twist 🤔 -`
           </Table>
         )}
       </Card>
+
+      <BulkUploadStepper
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        title="Bulk Upload Tests"
+        instructions={testInstructions}
+        onParse={handleBulkUploadParse}
+        onPreviewRender={handleBulkUploadPreview}
+        onSubmit={handleBulkUploadSubmit}
+        onSuccess={fetchTests}
+      />
     </div>
   );
 }
