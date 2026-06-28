@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,14 @@ import CreateFolderDialog from "@/components/flash-cards/CreateFolderDialog";
 import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
 import RequestTopicDialog from "@/components/flash-cards/RequestTopicDialog";
 import { cn } from "@/lib/utils";
+import { SUBJECT_MAPPING, SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Global cache variables for SWR caching
 let cacheFolders: any[] | null = null;
@@ -30,16 +38,18 @@ export default function FlashcardsDashboard() {
   // Filters & Pagination
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<"All" | "Admin" | "You">("All");
+  const [subjectFilter, setSubjectFilter] = useState<string>("All");
   const [page, setPage] = useState(1);
   const pageSize = 6;
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Dialogs
   const [folderOpen, setFolderOpen] = useState(false);
   const [setOpen, setSetOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
 
-  const fetchData = async (forceRefresh = false) => {
-    if (!forceRefresh && cacheFolders && cacheSets) {
+  const fetchData = async (forceRefresh = false, selectedSubject = subjectFilter) => {
+    if (!forceRefresh && cacheFolders && cacheSets && selectedSubject === "All") {
       setFolders(cacheFolders);
       setSets(cacheSets);
       setLoading(false);
@@ -52,10 +62,21 @@ export default function FlashcardsDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      let setsQuery = supabase
+        .from("flashcard_sets")
+        .select("*, flashcards(count)")
+        .or(`user_id.eq.${user.id},is_admin.eq.true`);
+
+      if (selectedSubject !== "All") {
+        setsQuery = setsQuery.eq("subject", selectedSubject);
+      }
+
+      setsQuery = setsQuery.order("created_at", { ascending: false });
+
       const [foldersRes, linksRes, setsRes] = await Promise.all([
         supabase.from("flashcard_folders").select("*").order("created_at", { ascending: false }),
         supabase.from("flashcard_folder_sets").select("folder_id"),
-        supabase.from("flashcard_sets").select("*, flashcards(count)").or(`user_id.eq.${user.id},is_admin.eq.true`).order("created_at", { ascending: false })
+        setsQuery
       ]);
 
       const folderCounts = (linksRes.data || []).reduce((acc: Record<string, number>, item) => {
@@ -73,8 +94,10 @@ export default function FlashcardsDashboard() {
         cardCount: s.flashcards?.[0]?.count || 0,
       }));
 
-      cacheFolders = processedFolders;
-      cacheSets = processedSets;
+      if (selectedSubject === "All" && !forceRefresh) {
+        cacheFolders = processedFolders;
+        cacheSets = processedSets;
+      }
       setFolders(processedFolders);
       setSets(processedSets);
     } catch (err) {
@@ -82,6 +105,11 @@ export default function FlashcardsDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubjectChange = (val: string) => {
+    setSubjectFilter(val);
+    fetchData(true, val);
   };
 
   const handleDeleteFolder = async (folderId: string) => {
@@ -103,7 +131,14 @@ export default function FlashcardsDashboard() {
   // Reset page when search or filter changes
   useEffect(() => {
     setPage(1);
-  }, [search, sourceFilter]);
+  }, [search, sourceFilter, subjectFilter]);
+
+  const subjects = [
+    "general",
+    ...SUBJECT_MAPPING.foundation,
+    ...SUBJECT_MAPPING.intermediate,
+    ...SUBJECT_MAPPING.final,
+  ];
 
   const filteredSets = sets.filter((s) => {
     const matchesSearch =
@@ -115,11 +150,34 @@ export default function FlashcardsDashboard() {
       (sourceFilter === "Admin" && s.is_admin) ||
       (sourceFilter === "You" && !s.is_admin);
 
-    return matchesSearch && matchesSource;
+    const matchesSubject =
+      subjectFilter === "All" ||
+      s.subject === subjectFilter;
+
+    return matchesSearch && matchesSource && matchesSubject;
   });
 
   const totalPages = Math.ceil(filteredSets.length / pageSize);
-  const paginatedSets = filteredSets.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedSets = filteredSets.slice(0, page * pageSize);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && page < totalPages) {
+          setPage((p) => Math.min(p + 1, totalPages));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [page, totalPages]);
 
   return (
     <div className="container py-8 max-w-5xl">
@@ -228,6 +286,21 @@ export default function FlashcardsDashboard() {
                   className="pl-9 text-sm h-10"
                 />
               </div>
+              <div className="w-full sm:w-[200px]">
+                <Select value={subjectFilter} onValueChange={handleSubjectChange}>
+                  <SelectTrigger className="h-10 text-sm">
+                    <SelectValue placeholder="All Subjects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Subjects</SelectItem>
+                    {subjects.map((sub) => (
+                      <SelectItem key={sub} value={sub}>
+                        {formatSubjectName(sub as any)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex gap-1.5 flex-wrap items-center">
                 {([
                   { value: "All", label: "All" },
@@ -273,30 +346,10 @@ export default function FlashcardsDashboard() {
                   ))}
                 </div>
 
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-8 border-t border-border/50 pt-6">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                      disabled={page === 1}
-                      className="h-9 px-4 border-border/80 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all font-semibold text-xs"
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-xs text-muted-foreground font-semibold px-2">
-                      Page {page} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                      disabled={page === totalPages}
-                      className="h-9 px-4 border-border/80 hover:bg-accent hover:text-accent-foreground hover:border-accent transition-all font-semibold text-xs"
-                    >
-                      Next
-                    </Button>
+                {/* Sentinel for Infinite Scroll */}
+                {page < totalPages && (
+                  <div ref={sentinelRef} className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-accent" />
                   </div>
                 )}
               </>
@@ -306,8 +359,8 @@ export default function FlashcardsDashboard() {
       )}
 
       {/* Dialogs */}
-      <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} onCreated={() => fetchData(true)} />
-      <CreateSetDialog open={setOpen} onOpenChange={setSetOpen} onCreated={() => fetchData(true)} />
+      <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} onCreated={() => fetchData(true, subjectFilter)} />
+      <CreateSetDialog open={setOpen} onOpenChange={setSetOpen} onCreated={() => fetchData(true, subjectFilter)} />
       <RequestTopicDialog open={requestOpen} onOpenChange={setRequestOpen} />
     </div>
   );

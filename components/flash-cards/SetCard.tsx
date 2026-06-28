@@ -3,7 +3,7 @@
 import { Layers, ShieldCheck, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { formatSubjectName } from "@/utils/subjects";
+import { formatSubjectName, getSubjectAbbreviation } from "@/utils/subjects";
 
 interface SetCardProps {
   title: string;
@@ -35,7 +35,7 @@ export default function SetCard({
       transition={{ delay: index * 0.04 }}
       whileHover={{ y: -3, scale: 1.01 }}
       onClick={onClick}
-      className="cursor-pointer rounded-xl border border-border bg-card p-4 hover:border-accent/40 hover:shadow-md hover:shadow-accent/5 transition-all group flex flex-col justify-between h-[130px]"
+      className="cursor-pointer rounded-xl border border-border bg-card p-4 hover:border-accent/40 hover:shadow-md hover:shadow-accent/5 transition-all group flex flex-col justify-between h-[140px]"
     >
       <div>
         <div className="flex items-start justify-between">
@@ -56,7 +56,7 @@ export default function SetCard({
       <div>
         <div className="mt-2 flex items-center justify-between gap-2">
           <Badge variant="secondary" className="text-[9px] font-bold py-0 bg-secondary/80 text-muted-foreground">
-            {formatSubjectName(subject as any)}
+            {getSubjectAbbreviation(subject as any)}
           </Badge>
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">{cardCount} cards</span>
         </div>

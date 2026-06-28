@@ -55,7 +55,7 @@ export default function AdminFlashcardsPage() {
         .order("created_at", { ascending: false });
 
       if (query) {
-        q = q.or(`title.ilike.%${query}%,subject.ilike.%${query}%`);
+        q = q.ilike("title", `%${query}%`);
       }
 
       const from = page * ITEMS_PER_PAGE;

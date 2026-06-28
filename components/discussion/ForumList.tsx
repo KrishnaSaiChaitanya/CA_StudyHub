@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Plus, Users, Check, ChevronRight, Compass } from "lucide-react";
+import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Plus, Users, Check, ChevronRight, Compass, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post, Group } from "./types";
 import { getVoterId } from "./forumUtils";
@@ -151,6 +151,27 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const posts = data?.pages.flatMap((page) => page.data).filter(post => post.status === "active") || [];
 
@@ -489,10 +510,12 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
             ))}
           </AnimatePresence>
           {hasNextPage && (
-            <div className="text-center pt-4">
-              <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                {isFetchingNextPage ? "Loading..." : "Load more posts"}
-              </Button>
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              {isFetchingNextPage ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <div className="h-5 w-5" />
+              )}
             </div>
           )}
         </div>

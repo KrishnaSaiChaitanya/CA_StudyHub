@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Flag, Reply as ReplyIcon, ChevronRight, ChevronDown } from "lucide-react";
+import { ArrowLeft, Clock, MessageCircle, ArrowBigUp, ArrowBigDown, Flag, Reply as ReplyIcon, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Post, Reply } from "./types";
@@ -287,6 +287,27 @@ export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Pro
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const flatReplies = data?.pages.flatMap((page) => page.data) || [];
   // Using a unique filter for when pages might overlap slightly
   const uniqueFlatReplies = flatReplies.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
@@ -465,10 +486,12 @@ export const PostDetail = ({ post, userId, onBack, onProfileClick, onVote }: Pro
               </p>
             )}
             {hasNextPage && replies.length > 0 && (
-              <div className="text-center pt-2">
-                <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                  {isFetchingNextPage ? "Loading..." : "Load more replies"}
-                </Button>
+              <div ref={sentinelRef} className="flex justify-center py-4">
+                {isFetchingNextPage ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <div className="h-5 w-5" />
+                )}
               </div>
             )}
           </div>
