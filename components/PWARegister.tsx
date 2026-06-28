@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export function PWARegister() {
   const { toast } = useToast();
@@ -60,5 +61,12 @@ export function PWARegister() {
     };
   }, [toast]);
 
-  return null;
+  return (
+    <div style={{ display: "none" }} aria-hidden="true">
+      <Link href="/offline" prefetch />
+      <Link href="/dashboard" prefetch />
+      <Link href="/study/planner" prefetch />
+      <Link href="/study/flash-cards" prefetch />
+    </div>
+  );
 }

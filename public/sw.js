@@ -23,9 +23,22 @@ function isStaticAsset(pathname) {
 // 1. Install event: pre-cache pages and standard icons
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(async (cache) => {
       console.log('[Service Worker] Pre-caching offline fallback and core assets');
-      return cache.addAll(ASSETS_TO_CACHE);
+      
+      const cachePromises = ASSETS_TO_CACHE.map(async (url) => {
+        try {
+          const response = await fetch(url, { redirect: 'follow' });
+          if (response.ok) {
+            return cache.put(url, response);
+          }
+          console.warn(`[Service Worker] Failed to pre-cache ${url}: Status ${response.status}`);
+        } catch (error) {
+          console.error(`[Service Worker] Failed to fetch and cache ${url}:`, error);
+        }
+      });
+      
+      await Promise.all(cachePromises);
     }).then(() => self.skipWaiting())
   );
 });
@@ -122,6 +135,33 @@ async function networkFirst(request) {
       if (offlineResponse) {
         return offlineResponse;
       }
+      
+      // If the offline page is not in cache, return a friendly generic HTML response instead of JSON
+      return new Response(
+        `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Offline - CA StudyHub</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; padding: 50px; background: #f9fafb; color: #374151; }
+            h1 { font-size: 24px; margin-bottom: 10px; }
+            p { font-size: 16px; color: #6b7280; }
+            .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #0284c7; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; }
+          </style>
+        </head>
+        <body>
+          <h1>You are offline</h1>
+          <p>Please check your internet connection and try again.</p>
+          <a href="/" class="btn">Retry</a>
+        </body>
+        </html>`,
+        {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' }
+        }
+      );
     }
     
     // If it is an API call, return a custom offline response

@@ -34,26 +34,31 @@ export const StudentTypeProvider = ({ children }: { children: React.ReactNode })
 
   const fetchProfile = async () => {
     setLoading(true);
-    await syncUserActivity(supabase);
+    try {
+      await syncUserActivity(supabase);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("student_type")
-        .eq("id", user.id)
-        .single();
-      
-      if (!error && data) {
-        setStudentLevel(data.student_type as StudentLevel | null);
-        if (!data.student_type) {
-          setShowPopup(true);
-        } else {
-          setShowPopup(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("student_type")
+          .eq("id", user.id)
+          .single();
+        
+        if (!error && data) {
+          setStudentLevel(data.student_type as StudentLevel | null);
+          if (!data.student_type) {
+            setShowPopup(true);
+          } else {
+            setShowPopup(false);
+          }
         }
       }
+    } catch (err) {
+      console.warn("Could not fetch profile (likely offline):", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

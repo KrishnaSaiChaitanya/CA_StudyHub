@@ -22,12 +22,16 @@ const WelcomeModal = () => {
     const supabase = createClient();
 
     const checkWelcome = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const seen = localStorage.getItem(STORAGE_KEY);
-        if (!seen) {
-          setOpen(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const seen = localStorage.getItem(STORAGE_KEY);
+          if (!seen) {
+            setOpen(true);
+          }
         }
+      } catch (err) {
+        console.warn("Could not check welcome modal session (likely offline):", err);
       }
       setChecked(true);
     };
