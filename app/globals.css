@@ -114,6 +114,14 @@
   .shadow-accent {
     box-shadow: 0 4px 16px -4px hsl(197 100% 50% / 0.35);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 

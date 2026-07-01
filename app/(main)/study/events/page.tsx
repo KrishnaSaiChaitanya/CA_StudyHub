@@ -1,7 +1,7 @@
 "use client"
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink, Check, Trash2, Pencil, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink, Check, Trash2, Pencil, AlertTriangle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
@@ -42,6 +42,15 @@ const CATEGORY_COLORS: Record<EventCategory, string> = {
   "Announcement": "bg-amber-500/15 text-amber-600 border-amber-500/30 ring-amber-500 shadow-amber-100",
 };
 
+const DOT_COLORS: Record<EventCategory, string> = {
+  "Exam": "bg-rose-500",
+  "Mocks": "bg-blue-500",
+  "Deadlines": "bg-orange-500",
+  "Sessions": "bg-emerald-500",
+  "Todo": "bg-purple-500",
+  "Announcement": "bg-amber-500",
+};
+
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -61,6 +70,10 @@ const ExamCalendarView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Mobile bottom sheet state
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [mobileSheetDay, setMobileSheetDay] = useState<number | null>(null);
+
   // Todo management state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
@@ -71,6 +84,25 @@ const ExamCalendarView = () => {
 
   // Use a ref to handle closing the popup when clicking outside
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile (< 640px)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const handleDayClick = useCallback((day: number, isSelected: boolean) => {
+    if (isMobile) {
+      setMobileSheetDay(day);
+      setMobileSheetOpen(true);
+    } else {
+      setSelectedDate(isSelected ? null : day);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -324,67 +356,70 @@ const ExamCalendarView = () => {
               </div>
             </div>
           </section>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="container py-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="container px-2 sm:px-6 py-8">
       {/* <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Study Tools
       </Button> */}
 
      
 
-      {/* Category Filters */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          variant={filterCategory === null ? "default" : "outline"}
-          onClick={() => setFilterCategory(null)}
-          className={filterCategory === null ? "bg-accent text-accent-foreground" : ""}
-        >
-          All Events
-        </Button>
-        {EVENT_CATEGORIES.map((cat) => (
+      {/* Category Filters - horizontally scrollable on mobile */}
+      <div className="mb-4 sm:mb-6 -mx-2 sm:mx-0 px-2 sm:px-0 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-1.5 sm:gap-2 sm:flex-wrap w-max sm:w-auto">
           <Button
-            key={cat}
             size="sm"
-            variant="outline"
-            onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
-            className={
-              filterCategory === cat
-                ? `${CATEGORY_COLORS[cat]} ring-1 !ring-current shadow-sm`
-                : "bg-background text-muted-foreground border-border hover:bg-secondary hover:text-foreground transition-all"
-            }
+            variant={filterCategory === null ? "default" : "outline"}
+            onClick={() => setFilterCategory(null)}
+            className={`text-xs sm:text-sm shrink-0 ${filterCategory === null ? "bg-accent text-accent-foreground" : ""}`}
           >
-            {cat}
+            All
           </Button>
-        ))}
+          {EVENT_CATEGORIES.map((cat) => (
+            <Button
+              key={cat}
+              size="sm"
+              variant="outline"
+              onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
+              className={`text-xs sm:text-sm shrink-0 ${
+                filterCategory === cat
+                  ? `${CATEGORY_COLORS[cat]} ring-1 !ring-current shadow-sm`
+                  : "bg-background text-muted-foreground border-border hover:bg-secondary hover:text-foreground transition-all"
+              }`}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Calendar */}
-        <Card className="shadow-card" ref={calendarRef}>
-          <CardHeader className="flex-row items-center justify-between pb-4">
+        <Card className="shadow-card overflow-hidden" ref={calendarRef}>
+          <CardHeader className="flex-row items-center justify-between pb-4 p-3 sm:p-6">
             <Button variant="ghost" size="icon" onClick={prevMonth}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <CardTitle className="text-lg">{MONTHS[month - 1]} {year}</CardTitle>
+            <CardTitle className="text-base sm:text-lg">{MONTHS[month - 1]} {year}</CardTitle>
             <Button variant="ghost" size="icon" onClick={nextMonth}>
               <ChevronRight className="h-5 w-5" />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-1.5 sm:p-6 pt-0">
             {/* Day headers */}
-            <div className="mb-2 grid grid-cols-7 gap-1">
+            <div className="mb-1 sm:mb-2 grid grid-cols-7 gap-0.5 sm:gap-1">
               {DAYS.map((d) => (
-                <div key={d} className="py-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
+                <div key={d} className="py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-semibold text-muted-foreground">{d}</div>
               ))}
             </div>
             
             {/* Date cells */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
               {cells.map((day, i) => {
                 if (day === null) return <div key={`empty-${i}`} className="aspect-square" />;
                 
                 const dayEvents = getEventsForDay(day);
-                const isSelected = selectedDate === day;
+                const isSelected = !isMobile && selectedDate === day;
+                const isMobileSelected = isMobile && mobileSheetOpen && mobileSheetDay === day;
                 const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
 
                 return (
@@ -392,46 +427,58 @@ const ExamCalendarView = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedDate(isSelected ? null : day)}
-                      className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-colors
-                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : "hover:bg-secondary"}
-                        ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}
+                      onClick={() => handleDayClick(day, isSelected)}
+                      className={`h-full w-full flex flex-col items-center justify-start rounded-md sm:rounded-lg p-0.5 sm:p-1 text-xs sm:text-sm transition-colors
+                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : ""}
+                        ${isMobileSelected ? "bg-accent/80 text-accent-foreground ring-2 ring-accent" : ""}
+                        ${!isSelected && !isMobileSelected ? "hover:bg-secondary" : ""}
+                        ${isToday && !isSelected && !isMobileSelected ? "ring-1 ring-accent/50 font-bold" : ""}
                       `}
                     >
-                      <span className={`text-xs font-medium ${isToday ? "font-bold" : ""}`}>{day}</span>
-                     {dayEvents.length > 0 && (
-  <div className="mt-1 flex w-full flex-col gap-1 px-1">
-    {dayEvents.slice(0, 3).map((ev) => {
-      const categoryColor = CATEGORY_COLORS[ev.category] || "bg-primary text-primary-foreground border border-input";
-
-      return (
-        <div
-          key={ev.id}
-          className={`${categoryColor} w-full truncate rounded-md px-1.5 py-[2px] text-[10px] font-medium`}
-        >
-          {ev.event_time ? `${ev.event_time} ` : ''}
-          {ev.title}
-        </div>
-      )
-    })}
-
-    {dayEvents.length > 3 && (
-      <span className="text-[9px] font-medium text-muted-foreground pl-1">
-        +{dayEvents.length - 3} more
-      </span>
-    )}
-  </div>
-)}
+                      <span className={`text-[10px] sm:text-xs font-medium leading-tight ${isToday ? "font-bold" : ""}`}>{day}</span>
+                      {dayEvents.length > 0 && (
+                        <div className="mt-0.5 sm:mt-1 flex w-full flex-col gap-0.5 sm:gap-1 px-0.5 sm:px-1">
+                          {/* Mobile: colored dots */}
+                          <div className="flex sm:hidden gap-[2px] justify-center flex-wrap">
+                            {dayEvents.slice(0, 3).map((ev) => (
+                              <span key={ev.id} className={`h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full ${DOT_COLORS[ev.category] || "bg-primary"}`} />
+                            ))}
+                            {dayEvents.length > 3 && (
+                              <span className="text-[7px] text-muted-foreground leading-none">+{dayEvents.length - 3}</span>
+                            )}
+                          </div>
+                          {/* Desktop: event labels */}
+                          <div className="hidden sm:flex flex-col gap-1 w-full">
+                            {dayEvents.slice(0, 3).map((ev) => {
+                              const categoryColor = CATEGORY_COLORS[ev.category] || "bg-primary text-primary-foreground border border-input";
+                              return (
+                                <div
+                                  key={ev.id}
+                                  className={`${categoryColor} w-full truncate rounded-md px-1.5 py-[2px] text-[10px] font-medium`}
+                                >
+                                  {ev.event_time ? `${ev.event_time} ` : ''}
+                                  {ev.title}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {dayEvents.length > 3 && (
+                            <span className="text-[9px] font-medium text-muted-foreground pl-1 hidden sm:inline">
+                              +{dayEvents.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </motion.button>
 
-                    {/* IN-CALENDAR POPOVER / TOOLTIP */}
+                    {/* Desktop-only IN-CALENDAR POPOVER */}
                     <AnimatePresence>
-                      {isSelected && (
+                      {isSelected && !isMobile && (
                         <motion.div
                           initial={{ opacity: 0, y: 5, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                          className="absolute left-[-50%] top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border bg-background p-4 shadow-xl"
+                          className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border bg-background p-4 shadow-xl"
                         >
                           <div className="mb-3 flex items-center justify-between">
                             <h4 className="text-sm font-semibold text-foreground">
@@ -581,7 +628,7 @@ const ExamCalendarView = () => {
                   <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS[ev.category] || ""}`}>
                     <span className="text-xs font-bold leading-none">{ev.event_date}</span>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
                     <p className="truncate text-[10px] text-muted-foreground">
                       {ev.category}
@@ -597,6 +644,114 @@ const ExamCalendarView = () => {
         </div>
       </div>
     </motion.div>
+
+    {/* Mobile Bottom Sheet for Day Events */}
+    <AnimatePresence>
+      {mobileSheetOpen && mobileSheetDay !== null && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+            onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); }}
+          />
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-[70] rounded-t-2xl border-t bg-background shadow-2xl max-h-[70vh] flex flex-col"
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pb-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-accent" />
+                <h4 className="text-base font-semibold text-foreground">
+                  {MONTHS[month - 1]} {mobileSheetDay}, {year}
+                </h4>
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); }}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-3">
+              {(() => {
+                const sheetEvents = getEventsForDay(mobileSheetDay);
+                if (sheetEvents.length === 0) return (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                    <CalendarDays className="h-8 w-8 mb-2 opacity-40" />
+                    <p className="text-sm">No events scheduled for this day.</p>
+                  </div>
+                );
+                return sheetEvents.map((ev) => (
+                  <div key={ev.id} className={`rounded-xl border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+                      {ev.category}
+                    </span>
+                    <p className="mt-0.5 text-sm font-medium leading-tight">{ev.title}</p>
+                    {ev.event_time && (
+                      <div className="mt-1.5 flex items-center gap-1 opacity-80">
+                        <Clock className="h-3 w-3" />
+                        <span className="text-xs">{ev.event_time}</span>
+                      </div>
+                    )}
+                    {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
+                    {ev.url && (
+                      <a
+                        href={ev.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
+                      >
+                        View Announcement <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                    {ev.type === "todo" && (
+                      <div className="mt-2.5 flex items-center gap-2">
+                        {!ev.done && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                            onClick={() => handleMarkComplete(ev.id)}
+                          >
+                            <Check className="h-3.5 w-3.5" /> Done
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2.5 text-xs gap-1"
+                          onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); openEditDialog(ev); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2.5 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ));
+              })()}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
 
     {/* Delete confirmation modal */}
     <ConfirmModal

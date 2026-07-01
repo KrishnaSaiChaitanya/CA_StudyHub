@@ -109,7 +109,7 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${tagColors[item.tag] || "bg-muted text-muted-foreground"}`}>
-                      {item.tag}
+                      {item.tag.charAt(0).toUpperCase() + item.tag.slice(1)}
                     </span>
                     {item.date && (
                       <span className="flex items-center gap-1 text-[11px] text-muted-foreground">

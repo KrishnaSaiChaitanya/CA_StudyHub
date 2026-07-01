@@ -180,7 +180,7 @@ export const ForumList = ({ onBack, onCreatePost, onPostClick, onProfileClick, g
     const voterId = getVoterId();
     let nextVote = 0;
 
-    queryClient.setQueryData(["forum-posts", category], (oldData: any) => {
+    queryClient.setQueryData(["forum-posts", category, activeGroupId, followedGroups], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,

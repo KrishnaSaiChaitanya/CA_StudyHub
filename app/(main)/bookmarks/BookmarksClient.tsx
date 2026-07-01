@@ -374,7 +374,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                   />
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {["all", "pdf", "rtp", "pyq", "mtp", "question", "spom"].map((type) => (
+                  {["all", "pdf", "rtp", "pyq", "mtp", "question"].map((type) => (
                     <Button
                       key={type}
                       size="sm"

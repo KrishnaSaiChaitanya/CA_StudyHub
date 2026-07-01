@@ -213,7 +213,7 @@ const Navbar = () => {
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Profile Settings</h4>
             <p className="text-sm text-muted-foreground">
-              Update your details and view your plan.
+              Update your details.
             </p>
           </div>
           <div className="grid gap-3">

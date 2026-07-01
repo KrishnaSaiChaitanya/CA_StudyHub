@@ -15,6 +15,7 @@ import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
 import RequestTopicDialog from "@/components/flash-cards/RequestTopicDialog";
 import { cn } from "@/lib/utils";
 import { SUBJECT_MAPPING, SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
+import { useStudent } from "@/components/StudentTypeProvider";
 import {
   Select,
   SelectContent,
@@ -30,7 +31,7 @@ let cacheSets: any[] | null = null;
 export default function FlashcardsDashboard() {
   const router = useRouter();
   const supabase = createClient();
-
+  const { studentLevel, subjects: studentSubjects } = useStudent();
   const [folders, setFolders] = useState<any[]>(cacheFolders || []);
   const [sets, setSets] = useState<any[]>(cacheSets || []);
   const [loading, setLoading] = useState(!cacheFolders || !cacheSets);
@@ -70,6 +71,9 @@ export default function FlashcardsDashboard() {
 
       if (selectedSubject !== "All") {
         setsQuery = setsQuery.eq("subject", selectedSubject);
+      } else {
+        const allowedSubjects = ["general", ...(studentSubjects || [])];
+        setsQuery = setsQuery.in("subject", allowedSubjects);
       }
 
       setsQuery = setsQuery.order("created_at", { ascending: false });
@@ -127,7 +131,7 @@ export default function FlashcardsDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [studentSubjects]);
 
   // Reset page when search or filter changes
   useEffect(() => {
@@ -136,9 +140,7 @@ export default function FlashcardsDashboard() {
 
   const subjects = [
     "general",
-    ...SUBJECT_MAPPING.foundation,
-    ...SUBJECT_MAPPING.intermediate,
-    ...SUBJECT_MAPPING.final,
+    ...(studentSubjects || []),
   ];
 
   const filteredSets = sets.filter((s) => {

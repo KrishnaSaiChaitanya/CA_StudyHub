@@ -428,6 +428,14 @@ export default function SiteContentAdmin() {
                   placeholder="https://t.me/your-channel"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>WhatsApp Link</Label>
+                <Input 
+                  value={contents['footer']?.whatsapp || ""} 
+                  onChange={(e) => updateContent('footer', 'whatsapp', e.target.value)} 
+                  placeholder="https://wa.me/your-number"
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

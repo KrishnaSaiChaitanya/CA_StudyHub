@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
+import { useQueryClient } from "@tanstack/react-query";
 import { ForumList } from "./ForumList";
 import { PostDetail } from "./PostDetail";
 import { CreatePost } from "./CreatePost";
@@ -9,6 +10,7 @@ import { EditPost } from "./EditPost";
 import { Post } from "./types";
 
 const DiscussionForumView = ({ onBack, groupId }: { onBack: () => void, groupId?: string }) => {
+  const queryClient = useQueryClient();
   const [view, setView] = useState<"list" | "post" | "create" | "profile" | "edit">("list");
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -32,6 +34,7 @@ const DiscussionForumView = ({ onBack, groupId }: { onBack: () => void, groupId?
     setSelectedPost(null);
     setSelectedUserId(null);
     setView("list");
+    queryClient.invalidateQueries({ queryKey: ["forum-posts"] });
   };
 
   // The post vote function could be hoisted if needed, but since we modify state in place in the children components

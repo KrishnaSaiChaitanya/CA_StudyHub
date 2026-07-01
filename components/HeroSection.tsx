@@ -56,7 +56,7 @@ const HeroSection = () => {
           >
             <Link href="/sign-in">
             <Button size="lg" className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">
-              Start Studying Free
+              Start Studying
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             </Link>
