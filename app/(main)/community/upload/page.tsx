@@ -193,8 +193,8 @@ export default function CommunityUploadPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2 sm:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div className="space-y-2 sm:col-span-3">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</label>
                     <Input 
                       required 
@@ -219,7 +219,7 @@ export default function CommunityUploadPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Faculty (Optional)</label>
                     <Select 
                       value={facultyId} 
@@ -246,7 +246,7 @@ export default function CommunityUploadPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Material Date</label>

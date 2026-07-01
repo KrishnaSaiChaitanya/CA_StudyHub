@@ -375,7 +375,7 @@ const Navbar = () => {
           animate={{ opacity: 1, y: 0 }}
           className="border-t border-border bg-background px-4 pb-4 md:hidden"
         >
-          {navItems.map((item) => (
+          {navItems.filter((i) => i.path === "/pricing" ? (requirePayment && !isPro) : true).map((item) => (
             <Link
               key={item.path}
               href={item.path}

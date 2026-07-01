@@ -444,7 +444,7 @@ const Home = () => {
 
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
           {/* Left Column — Quick Access */}
-          <div className="">
+          <div className="min-w-0">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-base font-semibold text-foreground">Quick Access</h2>
@@ -560,7 +560,7 @@ const Home = () => {
           </div>
 
           {/* Right Column — Upcoming Events */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }} className="min-w-0">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-foreground">Upcoming Events</h2>
               <Link href="/study/events" className="text-sm font-medium text-accent hover:underline" prefetch={false}>
@@ -587,9 +587,9 @@ const Home = () => {
                         </span>
                         <span className="text-xs font-semibold leading-tight">{event.event_date}</span>
                       </div>
-                      <div className="min-w-0">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{event.title}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground truncate sm:w-full w-60">
+                        <p className="mt-0.5 text-xs text-muted-foreground truncate">
                           {event.event_time} · {formatSubjectName(event.subject)}
                         </p>
                       </div>

@@ -97,7 +97,7 @@ console.log(plannersData, "data");
         downloads: p.downloads || 0,
         rating: p.rating || 0,
         pdf_url: p.pdf_url,
-        faculty_name: p.faculty?.name || 'Unknown Faculty',
+        faculty_name: p.faculty?.name || '',
         is_community: p.is_community || false,
       }));
       setPlanners(formattedPlanners);
@@ -326,6 +326,11 @@ console.log(plannersData, "data");
                           Community
                         </span>
                       )}
+                      {!planner.is_community && !planner.faculty_name && (
+                        <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-medium text-blue-500">
+                          Admin
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -334,11 +339,11 @@ console.log(plannersData, "data");
 
                   {/* Meta */}
                   <div className="mt-3 space-y-1.5 flex-1">
-                    {/* {!planner.is_community && ( */}
+                    {!planner.is_community && planner.faculty_name  && (
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <User className="h-3 w-3" /> {planner.faculty_name}
                       </div>
-                    {/* )} */}
+                    )}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" /> {new Date(planner.planner_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </div>
