@@ -336,7 +336,7 @@ const ExamCalendarView = () => {
               </div>
             </div>
           </section>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
       {/* <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Study Tools
       </Button> */}
@@ -372,9 +372,9 @@ const ExamCalendarView = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_220px]">
         {/* ============ MOBILE CALENDAR (< sm) ============ */}
-        <div className="sm:hidden" ref={calendarRef}>
+        <div className="sm:hidden w-full min-w-0" ref={calendarRef}>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-3">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
@@ -490,7 +490,7 @@ const ExamCalendarView = () => {
                             </a>
                           )}
                           {ev.type === "todo" && (
-                            <div className="mt-2 flex items-center gap-1.5">
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
                               {!ev.done && (
                                 <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30" onClick={() => handleMarkComplete(ev.id)}>
                                   <Check className="h-3 w-3" /> Done
@@ -669,10 +669,10 @@ const ExamCalendarView = () => {
         </Card>
 
         {/* Sidebar - Quick Upcoming Events + Overdue */}
-        <div className="space-y-4">
+        <div className="space-y-4 w-full min-w-0">
           {/* Overdue Tasks */}
           {overdueTodos.length > 0 && (
-            <Card className="shadow-card border-destructive/30">
+            <Card className="shadow-card border-destructive/30 w-full min-w-0">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-1.5 text-destructive">
                   <AlertTriangle className="h-4 w-4" /> Overdue Tasks ({overdueTodos.length})
@@ -688,7 +688,7 @@ const ExamCalendarView = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
                       <p className="truncate text-[10px] text-muted-foreground">{ev.description}</p>
-                      <div className="mt-1.5 flex items-center gap-1">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
                         <Button
                           size="sm"
                           variant="outline"
@@ -721,7 +721,7 @@ const ExamCalendarView = () => {
             </Card>
           )}
 
-          <Card className="shadow-card">
+          <Card className="shadow-card w-full min-w-0">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Upcoming This Month</CardTitle>
             </CardHeader>
