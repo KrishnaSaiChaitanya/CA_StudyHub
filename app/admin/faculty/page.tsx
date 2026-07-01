@@ -46,9 +46,15 @@ export default function FacultyDashboard() {
     ...SUBJECT_MAPPING.final
   ];
 
+  const [sorting, setSorting] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
-    const { data } = await supabase.from('faculty').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('faculty')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
     if (data) setFaculty(data);
     setLoading(false);
   };
@@ -56,6 +62,36 @@ export default function FacultyDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    const list = [...faculty];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+
+    setSorting(true);
+    // Swap sort_order
+    const tempOrder = list[index].sort_order;
+    list[index].sort_order = list[targetIndex].sort_order;
+    list[targetIndex].sort_order = tempOrder;
+
+    // Save to DB
+    const { error: error1 } = await supabase
+      .from('faculty')
+      .update({ sort_order: list[index].sort_order })
+      .eq('id', list[index].id);
+
+    const { error: error2 } = await supabase
+      .from('faculty')
+      .update({ sort_order: list[targetIndex].sort_order })
+      .eq('id', list[targetIndex].id);
+
+    if (error1 || error2) {
+      toast({ title: "Failed to reorder faculty", variant: "destructive" });
+    } else {
+      fetchData();
+    }
+    setSorting(false);
+  };
 
   const handleEdit = (facultyData: any) => {
     setName(facultyData.name);
@@ -121,6 +157,9 @@ export default function FacultyDashboard() {
       const { error: updateError } = await supabase.from('faculty').update(payload).eq('id', editingId);
       error = updateError;
     } else {
+      // Find max sort_order
+      const maxSortOrder = faculty.length > 0 ? Math.max(...faculty.map(f => f.sort_order || 0)) : 0;
+      payload.sort_order = maxSortOrder + 1;
       const { error: insertError } = await supabase.from('faculty').insert(payload);
       error = insertError;
     }
@@ -278,6 +317,7 @@ export default function FacultyDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[100px]">Order</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Level</TableHead>
                 <TableHead>Subject</TableHead>
@@ -307,8 +347,30 @@ export default function FacultyDashboard() {
                    return subjectName.toLowerCase().includes(filters.value.toLowerCase());
                 }
                 return field?.toString().toLowerCase().includes(filters.value.toLowerCase());
-              }).map(f => (
+              }).map((f, index) => (
                 <TableRow key={f.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === 0 || sorting}
+                        onClick={() => handleMove(index, 'up')}
+                      >
+                        ▲
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === faculty.length - 1 || sorting}
+                        onClick={() => handleMove(index, 'down')}
+                      >
+                        ▼
+                      </Button>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">{f.name}</TableCell>
                   <TableCell className="capitalize">{f.level || '-'}</TableCell>
                   <TableCell>{f.subject ? formatSubjectName(f.subject) : '-'}</TableCell>

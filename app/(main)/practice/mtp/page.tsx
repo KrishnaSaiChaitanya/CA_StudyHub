@@ -30,7 +30,7 @@ const MTP = () => {
         />
       </main>
       
-      <Footer />
+      
     </div>
   );
 };

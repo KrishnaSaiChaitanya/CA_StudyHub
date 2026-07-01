@@ -12,7 +12,7 @@ export default function PerformancePage() {
       <div className="flex-1 w-full">
         <PerformanceHistory onBack={() => router.push('/practice')} />
       </div>
-      <Footer />
+      
     </div>
   );
 }

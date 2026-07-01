@@ -79,7 +79,7 @@ if (studentLevel === "final") {
           </div>
         </section>
       </div>
-      <Footer />
+      
     </div>
   );
 };

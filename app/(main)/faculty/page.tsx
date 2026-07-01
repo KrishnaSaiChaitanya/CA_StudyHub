@@ -6,7 +6,6 @@ import { Star, User, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import Footer from "@/components/Footer";
 import { useStudent } from "@/components/StudentTypeProvider";
 
 export interface FacultyDisplayData {
@@ -53,6 +52,8 @@ const Faculty = () => {
         .from("faculty")
         .select("*")
         .in("level", studentLevel ? [studentLevel] : ["foundation", "intermediate", "final"])
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
 
       if (data && !error) {
         const formattedData: FacultyDisplayData[] = data.map((f) => ({
@@ -81,7 +82,6 @@ const Faculty = () => {
   }, [studentLevel, studentLoading]);
 
   return (
-    <>
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {selectedFaculty ? (
         <FacultyProfile faculty={selectedFaculty} onBack={() => setSelectedFaculty(null)} />
@@ -151,8 +151,6 @@ const Faculty = () => {
         </>
       )}
     </div>
-    <Footer/>
-    </>
   );
 };
 

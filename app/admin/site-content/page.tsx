@@ -103,11 +103,12 @@ export default function SiteContentAdmin() {
       </div>
 
       <Tabs defaultValue="help-center" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="help-center">Help Center</TabsTrigger>
           <TabsTrigger value="contact-us">Contact Us</TabsTrigger>
           <TabsTrigger value="terms">Terms</TabsTrigger>
           <TabsTrigger value="privacy-policy">Privacy</TabsTrigger>
+          <TabsTrigger value="footer">Footer</TabsTrigger>
         </TabsList>
 
         {/* HELP CENTER */}
@@ -363,6 +364,69 @@ export default function SiteContentAdmin() {
                 >
                   <Plus className="h-4 w-4 mr-2" /> Add Section
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* FOOTER SOCIAL LINKS */}
+        <TabsContent value="footer" className="space-y-4 py-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Footer Social Links</CardTitle>
+              <Button onClick={() => handleSave('footer')} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save Changes
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Facebook URL</Label>
+                <Input 
+                  value={contents['footer']?.facebook || ""} 
+                  onChange={(e) => updateContent('footer', 'facebook', e.target.value)} 
+                  placeholder="https://facebook.com/your-page"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Twitter (X) URL</Label>
+                <Input 
+                  value={contents['footer']?.twitter || ""} 
+                  onChange={(e) => updateContent('footer', 'twitter', e.target.value)} 
+                  placeholder="https://x.com/your-handle"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Instagram URL</Label>
+                <Input 
+                  value={contents['footer']?.instagram || ""} 
+                  onChange={(e) => updateContent('footer', 'instagram', e.target.value)} 
+                  placeholder="https://instagram.com/your-profile"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>LinkedIn URL</Label>
+                <Input 
+                  value={contents['footer']?.linkedin || ""} 
+                  onChange={(e) => updateContent('footer', 'linkedin', e.target.value)} 
+                  placeholder="https://linkedin.com/in/your-profile"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>YouTube URL</Label>
+                <Input 
+                  value={contents['footer']?.youtube || ""} 
+                  onChange={(e) => updateContent('footer', 'youtube', e.target.value)} 
+                  placeholder="https://youtube.com/c/your-channel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Telegram Link</Label>
+                <Input 
+                  value={contents['footer']?.telegram || ""} 
+                  onChange={(e) => updateContent('footer', 'telegram', e.target.value)} 
+                  placeholder="https://t.me/your-channel"
+                />
               </div>
             </CardContent>
           </Card>

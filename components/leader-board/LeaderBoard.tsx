@@ -291,7 +291,7 @@ const Leaderboard = () => {
         </motion.div>
       </section>
 
-      <Footer />
+      
     </div>
   );
 };

@@ -67,7 +67,7 @@ export default function FolderDetailsPage({ params }: FolderDetailsPageProps) {
       const processedSets = (linkedData || [])
         .map((item: any) => {
           const s = item.flashcard_sets;
-          if (!s) return null;
+          if (!s || s.state !== "published") return null;
           return {
             ...s,
             cardCount: s.flashcards?.[0]?.count || 0,

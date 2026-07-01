@@ -1,8 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { HelpCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
@@ -42,7 +40,7 @@ const HelpCenter = () => {
               <HelpCircle className="h-6 w-6 text-accent" />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-3">Help Center</h1>
-            <p className="text-muted-foreground">Find answers to frequently asked questions</p>
+            <p className="text-muted-foreground">Find answers to frequently asked questions about CA StudyHub.</p>
           </motion.div>
 
           {loading ? (
@@ -70,7 +68,6 @@ const HelpCenter = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -65,6 +65,7 @@ export default function FlashcardsDashboard() {
       let setsQuery = supabase
         .from("flashcard_sets")
         .select("*, flashcards(count)")
+        .eq("state", "published")
         .or(`user_id.eq.${user.id},is_admin.eq.true`);
 
       if (selectedSubject !== "All") {

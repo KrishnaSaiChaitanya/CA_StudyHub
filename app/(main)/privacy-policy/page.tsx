@@ -1,8 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import * as LucideIcons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
@@ -109,7 +107,6 @@ const PrivacyPolicy = () => {
           </motion.div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

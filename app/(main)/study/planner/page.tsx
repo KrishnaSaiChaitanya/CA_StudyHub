@@ -12,7 +12,7 @@ export default function PlannerPage() {
       <div className="flex-1">
         <StudyPlannerView onBack={() => router.push('/study')} />
       </div>
-      <Footer />
+      
     </div>
   );
 }

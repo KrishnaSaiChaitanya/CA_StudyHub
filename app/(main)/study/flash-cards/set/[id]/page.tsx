@@ -60,6 +60,7 @@ export default function StudyPage({ params }: StudyPageProps) {
         .from("flashcard_sets")
         .select("*")
         .eq("id", setId)
+        .eq("state", "published")
         .single();
 
       if (setErr) throw setErr;

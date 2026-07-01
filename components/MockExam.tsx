@@ -65,6 +65,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
           .from('tests')
           .select('*')
           .eq('id', testId)
+          .eq('state', 'published')
           .single();
         if (testErr) throw testErr;
 

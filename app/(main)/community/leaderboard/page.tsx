@@ -638,7 +638,7 @@ export default function LeaderboardPage() {
         )}
       </AnimatePresence>
 
-      <Footer />
+      
     </div>
   );
 }

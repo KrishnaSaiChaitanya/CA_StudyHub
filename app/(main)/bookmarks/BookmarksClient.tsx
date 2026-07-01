@@ -552,7 +552,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
           </Tabs>
         </ProFeatureLock>
       </section>
-      <Footer />
+      
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

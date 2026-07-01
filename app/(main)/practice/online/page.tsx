@@ -25,7 +25,7 @@ const PYQ = () => (
           subtitle="Browse, bookmark, and download ICAI mock test papers." 
           paperType="online" 
         />
-    <Footer />
+    
   </div>
 );
 

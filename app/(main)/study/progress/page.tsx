@@ -12,7 +12,7 @@ export default function ProgressPage() {
       <div className="flex-1">
         <ProgressDashboardView onBack={() => router.push('/study')} />
       </div>
-      <Footer />
+      
     </div>
   );
 }

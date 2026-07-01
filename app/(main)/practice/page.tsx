@@ -168,7 +168,7 @@ const Practice = () => {
           </ProFeatureLock>
         </section>
       </main>
-      <Footer />
+      
     </div>
   );
 };

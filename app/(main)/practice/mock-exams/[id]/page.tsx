@@ -1,5 +1,4 @@
 import MockExamClientWrapper from "./MockExamClientWrapper";
-import Footer from "@/components/Footer";
 import { use } from "react";
 
 export default function MockExamSlugPage({ params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +7,6 @@ export default function MockExamSlugPage({ params }: { params: Promise<{ id: str
   return (
     <div className="w-full">
       <MockExamClientWrapper id={id} />
-      <Footer />
     </div>
   );
 }

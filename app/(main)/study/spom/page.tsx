@@ -12,7 +12,7 @@ const SpomPage = () => {
       <div className="flex-1 w-full">
         <SPOMView onBack={() => router.push("/study")} />
       </div>
-      <Footer />
+      
     </div>
   );
 };

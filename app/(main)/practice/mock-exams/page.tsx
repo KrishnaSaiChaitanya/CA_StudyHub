@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import MockExam from "@/components/MockExam";
-import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { FileText, Clock, ChevronRight, BookOpen, Sparkles, TrendingUp, History, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -45,7 +44,7 @@ export default function MockExamsPage() {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        let testQuery = supabase.from('tests').select('*');
+        let testQuery = supabase.from('tests').select('*').eq('state', 'published');
 
         if (subjects.length > 0) {
           testQuery = testQuery.in('category', subjects);
@@ -95,7 +94,6 @@ export default function MockExamsPage() {
   };
 
   return (
-    <>
     <div className="min-h-[calc(100vh-4rem)] bg-background w-full flex flex-col">
       <main className="flex-1 pb-12">
         {/* <section className="bg-primary py-20 relative overflow-hidden"> */}
@@ -348,7 +346,5 @@ export default function MockExamsPage() {
         </section>
       </main>
     </div>
-    <Footer/>
-    </>
   );
 }

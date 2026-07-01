@@ -25,7 +25,7 @@ const PYQ = () => (
           subtitle="Browse, bookmark, and download ICAI previous year questions." 
           paperType="pyq" 
         />
-    <Footer />
+    
   </div>
 );
 

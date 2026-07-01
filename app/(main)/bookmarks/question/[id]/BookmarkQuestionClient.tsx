@@ -175,7 +175,7 @@ export default function BookmarkQuestionClient({ id }: { id: string }) {
           </Card>
         </motion.div>
       </main>
-      <Footer />
+      
     </div>
   );
 }

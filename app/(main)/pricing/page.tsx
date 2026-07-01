@@ -471,7 +471,7 @@ const Pricing = () => {
         </motion.div>
       </div>
 
-      <Footer />
+      
     </div>
   );
 };

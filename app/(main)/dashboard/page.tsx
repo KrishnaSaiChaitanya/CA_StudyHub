@@ -664,8 +664,6 @@ const Home = () => {
           </div>
         </motion.div>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -1,8 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,7 +217,6 @@ const ContactUs = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -25,7 +25,7 @@ const RTP = () => (
           subtitle="Browse, bookmark, and download Revision Test Papers" 
           paperType="rtp" 
         />
-    <Footer />
+    
   </div>
 );
 

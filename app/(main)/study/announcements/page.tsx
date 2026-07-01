@@ -12,7 +12,7 @@ export default function AnnouncementsPage() {
       <div className="flex-1">
         <AnnouncementsView onBack={() => router.push('/study')} />
       </div>
-      <Footer />
+      
     </div>
   );
 }
