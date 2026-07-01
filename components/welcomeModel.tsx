@@ -109,7 +109,7 @@ const WelcomeModal = () => {
           </motion.div>
 
           {/* Section 2 */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
@@ -131,7 +131,7 @@ const WelcomeModal = () => {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </motion.div> */}
 
           {/* Button */}
           <motion.div

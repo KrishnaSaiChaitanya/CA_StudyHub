@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink, Check, Trash2, Pencil, AlertTriangle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,8 +70,7 @@ const ExamCalendarView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Mobile bottom sheet state
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  // Mobile selected day (for inline event list below calendar)
   const [mobileSheetDay, setMobileSheetDay] = useState<number | null>(null);
 
   // Todo management state
@@ -84,25 +83,6 @@ const ExamCalendarView = () => {
 
   // Use a ref to handle closing the popup when clicking outside
   const calendarRef = useRef<HTMLDivElement>(null);
-
-  // Detect mobile (< 640px)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mql = window.matchMedia("(max-width: 639px)");
-    setIsMobile(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, []);
-
-  const handleDayClick = useCallback((day: number, isSelected: boolean) => {
-    if (isMobile) {
-      setMobileSheetDay(day);
-      setMobileSheetOpen(true);
-    } else {
-      setSelectedDate(isSelected ? null : day);
-    }
-  }, [isMobile]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -356,7 +336,7 @@ const ExamCalendarView = () => {
               </div>
             </div>
           </section>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="container px-2 sm:px-6 py-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
       {/* <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Study Tools
       </Button> */}
@@ -393,33 +373,173 @@ const ExamCalendarView = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Calendar */}
-        <Card className="shadow-card overflow-hidden" ref={calendarRef}>
-          <CardHeader className="flex-row items-center justify-between pb-4 p-3 sm:p-6">
+        {/* ============ MOBILE CALENDAR (< sm) ============ */}
+        <div className="sm:hidden" ref={calendarRef}>
+          {/* Month nav */}
+          <div className="flex items-center justify-between mb-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h2 className="text-sm font-semibold">{MONTHS[month - 1]} {year}</h2>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={nextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAYS.map((d) => (
+              <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Day cells - compact circular */}
+          <div className="grid grid-cols-7">
+            {cells.map((day, i) => {
+              if (day === null) return <div key={`empty-${i}`} className="h-11" />;
+
+              const dayEvents = getEventsForDay(day);
+              const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
+              const isTapped = mobileSheetDay === day;
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => setMobileSheetDay(mobileSheetDay === day ? null : day)}
+                  className="flex flex-col items-center justify-center h-11 relative"
+                >
+                  <span
+                    className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-medium transition-colors
+                      ${isTapped ? "bg-accent text-accent-foreground" : ""}
+                      ${isToday && !isTapped ? "bg-accent/20 text-accent font-bold ring-1 ring-accent/40" : ""}
+                      ${!isToday && !isTapped ? "text-foreground" : ""}
+                    `}
+                  >
+                    {day}
+                  </span>
+                  {/* Event dots */}
+                  {dayEvents.length > 0 && (
+                    <div className="flex gap-[2px] mt-[2px] justify-center">
+                      {dayEvents.slice(0, 3).map((ev) => (
+                        <span key={ev.id} className={`h-1 w-1 rounded-full ${DOT_COLORS[ev.category] || "bg-primary"}`} />
+                      ))}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Category legend */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 mb-4 px-1">
+            {EVENT_CATEGORIES.map((cat) => (
+              <div key={cat} className="flex items-center gap-1">
+                <span className={`h-2 w-2 rounded-full ${DOT_COLORS[cat]}`} />
+                <span className="text-[10px] text-muted-foreground">{cat}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Selected day events list (inline, below calendar) */}
+          <AnimatePresence mode="wait">
+            {mobileSheetDay !== null && (
+              <motion.div
+                key={mobileSheetDay}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+                className="mb-4"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5 text-accent" />
+                    {MONTHS[month - 1]} {mobileSheetDay}, {year}
+                  </h3>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMobileSheetDay(null)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                {(() => {
+                  const dayEvs = getEventsForDay(mobileSheetDay);
+                  if (dayEvs.length === 0) return (
+                    <div className="rounded-lg border bg-muted/30 py-6 flex flex-col items-center text-muted-foreground">
+                      <CalendarDays className="h-6 w-6 mb-1.5 opacity-40" />
+                      <p className="text-xs">No events on this day</p>
+                    </div>
+                  );
+                  return (
+                    <div className="space-y-2">
+                      {dayEvs.map((ev) => (
+                        <div key={ev.id} className={`rounded-lg border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`h-2 w-2 rounded-full ${DOT_COLORS[ev.category]}`} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{ev.category}</span>
+                          </div>
+                          <p className="text-sm font-medium leading-snug">{ev.title}</p>
+                          {ev.event_time && (
+                            <div className="mt-1 flex items-center gap-1 opacity-80">
+                              <Clock className="h-3 w-3" />
+                              <span className="text-xs">{ev.event_time}</span>
+                            </div>
+                          )}
+                          {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
+                          {ev.url && (
+                            <a href={ev.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
+                              View <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {ev.type === "todo" && (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              {!ev.done && (
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30" onClick={() => handleMarkComplete(ev.id)}>
+                                  <Check className="h-3 w-3" /> Done
+                                </Button>
+                              )}
+                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1" onClick={() => openEditDialog(ev)}>
+                                <Pencil className="h-3 w-3" /> Edit
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30" onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ============ DESKTOP CALENDAR (>= sm) ============ */}
+        <Card className="shadow-card overflow-hidden hidden sm:block">
+          <CardHeader className="flex-row items-center justify-between pb-4 p-6">
             <Button variant="ghost" size="icon" onClick={prevMonth}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <CardTitle className="text-base sm:text-lg">{MONTHS[month - 1]} {year}</CardTitle>
+            <CardTitle className="text-lg">{MONTHS[month - 1]} {year}</CardTitle>
             <Button variant="ghost" size="icon" onClick={nextMonth}>
               <ChevronRight className="h-5 w-5" />
             </Button>
           </CardHeader>
-          <CardContent className="p-1.5 sm:p-6 pt-0">
+          <CardContent className="p-6 pt-0">
             {/* Day headers */}
-            <div className="mb-1 sm:mb-2 grid grid-cols-7 gap-0.5 sm:gap-1">
+            <div className="mb-2 grid grid-cols-7 gap-1">
               {DAYS.map((d) => (
-                <div key={d} className="py-0.5 sm:py-1 text-center text-[10px] sm:text-xs font-semibold text-muted-foreground">{d}</div>
+                <div key={d} className="py-1 text-center text-xs font-semibold text-muted-foreground">{d}</div>
               ))}
             </div>
             
             {/* Date cells */}
-            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+            <div className="grid grid-cols-7 gap-1">
               {cells.map((day, i) => {
                 if (day === null) return <div key={`empty-${i}`} className="aspect-square" />;
                 
                 const dayEvents = getEventsForDay(day);
-                const isSelected = !isMobile && selectedDate === day;
-                const isMobileSelected = isMobile && mobileSheetOpen && mobileSheetDay === day;
+                const isSelected = selectedDate === day;
                 const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
 
                 return (
@@ -427,28 +547,16 @@ const ExamCalendarView = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDayClick(day, isSelected)}
-                      className={`h-full w-full flex flex-col items-center justify-start rounded-md sm:rounded-lg p-0.5 sm:p-1 text-xs sm:text-sm transition-colors
-                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : ""}
-                        ${isMobileSelected ? "bg-accent/80 text-accent-foreground ring-2 ring-accent" : ""}
-                        ${!isSelected && !isMobileSelected ? "hover:bg-secondary" : ""}
-                        ${isToday && !isSelected && !isMobileSelected ? "ring-1 ring-accent/50 font-bold" : ""}
+                      onClick={() => setSelectedDate(isSelected ? null : day)}
+                      className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-colors
+                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : "hover:bg-secondary"}
+                        ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}
                       `}
                     >
-                      <span className={`text-[10px] sm:text-xs font-medium leading-tight ${isToday ? "font-bold" : ""}`}>{day}</span>
+                      <span className={`text-xs font-medium ${isToday ? "font-bold" : ""}`}>{day}</span>
                       {dayEvents.length > 0 && (
-                        <div className="mt-0.5 sm:mt-1 flex w-full flex-col gap-0.5 sm:gap-1 px-0.5 sm:px-1">
-                          {/* Mobile: colored dots */}
-                          <div className="flex sm:hidden gap-[2px] justify-center flex-wrap">
-                            {dayEvents.slice(0, 3).map((ev) => (
-                              <span key={ev.id} className={`h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full ${DOT_COLORS[ev.category] || "bg-primary"}`} />
-                            ))}
-                            {dayEvents.length > 3 && (
-                              <span className="text-[7px] text-muted-foreground leading-none">+{dayEvents.length - 3}</span>
-                            )}
-                          </div>
-                          {/* Desktop: event labels */}
-                          <div className="hidden sm:flex flex-col gap-1 w-full">
+                        <div className="mt-1 flex w-full flex-col gap-1 px-1">
+                          <div className="flex flex-col gap-1 w-full">
                             {dayEvents.slice(0, 3).map((ev) => {
                               const categoryColor = CATEGORY_COLORS[ev.category] || "bg-primary text-primary-foreground border border-input";
                               return (
@@ -463,7 +571,7 @@ const ExamCalendarView = () => {
                             })}
                           </div>
                           {dayEvents.length > 3 && (
-                            <span className="text-[9px] font-medium text-muted-foreground pl-1 hidden sm:inline">
+                            <span className="text-[9px] font-medium text-muted-foreground pl-1">
                               +{dayEvents.length - 3} more
                             </span>
                           )}
@@ -471,9 +579,9 @@ const ExamCalendarView = () => {
                       )}
                     </motion.button>
 
-                    {/* Desktop-only IN-CALENDAR POPOVER */}
+                    {/* Desktop popover */}
                     <AnimatePresence>
-                      {isSelected && !isMobile && (
+                      {isSelected && (
                         <motion.div
                           initial={{ opacity: 0, y: 5, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -516,7 +624,6 @@ const ExamCalendarView = () => {
                                       View Announcement <ExternalLink className="h-2.5 w-2.5" />
                                     </a>
                                   )}
-                                  {/* Todo action buttons */}
                                   {ev.type === "todo" && (
                                     <div className="mt-2 flex items-center gap-1.5">
                                       {!ev.done && (
@@ -645,113 +752,7 @@ const ExamCalendarView = () => {
       </div>
     </motion.div>
 
-    {/* Mobile Bottom Sheet for Day Events */}
-    <AnimatePresence>
-      {mobileSheetOpen && mobileSheetDay !== null && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
-            onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); }}
-          />
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[70] rounded-t-2xl border-t bg-background shadow-2xl max-h-[70vh] flex flex-col"
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-            </div>
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-accent" />
-                <h4 className="text-base font-semibold text-foreground">
-                  {MONTHS[month - 1]} {mobileSheetDay}, {year}
-                </h4>
-              </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); }}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-3">
-              {(() => {
-                const sheetEvents = getEventsForDay(mobileSheetDay);
-                if (sheetEvents.length === 0) return (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                    <CalendarDays className="h-8 w-8 mb-2 opacity-40" />
-                    <p className="text-sm">No events scheduled for this day.</p>
-                  </div>
-                );
-                return sheetEvents.map((ev) => (
-                  <div key={ev.id} className={`rounded-xl border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
-                      {ev.category}
-                    </span>
-                    <p className="mt-0.5 text-sm font-medium leading-tight">{ev.title}</p>
-                    {ev.event_time && (
-                      <div className="mt-1.5 flex items-center gap-1 opacity-80">
-                        <Clock className="h-3 w-3" />
-                        <span className="text-xs">{ev.event_time}</span>
-                      </div>
-                    )}
-                    {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
-                    {ev.url && (
-                      <a
-                        href={ev.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
-                      >
-                        View Announcement <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                    {ev.type === "todo" && (
-                      <div className="mt-2.5 flex items-center gap-2">
-                        {!ev.done && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2.5 text-xs gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
-                            onClick={() => handleMarkComplete(ev.id)}
-                          >
-                            <Check className="h-3.5 w-3.5" /> Done
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2.5 text-xs gap-1"
-                          onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); openEditDialog(ev); }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2.5 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
-                          onClick={() => { setMobileSheetOpen(false); setMobileSheetDay(null); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ));
-              })()}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+
 
     {/* Delete confirmation modal */}
     <ConfirmModal

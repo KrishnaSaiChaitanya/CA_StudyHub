@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
 import EditSetDialog from "@/components/flash-cards/EditSetDialog";
 import BulkUploadStepper from "@/components/admin/BulkUploadStepper";
-import { deleteFlashcardRequest } from "./actions";
+import { deleteFlashcardRequest, getUserEmails } from "./actions";
 
 export default function AdminFlashcardsPage() {
   const supabase = createClient();
@@ -42,6 +42,7 @@ export default function AdminFlashcardsPage() {
   const [presetTitle, setPresetTitle] = useState("");
   const [actionId, setActionId] = useState<string | null>(null);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
 
   const ITEMS_PER_PAGE = 10;
 
@@ -109,6 +110,13 @@ export default function AdminFlashcardsPage() {
       const { data, error, count } = await q;
 
       if (error) throw error;
+
+      // Fetch emails from auth.users via server action
+      const userIds = (data || []).map((r: any) => r.user_id).filter(Boolean);
+      if (userIds.length > 0) {
+        const emails = await getUserEmails(userIds);
+        setEmailMap((prev) => ({ ...prev, ...emails }));
+      }
       
       if (append) {
         setRequests((prev) => {
@@ -559,6 +567,7 @@ export default function AdminFlashcardsPage() {
                     <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead className="font-bold">Requested By</TableHead>
+                        <TableHead className="font-bold">Email</TableHead>
                         <TableHead className="font-bold">Topic</TableHead>
                         <TableHead className="font-bold">Notes</TableHead>
                         <TableHead className="font-bold">Date</TableHead>
@@ -570,6 +579,9 @@ export default function AdminFlashcardsPage() {
                         <TableRow key={req.id} className="hover:bg-muted/20 transition-colors">
                           <TableCell className="font-semibold text-xs text-foreground italic">
                             {req.profiles?.full_name || "Anonymous"}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {emailMap[req.user_id] || "—"}
                           </TableCell>
                           <TableCell className="font-medium text-sm text-foreground">{req.topic}</TableCell>
                           <TableCell className="text-xs text-muted-foreground max-w-[200px]">
