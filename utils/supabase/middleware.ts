@@ -86,7 +86,8 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     // 2. Premium content check: Only run this query for premium paths to avoid delaying other pages
-    if (isPremiumPath && user && !isUserAdmin) {
+    const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+    if (requirePayment && isPremiumPath && user && !isUserAdmin) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_perminent_paid_user")
