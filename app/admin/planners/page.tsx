@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Plus, Trash2, Loader2, RefreshCw, Pencil } from "lucide-react";
+import { Plus, Trash2, Loader2, RefreshCw, Pencil, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { SUBJECT_MAPPING, formatSubjectName } from "@/utils/subjects";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TableFilters } from "@/components/admin/TableFilters";
+import dynamic from "next/dynamic";
+
+const BulkUploadPlannersDialog = dynamic(
+  () => import("@/components/admin/BulkUploadPlannersDialog"),
+  { ssr: false }
+);
 
 export default function PlannersDashboard() {
   const supabase = createClient();
@@ -21,6 +27,7 @@ export default function PlannersDashboard() {
   const [faculty, setFaculty] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({ column: "title", value: "" });
@@ -116,6 +123,9 @@ export default function PlannersDashboard() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="h-4 w-4" /></Button>
+          <Button variant="outline" onClick={() => setShowBulkUpload(true)} className="gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+            <UploadCloud className="h-4 w-4" /> Bulk Upload
+          </Button>
           <Button onClick={() => { setEditingId(null); setTitle(""); setCategoryId(""); setFacultyId(""); setPlannerDate(""); setPages(""); setPdfUrl(""); setShowAdd(true); }} className="gap-2">
             <Plus className="h-4 w-4" /> Add Planner
           </Button>
@@ -254,6 +264,12 @@ export default function PlannersDashboard() {
           </Table>
         )}
       </Card>
+
+      <BulkUploadPlannersDialog 
+        open={showBulkUpload} 
+        onOpenChange={setShowBulkUpload} 
+        onSuccess={fetchData} 
+      />
     </div>
   );
 }

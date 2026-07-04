@@ -134,23 +134,51 @@ console.log(plannersData, "data");
     setPlannerToUnbookmark(null);
   };
 
- const handleDownload = async (planner: PlannerType) => {
-  // 1. Convert standard Drive link to a direct download link
-  // Standard: https://drive.google.com/file/d/FILE_ID/view
-  // Download: https://drive.google.com/uc?export=download&id=FILE_ID
-  const fileId = planner.pdf_url.match(/[-\w]{25,}/); 
-  const downloadUrl = fileId 
-    ? `https://drive.google.com/uc?export=download&id=${fileId[0]}`
-    : planner.pdf_url;
-
+const handleDownload = async (planner: PlannerType) => {
   try {
     setDownloadingIds(prev => [...prev, planner.id]);
-    // 2. Open the download link in a hidden iframe or new tab
-    // This triggers the browser's native download behavior
-    window.location.href = downloadUrl;
+
+    const url = planner.pdf_url;
+    // Check if it's a Google Drive link
+    const isGoogleDrive = url.includes('drive.google.com');
+
+    if (isGoogleDrive) {
+      // 1. Handle Google Drive Download
+      const fileIdMatch = url.match(/[-\w]{25,}/);
+      if (!fileIdMatch) throw new Error("Invalid Google Drive URL");
+      
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
+      
+      // Use a temporary anchor tag to prevent page redirection
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('target', '_blank'); // Open in a new tab if it can't force download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } else {
+      // 2. Handle Normal URL (Forces download instead of opening in a new tab)
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      // Fallback filename if none provided
+      link.setAttribute('download', planner.title ? `${planner.title}.pdf` : 'download.pdf'); 
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up memory
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    }
 
     // 3. Increment download count in Supabase
-    // Note: Use .rpc() or increment logic if multiple users might download at once
     const { error } = await supabase
       .from('study_planners')
       .update({ downloads: planner.downloads + 1 })
@@ -162,9 +190,10 @@ console.log(plannersData, "data");
       ));
     }
   } catch (error) {
-    console.error("Tracking failed:", error);
+    console.error("Download or tracking failed:", error);
+    alert("Failed to download file. Please try again.");
   } finally {
-    // Add a small delay so it doesn't flicker too fast if it's instant
+    // Add a small delay so loading state doesn't flicker too fast
     setTimeout(() => {
       setDownloadingIds(prev => prev.filter(id => id !== planner.id));
     }, 1000);
