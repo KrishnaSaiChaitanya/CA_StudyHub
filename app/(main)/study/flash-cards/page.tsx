@@ -31,14 +31,16 @@ let cacheSets: any[] | null = null;
 export default function FlashcardsDashboard() {
   const router = useRouter();
   const supabase = createClient();
-  const { studentLevel, subjects: studentSubjects } = useStudent();
+  const { subjects: studentSubjects } = useStudent();
   const [folders, setFolders] = useState<any[]>(cacheFolders || []);
   const [sets, setSets] = useState<any[]>(cacheSets || []);
-  const [loading, setLoading] = useState(!cacheFolders || !cacheSets);
+  const [foldersLoading, setFoldersLoading] = useState(!cacheFolders);
+  const [setsLoading, setSetsLoading] = useState(!cacheSets);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Filters & Pagination
   const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<"All" | "Admin" | "You">("All");
+  const [sourceFilter, setSourceFilter] = useState<"All" | "Admin" | "You" | "Requested">("All");
   const [subjectFilter, setSubjectFilter] = useState<string>("All");
   const [page, setPage] = useState(1);
   const pageSize = 6;
@@ -49,39 +51,17 @@ export default function FlashcardsDashboard() {
   const [setOpen, setSetOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
 
-  const fetchData = async (forceRefresh = false, selectedSubject = subjectFilter) => {
-    if (!forceRefresh && cacheFolders && cacheSets && selectedSubject === "All") {
+  const fetchFolders = async (forceRefresh = false) => {
+    if (!forceRefresh && cacheFolders) {
       setFolders(cacheFolders);
-      setSets(cacheSets);
-      setLoading(false);
-      // Background revalidation
-    } else {
-      setLoading(true);
+      setFoldersLoading(false);
+      return;
     }
-
+    setFoldersLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      let setsQuery = supabase
-        .from("flashcard_sets")
-        .select("*, flashcards(count)")
-        .eq("state", "published")
-        .or(`user_id.eq.${user.id},is_admin.eq.true`);
-
-      if (selectedSubject !== "All") {
-        setsQuery = setsQuery.eq("subject", selectedSubject);
-      } else {
-        const allowedSubjects = ["general", ...(studentSubjects || [])];
-        setsQuery = setsQuery.in("subject", allowedSubjects);
-      }
-
-      setsQuery = setsQuery.order("created_at", { ascending: false });
-
-      const [foldersRes, linksRes, setsRes] = await Promise.all([
+      const [foldersRes, linksRes] = await Promise.all([
         supabase.from("flashcard_folders").select("*").order("created_at", { ascending: false }),
         supabase.from("flashcard_folder_sets").select("folder_id"),
-        setsQuery
       ]);
 
       const folderCounts = (linksRes.data || []).reduce((acc: Record<string, number>, item) => {
@@ -94,27 +74,84 @@ export default function FlashcardsDashboard() {
         setCount: folderCounts[f.id] || 0,
       }));
 
-      const processedSets = (setsRes.data || []).map((s) => ({
+      cacheFolders = processedFolders;
+      setFolders(processedFolders);
+    } catch (err) {
+      console.error("Error loading folders data:", err);
+    } finally {
+      setFoldersLoading(false);
+    }
+  };
+
+  const fetchSets = async (selectedSubject = subjectFilter, selectedSource = sourceFilter, forceRefresh = false) => {
+    if (!forceRefresh && cacheSets && selectedSubject === "All" && selectedSource === "All") {
+      setSets(cacheSets);
+      setSetsLoading(false);
+      return;
+    }
+    setSetsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      let setsQuery = supabase
+        .from("flashcard_sets")
+        .select("*, flashcards(count)");
+
+
+      // 1. Apply Subject Filter if selected, or restrict to allowedSubjects for All/Admin browse
+      if (selectedSubject !== "All") {
+        setsQuery = setsQuery.eq("subject", selectedSubject);
+      } else {
+        const allowedSubjects = ["general", ...(studentSubjects || [])];
+        setsQuery = setsQuery.in("subject", allowedSubjects);
+      }
+
+      // 2. Apply Source and State Filters
+      if (selectedSource === "Admin") {
+        setsQuery = setsQuery.eq("is_admin", true).is("user_id", null).eq("state", "published");
+      } else if (selectedSource === "You") {
+        setsQuery = setsQuery.eq("user_id", user.id).eq("is_admin", false);
+      } else if (selectedSource === "Requested") {
+        setsQuery = setsQuery.eq("is_admin", true).eq("user_id", user.id);
+      } else {
+     setsQuery = setsQuery.or(
+  `user_id.eq.${user.id},and(is_admin.eq.true,state.eq.published)`
+);
+
+      }
+
+      setsQuery = setsQuery.order("created_at", { ascending: false });
+
+      const { data: setsData, error } = await setsQuery;
+
+      if (error) throw error;
+
+      const processedSets = (setsData || []).map((s) => ({
         ...s,
         cardCount: s.flashcards?.[0]?.count || 0,
       }));
 
-      if (selectedSubject === "All" && !forceRefresh) {
-        cacheFolders = processedFolders;
+      if (selectedSubject === "All" && selectedSource === "All") {
         cacheSets = processedSets;
       }
-      setFolders(processedFolders);
       setSets(processedSets);
     } catch (err) {
-      console.error("Error loading flashcards data:", err);
+      console.error("Error loading sets data:", err);
     } finally {
-      setLoading(false);
+      setSetsLoading(false);
     }
   };
 
   const handleSubjectChange = (val: string) => {
     setSubjectFilter(val);
-    fetchData(true, val);
+    fetchSets(val, sourceFilter);
+  };
+
+  const handleSourceChange = (val: "All" | "Admin" | "You" | "Requested") => {
+    setSourceFilter(val);
+    fetchSets(subjectFilter, val);
   };
 
   const handleDeleteFolder = async (folderId: string) => {
@@ -130,17 +167,23 @@ export default function FlashcardsDashboard() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchFolders();
+  }, []);
+
+  useEffect(() => {
+    fetchSets(subjectFilter, sourceFilter);
   }, [studentSubjects]);
 
   // Reset page when search or filter changes
   useEffect(() => {
     setPage(1);
-  }, [search, sourceFilter, subjectFilter]);
+  }, [search]);
 
-  const subjects = [
+
+
+  const subjectFIlterOptions = [
     "general",
-    ...(studentSubjects || []),
+   ...studentSubjects
   ];
 
   const filteredSets = sets.filter((s) => {
@@ -148,16 +191,7 @@ export default function FlashcardsDashboard() {
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.subject.toLowerCase().includes(search.toLowerCase());
 
-    const matchesSource =
-      sourceFilter === "All" ||
-      (sourceFilter === "Admin" && s.is_admin) ||
-      (sourceFilter === "You" && !s.is_admin);
-
-    const matchesSubject =
-      subjectFilter === "All" ||
-      s.subject === subjectFilter;
-
-    return matchesSearch && matchesSource && matchesSubject;
+    return matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredSets.length / pageSize);
@@ -230,7 +264,7 @@ export default function FlashcardsDashboard() {
         </div>
       </motion.div>
 
-      {loading && folders.length === 0 && sets.length === 0 ? (
+      {(foldersLoading || setsLoading) && folders.length === 0 && sets.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
           <p className="text-sm text-muted-foreground font-medium">Loading your cards...</p>
@@ -250,7 +284,11 @@ export default function FlashcardsDashboard() {
                 <FolderPlus className="h-4 w-4" /> New Folder
               </Button>
             </div>
-            {folders.length === 0 ? (
+            {foldersLoading && folders.length === 0 ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-accent" />
+              </div>
+            ) : folders.length === 0 ? (
               <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-card/30">
                 <p className="text-sm">No folders created yet. Create a folder to organize your sets.</p>
               </div>
@@ -296,7 +334,7 @@ export default function FlashcardsDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">All Subjects</SelectItem>
-                    {subjects.map((sub) => (
+                    {subjectFIlterOptions.map((sub) => (
                       <SelectItem key={sub} value={sub}>
                         {formatSubjectName(sub as any)}
                       </SelectItem>
@@ -308,7 +346,8 @@ export default function FlashcardsDashboard() {
                 {([
                   { value: "All", label: "All" },
                   { value: "Admin", label: "Admin" },
-                  { value: "You", label: "Created by You" }
+                  { value: "You", label: "Created by You" },
+                  { value: "Requested", label: "Requested by You" }
                 ] as const).map((s) => (
                   <Badge
                     key={s.value}
@@ -319,7 +358,7 @@ export default function FlashcardsDashboard() {
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "hover:bg-muted"
                     )}
-                    onClick={() => setSourceFilter(s.value)}
+                    onClick={() => handleSourceChange(s.value)}
                   >
                     {s.label}
                   </Badge>
@@ -327,7 +366,12 @@ export default function FlashcardsDashboard() {
               </div>
             </div>
 
-            {filteredSets.length === 0 ? (
+            {setsLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                <p className="text-sm text-muted-foreground font-medium">Loading library sets...</p>
+              </div>
+            ) : filteredSets.length === 0 ? (
               <div className="text-center py-16 rounded-xl border border-dashed bg-card/30 text-muted-foreground">
                 <Layers className="mx-auto h-8 w-8 opacity-20 mb-3" />
                 <p className="text-sm">No sets match your filters.</p>
@@ -343,6 +387,7 @@ export default function FlashcardsDashboard() {
                       isAdmin={s.is_admin}
                       cardCount={s.cardCount}
                       author={s.is_admin ? "Admin" : "You"}
+                      isRequestedByMe={s.is_admin && s.user_id === userId}
                       index={i}
                       onClick={() => router.push(`/study/flash-cards/set/${s.id}`)}
                     />
@@ -362,8 +407,8 @@ export default function FlashcardsDashboard() {
       )}
 
       {/* Dialogs */}
-      <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} onCreated={() => fetchData(true, subjectFilter)} />
-      <CreateSetDialog open={setOpen} onOpenChange={setSetOpen} onCreated={() => fetchData(true, subjectFilter)} />
+      <CreateFolderDialog open={folderOpen} onOpenChange={setFolderOpen} onCreated={() => fetchFolders(true)} />
+      <CreateSetDialog open={setOpen} onOpenChange={setSetOpen} onCreated={() => fetchSets(subjectFilter, sourceFilter, true)} />
       <RequestTopicDialog open={requestOpen} onOpenChange={setRequestOpen} />
     </div>
   );

@@ -24,7 +24,7 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
   const [loading, setLoading] = useState(true);
   const [sets, setSets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+  const [selectedSetIds, setSelectedSetIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const fetchAvailableSets = async () => {
@@ -40,6 +40,7 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
         .or(`user_id.eq.${user.id},is_admin.eq.true`);
 
       if (setsErr) throw setsErr;
+      
 
       // 2. Fetch sets already in this folder
       const { data: linkedSets, error: linkErr } = await supabase
@@ -54,7 +55,7 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
       // Filter out sets already in this folder
       const availableSets = (dbSets || []).filter((s) => !linkedIds.includes(s.id));
       setSets(availableSets);
-      setSelectedSetId(null);
+      setSelectedSetIds([]);
     } catch (err: any) {
       toast({ title: "Failed to load sets", description: err.message, variant: "destructive" });
     } finally {
@@ -68,22 +69,33 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
     }
   }, [open, folderId]);
 
+  const handleToggleSet = (setId: string) => {
+    setSelectedSetIds((prev) =>
+      prev.includes(setId) ? prev.filter((id) => id !== setId) : [...prev, setId]
+    );
+  };
+
   const handleAddSet = async () => {
-    if (!selectedSetId) return;
+    if (selectedSetIds.length === 0) return;
 
     setSaving(true);
     try {
+      const inserts = selectedSetIds.map((setId) => ({
+        folder_id: folderId,
+        set_id: setId,
+      }));
+
       const { error } = await supabase
         .from("flashcard_folder_sets")
-        .insert({ folder_id: folderId, set_id: selectedSetId });
+        .insert(inserts);
 
       if (error) throw error;
 
-      toast({ title: "Set added to folder!" });
+      toast({ title: `${selectedSetIds.length} set(s) added to folder!` });
       onOpenChange(false);
       onAdded();
     } catch (err: any) {
-      toast({ title: "Failed to add set", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to add sets", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -102,10 +114,10 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-accent" />
-            Add existing set to folder
+            Add existing sets to folder
           </DialogTitle>
           <DialogDescription>
-            Select a flashcard set from your library or admin sets to organize inside this folder.
+            Select flashcard sets from your library or admin sets to organize inside this folder.
           </DialogDescription>
         </DialogHeader>
 
@@ -133,12 +145,12 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
             </div>
           ) : (
             filteredSets.map((set) => {
-              const isSelected = selectedSetId === set.id;
+              const isSelected = selectedSetIds.includes(set.id);
               const SourceIcon = set.is_admin ? ShieldCheck : User;
               return (
                 <div
                   key={set.id}
-                  onClick={() => !saving && setSelectedSetId(set.id)}
+                  onClick={() => !saving && handleToggleSet(set.id)}
                   className={cn(
                     "flex items-start justify-between p-3 rounded-lg border cursor-pointer transition-all",
                     isSelected
@@ -157,7 +169,7 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
                   <div className="flex items-center gap-1.5 shrink-0">
                     <SourceIcon className={cn("h-3.5 w-3.5", set.is_admin ? "text-accent" : "text-violet-500")} />
                     <span className="text-[9px] font-bold uppercase text-muted-foreground">
-                      {set.is_admin ? "Admin" : "You"}
+                      {set.is_admin && set.user_id ? "Requested" : (set.is_admin ? "Admin" : "You")}
                     </span>
                   </div>
                 </div>
@@ -173,7 +185,7 @@ export default function AddToFolderDialog({ open, onOpenChange, folderId, onAdde
           <Button
             className="bg-accent text-accent-foreground hover:bg-accent/90 h-10 font-bold"
             onClick={handleAddSet}
-            disabled={saving || !selectedSetId}
+            disabled={saving || selectedSetIds.length === 0}
           >
             {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Adding…</> : "Add to Folder"}
           </Button>

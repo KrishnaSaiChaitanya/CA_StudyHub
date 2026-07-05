@@ -256,3 +256,28 @@ export const joinWaitlistAction = async (email: string) => {
 
   return { success: true };
 };
+
+export const getUserDetailsAction = async (userId: string) => {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email.length > 0);
+  
+  const isUserAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
+  if (!isUserAdmin) {
+    throw new Error("Unauthorized");
+  }
+
+  const adminClient = createAdminClient();
+  const { data: { user: targetUser }, error } = await adminClient.auth.admin.getUserById(userId);
+  if (error || !targetUser) {
+    return { name: "Unknown", email: "Unknown" };
+  }
+
+  return {
+    name: targetUser.user_metadata?.full_name || "Unknown",
+    email: targetUser.email || "Unknown"
+  };
+};

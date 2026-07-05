@@ -26,6 +26,7 @@ CREATE TABLE public.profiles (
   last_active_date date,
   full_name text,
   quick_access_preference text[], 
+  exam_attempt_month smallint CHECK (exam_attempt_month IS NULL OR (exam_attempt_month >= 1 AND exam_attempt_month <= 12)),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -421,3 +422,9 @@ CREATE INDEX idx_user_bookmarks_user_id ON public.user_bookmarks(user_id);
 CREATE UNIQUE INDEX idx_unique_planner_bookmark ON public.user_bookmarks (user_id, planner_id) WHERE planner_id IS NOT NULL;
 CREATE UNIQUE INDEX idx_unique_practice_paper_bookmark ON public.user_bookmarks (user_id, practice_paper_id) WHERE practice_paper_id IS NOT NULL;
 CREATE UNIQUE INDEX idx_unique_question_bookmark ON public.user_bookmarks (user_id, question_id) WHERE question_id IS NOT NULL;
+
+-- 7. SCHEMA MIGRATIONS
+-- Add exam_attempt_month to profiles (stores the user's selected exam attempt month, 1-12)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS exam_attempt_month smallint
+  CHECK (exam_attempt_month IS NULL OR (exam_attempt_month >= 1 AND exam_attempt_month <= 12));

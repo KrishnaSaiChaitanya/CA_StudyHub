@@ -21,6 +21,9 @@ import {
   MessageCircle,
   BookOpen,
   Lightbulb,
+  Layers,
+  Megaphone,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +42,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useStudent } from "@/components/StudentTypeProvider";
 import { format } from "date-fns";
+import { getTargetDateForMonth } from "@/utils/exam-attempts";
 
 type DbPaper = {
   id: string;
@@ -88,6 +92,9 @@ const quickAccessOptions: QuickAccessOption[] = [
   { icon: MessageCircle, title: "Community Library", path: "/community/upload" },
   { icon: BookOpen, title: "Study Resources", path: "/study/planner" },
   { icon: Lightbulb, title: "Notes & Bookmarks", path: "/study/bookmarks" },
+  { icon: Layers, title: "Flashcards", path: "/study/flash-cards" },
+  { icon: Megaphone, title: "Announcements", path: "/study/announcements" },
+  { icon: Trophy, title: "Leaderboard", path: "/community/leaderboard" },
 ];
 
 const normalizeQuickAccessPreference = (preference: unknown): string[] => {
@@ -120,7 +127,7 @@ const timeAgo = (dateString: string) => {
 
 const Home = () => {
   const supabase = createClient();
-  const { studentLevel, subjects, loading: studentLoading } = useStudent();
+  const { studentLevel, examAttemptMonth, examAttemptYear, subjects, loading: studentLoading } = useStudent();
   const queryClient = useQueryClient();
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>([]);
@@ -138,7 +145,7 @@ const Home = () => {
       return paths;
     },
     onSuccess: (paths) => {
-      queryClient.setQueryData(["dashboardData", studentLevel], (oldData: any) => ({
+      queryClient.setQueryData(["dashboardData", studentLevel, examAttemptMonth, examAttemptYear], (oldData: any) => ({
         ...(oldData || {}),
         quickAccessPreference: paths,
       }));
@@ -146,7 +153,7 @@ const Home = () => {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboardData", studentLevel],
+    queryKey: ["dashboardData", studentLevel, examAttemptMonth, examAttemptYear],
     enabled: !studentLoading,
     queryFn: async () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -167,7 +174,7 @@ const Home = () => {
         tickerRes,
         announcementsRes
       ] = await Promise.all([
-        supabase.from('profiles').select('current_streak, quick_access_preference').eq('id', user.id).single(),
+        supabase.from('profiles').select('current_streak, quick_access_preference, exam_attempt_month, exam_attempt_year').eq('id', user.id).single(),
         supabase.from('study_sessions').select('duration_seconds').eq('user_id', user.id).eq('session_date', todayStr),
         supabase.from('todos').select('*').eq('user_id', user.id),
         supabase.from('calendar_events').select('*').in('subject', ['general', ...subjects]),
@@ -196,8 +203,21 @@ const Home = () => {
 
       // Process Exam Date
       const userLevel = studentLevel || 'foundation';
-      const examDateData = examDatesRes.data?.find((d: any) => d.level === userLevel);
-      const targetDate = examDateData ? new Date(examDateData.exam_date) : new Date("2026-05-15");
+      const profileExamMonth = profileRes.data?.exam_attempt_month as number | null;
+      const profileExamYear = profileRes.data?.exam_attempt_year as number | null;
+      let targetDate: Date;
+      if (profileExamMonth) {
+        // User selected a specific attempt month — target is 1st of that month/year
+        if (profileExamYear) {
+          targetDate = new Date(profileExamYear, profileExamMonth - 1, 1);
+        } else {
+          targetDate = getTargetDateForMonth(profileExamMonth);
+        }
+      } else {
+        // Fallback to exam_dates table
+        const examDateData = examDatesRes.data?.find((d: any) => d.level === userLevel);
+        targetDate = examDateData ? new Date(examDateData.exam_date) : new Date("2026-05-15");
+      }
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const daysLeft = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));

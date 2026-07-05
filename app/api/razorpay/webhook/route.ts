@@ -30,8 +30,6 @@ export async function POST(req: Request) {
     const event = payload.event;
     const supabase = await createClient();
 
-    console.log("Razorpay Webhook Event:", event);
-
     if (event.startsWith("subscription.")) {
       const subscription = payload.payload.subscription.entity;
       const razorpaySubscriptionId = subscription.id;

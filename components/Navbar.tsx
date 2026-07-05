@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Menu, X, User as UserIcon, LogOut, Crown, Download } from "lucide-react";
+import { Menu, X, User as UserIcon, LogOut, Crown, Download, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { cacheAuthState, clearAuthCache, fetchAndCacheAuthState, getCachedUser, 
 import { LogoElement } from "@/assets/logo";
 import { useSubscription } from "./SubscriptionProvider";
 import { useStudent } from "./StudentTypeProvider";
+import { getUpcomingAttempts } from "@/utils/exam-attempts";
+import { StudentLevel } from "@/utils/supabase/types";
 
 
 const navItems = [
@@ -34,11 +36,12 @@ const Navbar = () => {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isSubscribed: isPro, planName, expiryDate } = useSubscription();
-  const { studentLevel, refreshProfile } = useStudent();
+  const { studentLevel, examAttemptMonth, examAttemptYear, refreshProfile } = useStudent();
   const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === 'true';
   
   const [editName, setEditName] = useState("");
   const [editStudentType, setEditStudentType] = useState("");
+  const [editExamAttempt, setEditExamAttempt] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const prevPathname = useRef(pathname);
   
@@ -119,7 +122,12 @@ const Navbar = () => {
 
       await supabase
         .from("profiles")
-        .update({ student_type: editStudentType })
+        .update({ 
+          student_type: editStudentType,
+          full_name: editName,
+          exam_attempt_month: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[0], 10) : null,
+          exam_attempt_year: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[1], 10) : null,
+        })
         .eq("id", user.id);
       
       await refreshProfile();
@@ -196,6 +204,19 @@ const Navbar = () => {
     }
   }, [studentLevel]);
 
+  useEffect(() => {
+    if (examAttemptMonth && examAttemptYear) {
+      setEditExamAttempt(`${examAttemptMonth}-${examAttemptYear}`);
+    } else {
+      setEditExamAttempt("");
+    }
+  }, [examAttemptMonth, examAttemptYear]);
+
+  // Generate attempt options based on selected student type
+  const attemptOptions = editStudentType
+    ? getUpcomingAttempts(editStudentType as StudentLevel, 4)
+    : [];
+
   const renderUserPopover = (mobile = false) => (
     <Popover>
       <PopoverTrigger asChild>
@@ -235,7 +256,11 @@ const Navbar = () => {
             <div className="grid grid-cols-3 items-center gap-4 text-sm">
               <Label htmlFor={`level-${mobile ? 'mobile' : 'desktop'}`}>Level</Label>
               <div className="col-span-2">
-                <Select value={editStudentType} onValueChange={setEditStudentType}>
+                <Select value={editStudentType} onValueChange={(val) => {
+                  setEditStudentType(val);
+                  // Reset attempt when level changes since allowed months/years differ
+                  setEditExamAttempt("");
+                }}>
                   <SelectTrigger className="h-8">
                     <SelectValue placeholder="Select level" />
                   </SelectTrigger>
@@ -247,6 +272,27 @@ const Navbar = () => {
                 </Select>
               </div>
             </div>
+            {editStudentType && attemptOptions.length > 0 && (
+              <div className="grid grid-cols-3 items-start gap-4 text-sm">
+                <Label htmlFor={`attempt-${mobile ? 'mobile' : 'desktop'}`}>Attempt</Label>
+                <div className="col-span-2">
+                  <Select value={editExamAttempt} onValueChange={setEditExamAttempt}>
+                    <SelectTrigger className="h-8">
+                      <Calendar className="h-3.5 w-3 " />
+                      <SelectValue placeholder={attemptOptions[0].label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{attemptOptions[0].label}</SelectItem>
+                      {attemptOptions.slice(1, 5).map((opt) => (
+                        <SelectItem key={`${opt.month}-${opt.targetDate.getFullYear()}`} value={`${opt.month}-${opt.targetDate.getFullYear()}`}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
             <Button size="sm" onClick={handleSaveProfile} disabled={isSaving} className="mt-2 w-full">
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>

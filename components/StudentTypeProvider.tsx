@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
 import { syncUserActivity } from "@/utils/supabase/profile";
+import { getCachedStudentLevel, cacheStudentLevel } from "@/utils/auth";
 import { SUBJECT_MAPPING } from "@/utils/subjects";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Briefcase, Award, Loader2 } from "lucide-react";
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui/button";
 
 interface StudentContextType {
   studentLevel: StudentLevel | null;
+  examAttemptMonth: number | null;
+  examAttemptYear: number | null;
   subjects: SubjectCategory[];
   loading: boolean;
   refreshProfile: () => Promise<void>;
@@ -18,6 +21,8 @@ interface StudentContextType {
 
 const StudentContext = createContext<StudentContextType>({
   studentLevel: null,
+  examAttemptMonth: null,
+  examAttemptYear: null,
   subjects: SUBJECT_MAPPING.foundation,
   loading: true,
   refreshProfile: async () => {},
@@ -26,8 +31,12 @@ const StudentContext = createContext<StudentContextType>({
 export const useStudent = () => useContext(StudentContext);
 
 export const StudentTypeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [studentLevel, setStudentLevel] = useState<StudentLevel | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Hydrate from cache synchronously to avoid loading flash
+  const cachedLevel = typeof window !== "undefined" ? getCachedStudentLevel() as StudentLevel | null : null;
+  const [studentLevel, setStudentLevel] = useState<StudentLevel | null>(cachedLevel);
+  const [examAttemptMonth, setExamAttemptMonth] = useState<number | null>(null);
+  const [examAttemptYear, setExamAttemptYear] = useState<number | null>(null);
+  const [loading, setLoading] = useState(cachedLevel === null);
   const [showPopup, setShowPopup] = useState(false);
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
@@ -41,12 +50,18 @@ export const StudentTypeProvider = ({ children }: { children: React.ReactNode })
       if (user) {
         const { data, error } = await supabase
           .from("profiles")
-          .select("student_type")
+          .select("student_type, exam_attempt_month, exam_attempt_year")
           .eq("id", user.id)
           .single();
         
         if (!error && data) {
-          setStudentLevel(data.student_type as StudentLevel | null);
+          const level = data.student_type as StudentLevel | null;
+          setStudentLevel(level);
+          setExamAttemptMonth(data.exam_attempt_month ?? null);
+          setExamAttemptYear(data.exam_attempt_year ?? null);
+          if (level) {
+            cacheStudentLevel(level);
+          }
           if (!data.student_type) {
             setShowPopup(true);
           } else {
@@ -76,6 +91,7 @@ export const StudentTypeProvider = ({ children }: { children: React.ReactNode })
       
       if (!error) {
         setStudentLevel(level);
+        cacheStudentLevel(level);
         setShowPopup(false);
       }
     }
@@ -87,7 +103,7 @@ export const StudentTypeProvider = ({ children }: { children: React.ReactNode })
     : SUBJECT_MAPPING.foundation;
 
   return (
-    <StudentContext.Provider value={{ studentLevel, subjects, loading, refreshProfile: fetchProfile }}>
+    <StudentContext.Provider value={{ studentLevel, examAttemptMonth, examAttemptYear, subjects, loading, refreshProfile: fetchProfile }}>
       {children}
       
       <AnimatePresence>

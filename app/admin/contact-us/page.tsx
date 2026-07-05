@@ -26,8 +26,6 @@ export default function ContactSubmissionsPage() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    console.log(data);
-
     if (data) setSubmissions(data);
     setLoading(false);
   };

@@ -55,13 +55,21 @@ export default function StudyPage({ params }: StudyPageProps) {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       // 1. Fetch set metadata
-      const { data: setData, error: setErr } = await supabase
+      let query = supabase
         .from("flashcard_sets")
         .select("*")
-        .eq("id", setId)
-        .eq("state", "published")
-        .single();
+        .eq("id", setId);
+
+      if (user) {
+        query = query.or(`state.eq.published,user_id.eq.${user.id}`);
+      } else {
+        query = query.eq("state", "published");
+      }
+
+      const { data: setData, error: setErr } = await query.single();
 
       if (setErr) throw setErr;
       setSet(setData);

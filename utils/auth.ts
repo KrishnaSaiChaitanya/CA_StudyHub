@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const USER_CACHE_KEY = "CAStudyHub_auth_user";
 export const SUBSCRIPTION_CACHE_KEY = "CAStudyHub_isSubscribed";
+export const STUDENT_LEVEL_CACHE_KEY = "CAStudyHub_student_level";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -16,6 +17,33 @@ export const getCachedUser = () => {
 };
 
 export const SUBSCRIPTION_DATA_CACHE_KEY = "CAStudyHub_subscription_data";
+
+export const getCachedStudentLevel = (): string | null => {
+  if (!isBrowser) return null;
+  try {
+    return window.localStorage.getItem(STUDENT_LEVEL_CACHE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+export const cacheStudentLevel = (level: string) => {
+  if (!isBrowser) return;
+  try {
+    window.localStorage.setItem(STUDENT_LEVEL_CACHE_KEY, level);
+  } catch {
+    // ignore localStorage failures
+  }
+};
+
+export const clearStudentLevelCache = () => {
+  if (!isBrowser) return;
+  try {
+    window.localStorage.removeItem(STUDENT_LEVEL_CACHE_KEY);
+  } catch {
+    // ignore localStorage failures
+  }
+};
 
 export const getCachedSubscription = () => {
   if (!isBrowser) return null;
@@ -51,6 +79,7 @@ export const clearAuthCache = () => {
     window.localStorage.removeItem(USER_CACHE_KEY);
     window.localStorage.removeItem(SUBSCRIPTION_CACHE_KEY);
     window.localStorage.removeItem(SUBSCRIPTION_DATA_CACHE_KEY);
+    window.localStorage.removeItem(STUDENT_LEVEL_CACHE_KEY);
   } catch {
     // ignore localStorage failures
   }

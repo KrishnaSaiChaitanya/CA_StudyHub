@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { SUBJECT_MAPPING, formatSubjectName } from "@/utils/subjects";
 import { Plus, Trash2, Loader2, Sparkles } from "lucide-react";
+import { useStudent } from "@/components/StudentTypeProvider";
 
 interface CreateSetDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ export default function CreateSetDialog({
   isAdmin = false,
 }: CreateSetDialogProps) {
   const supabase = createClient();
+   const { subjects } = useStudent();
   const { toast } = useToast();
 
   const [title, setTitle] = useState("");
@@ -39,9 +41,7 @@ export default function CreateSetDialog({
 
   const allSubjects = [
     "general",
-    ...SUBJECT_MAPPING.foundation,
-    ...SUBJECT_MAPPING.intermediate,
-    ...SUBJECT_MAPPING.final,
+   ...subjects
   ];
 
   const addCard = () => setCards((c) => [...c, { front: "", back: "" }]);

@@ -196,7 +196,7 @@ export default function FolderDetailsPage({ params }: FolderDetailsPageProps) {
                 subject={s.subject}
                 isAdmin={s.is_admin}
                 cardCount={s.cardCount}
-                author={s.is_admin ? "Admin" : "You"}
+                author={s.is_admin && s.user_id ? "Requested" : s.is_admin ? "Admin" : "You"}
                 index={i}
                 onClick={() => router.push(`/study/flash-cards/set/${s.id}`)}
               />

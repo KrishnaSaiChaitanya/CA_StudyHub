@@ -13,6 +13,7 @@ interface SetCardProps {
   author: string;
   onClick: () => void;
   index: number;
+  isRequestedByMe?: boolean;
 }
 
 export default function SetCard({
@@ -23,6 +24,7 @@ export default function SetCard({
   author,
   onClick,
   index,
+  isRequestedByMe,
 }: SetCardProps) {
   const SourceIcon = isAdmin ? ShieldCheck : User;
   const sourceLabel = isAdmin ? "Admin" : "You";
@@ -42,10 +44,18 @@ export default function SetCard({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary group-hover:bg-accent/10 transition-colors">
             <Layers className="h-4 w-4 text-accent" />
           </div>
-          <Badge variant="outline" className={`text-[9px] font-semibold py-0.5 flex items-center gap-1 ${sourceColor}`}>
-            <SourceIcon className="h-2.5 w-2.5" />
-            {sourceLabel}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            {isRequestedByMe ? (
+              <Badge variant="outline" className="text-[9px] font-semibold py-0.5 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                Requested
+              </Badge>
+            ) : (
+              <Badge variant="outline" className={`text-[9px] font-semibold py-0.5 flex items-center gap-1 ${sourceColor}`}>
+                <SourceIcon className="h-2.5 w-2.5" />
+                {sourceLabel}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <h3 className="mt-3 text-sm font-semibold text-card-foreground line-clamp-2 group-hover:text-accent transition-colors" title={title}>

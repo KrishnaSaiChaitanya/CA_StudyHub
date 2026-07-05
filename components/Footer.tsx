@@ -105,10 +105,10 @@ const Footer = () => {
             { 
               title: "Resources", 
               links: [
-                { name: "MTPs", href: "/practice/mtp-papers" },
-                { name: "RTPs", href: "/practice/rtp-papers" },
-                { name: "PYQs", href: "/practice/pyq-bank" },
-                { name: "Mock Tests", href: "/practice/mock-exams" }
+                { name: "MTPs", href: "/practice/mtp" },
+                { name: "RTPs", href: "/practice/rtp" },
+                { name: "PYQs", href: "/practice/pyq" },
+                // { name: "Mock Tests", href: "/practice/mock-exams" }
               ] 
             },
             { 
