@@ -25,12 +25,20 @@ export interface LeaderboardConfig {
  * Ordered by rank ascending (1st place first).
  */
 export async function getLeaderboardRankings(
-  supabase: SupabaseClient<any, "public", any>
+  supabase: SupabaseClient<any, "public", any>,
+  from?: number,
+  to?: number
 ): Promise<LeaderboardEntry[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("user_leaderboard")
     .select("*")
     .order("rank", { ascending: true });
+
+  if (typeof from === "number" && typeof to === "number") {
+    query = query.range(from, to);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching leaderboard rankings:", error.message);
