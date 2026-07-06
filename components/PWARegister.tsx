@@ -6,32 +6,49 @@ import Link from "next/link";
 
 export function PWARegister() {
   const { toast } = useToast();
+  const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 1. Register Service Worker
-    if ("serviceWorker" in navigator) {
-      const handleRegister = async () => {
-        try {
-          const registration = await navigator.serviceWorker.register("/sw.js");
-          console.log("ServiceWorker registration successful with scope: ", registration.scope);
-        } catch (err) {
-          console.error("ServiceWorker registration failed: ", err);
-        }
-      };
+    if (enablePWA) {
+      // 1. Register Service Worker
+      if ("serviceWorker" in navigator) {
+        const handleRegister = async () => {
+          try {
+            const registration = await navigator.serviceWorker.register("/sw.js");
+            console.log("ServiceWorker registration successful with scope: ", registration.scope);
+          } catch (err) {
+            console.error("ServiceWorker registration failed: ", err);
+          }
+        };
 
-      // Register when document is loaded
-      if (document.readyState === "complete") {
-        handleRegister();
-      } else {
-        window.addEventListener("load", handleRegister);
-        return () => window.removeEventListener("load", handleRegister);
+        // Register when document is loaded
+        if (document.readyState === "complete") {
+          handleRegister();
+        } else {
+          window.addEventListener("load", handleRegister);
+          return () => window.removeEventListener("load", handleRegister);
+        }
+      }
+    } else {
+      // Clean up/unregister Service Worker if disabled
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister().then((success) => {
+              if (success) {
+                console.log("ServiceWorker unregistered successfully");
+              }
+            });
+          }
+        });
       }
     }
-  }, []);
+  }, [enablePWA]);
 
   useEffect(() => {
+    if (!enablePWA) return;
     if (typeof window === "undefined") return;
 
     // 2. Handle Online/Offline Toasts
@@ -59,7 +76,11 @@ export function PWARegister() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [toast]);
+  }, [toast, enablePWA]);
+
+  if (!enablePWA) {
+    return null;
+  }
 
   return (
     <div style={{ display: "none" }} aria-hidden="true">

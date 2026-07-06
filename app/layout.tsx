@@ -9,16 +9,20 @@ const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
+const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
+
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "CA StudyHub",
   description: "Comprehensive learning and resource-sharing platform for CA aspirants.",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "CA StudyHub",
-  },
+  ...(enablePWA ? {
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "CA StudyHub",
+    },
+  } : {}),
   formatDetection: {
     telephone: false,
   },
