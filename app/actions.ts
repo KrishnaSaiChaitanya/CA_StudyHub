@@ -281,3 +281,78 @@ export const getUserDetailsAction = async (userId: string) => {
     email: targetUser.email || "Unknown"
   };
 };
+
+export const submitFeedbackRatingAction = async (data: {
+  overall: number;
+  flashcards: number;
+  navEase: number;
+  recommend: number;
+  problem: string;
+}) => {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be signed in to submit rating feedback." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      feedback: {
+        overall: data.overall,
+        flashcards: data.flashcards,
+        nav_ease: data.navEase,
+        recommend: data.recommend,
+        problem: data.problem,
+        submitted_at: new Date().toISOString(),
+      }
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Error submitting feedback rating:", error.message);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+};
+
+export const submitFeedbackSubmissionAction = async (data: {
+  type: "bug" | "feature_request";
+  message: string;
+}) => {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be signed in to submit feedback." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const name = profile?.full_name || user.email || "Anonymous User";
+  const email = user.email || "unknown@castudyhub.in";
+  const subject = data.type === "bug" ? "Bug Report via Feedback Widget" : "Feature Request via Feedback Widget";
+
+  const { error } = await supabase
+    .from("contact_submissions")
+    .insert({
+      name,
+      email,
+      subject,
+      message: data.message,
+      type: data.type,
+    });
+
+  if (error) {
+    console.error("Error submitting feedback contact submission:", error.message);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+};

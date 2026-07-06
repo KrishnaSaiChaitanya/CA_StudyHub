@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { TableFilters } from "@/components/admin/TableFilters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ContactSubmissionsPage() {
   const supabase = createClient();
@@ -18,6 +19,7 @@ export default function ContactSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [filters, setFilters] = useState({ column: "name", value: "" });
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -49,6 +51,27 @@ export default function ContactSubmissionsPage() {
     });
   };
 
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case "bug":
+        return <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/10 border-red-500/20 font-semibold px-2 py-0.5 text-xs">Bug</Badge>;
+      case "feature_request":
+        return <Badge className="bg-purple-500/10 text-purple-500 hover:bg-purple-500/10 border-purple-500/20 font-semibold px-2 py-0.5 text-xs">Feature Request</Badge>;
+      case "general":
+      default:
+        return <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/10 border-blue-500/20 font-semibold px-2 py-0.5 text-xs">General</Badge>;
+    }
+  };
+
+  const filteredSubmissions = submissions.filter(s => {
+    // Standardize checking for 'generic' or 'general' as type
+    const sType = s.type || 'general';
+    if (typeFilter !== "all" && sType !== typeFilter) return false;
+    if (!filters.value) return true;
+    const field = s[filters.column];
+    return field?.toString().toLowerCase().includes(filters.value.toLowerCase());
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -62,16 +85,33 @@ export default function ContactSubmissionsPage() {
         </Button>
       </div>
 
-      <TableFilters 
-        columns={[
-          { key: "name", label: "Name" },
-          { key: "email", label: "Email" },
-          { key: "subject", label: "Subject" },
-          { key: "message", label: "Message" }
-        ]} 
-        onFilterChange={setFilters}
-        placeholder="Filter submissions..."
-      />
+      <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-start justify-between mb-6">
+        <div className="flex-1">
+          <TableFilters 
+            columns={[
+              { key: "name", label: "Name" },
+              { key: "email", label: "Email" },
+              { key: "subject", label: "Subject" },
+              { key: "message", label: "Message" }
+            ]} 
+            onFilterChange={setFilters}
+            placeholder="Filter submissions..."
+          />
+        </div>
+        <div className="w-full md:w-[220px] bg-card p-4 rounded-xl border border-border/50 shadow-sm flex flex-col justify-center">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="bg-background border-border/60">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="feature_request">Feature Request</SelectItem>
+              <SelectItem value="bug">Bug</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <Card className="border-border/60">
         {loading ? (
@@ -85,27 +125,20 @@ export default function ContactSubmissionsPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.filter(s => {
-                if (!filters.value) return true;
-                const field = s[filters.column];
-                return field?.toString().toLowerCase().includes(filters.value.toLowerCase());
-              }).length === 0 ? (
+              {filteredSubmissions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                     No submissions found yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                submissions.filter(s => {
-                  if (!filters.value) return true;
-                  const field = s[filters.column];
-                  return field?.toString().toLowerCase().includes(filters.value.toLowerCase());
-                }).map((submission) => (
+                filteredSubmissions.map((submission) => (
                   <TableRow key={submission.id} className="group cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleViewDetails(submission)}>
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-2">
@@ -115,11 +148,8 @@ export default function ContactSubmissionsPage() {
                     </TableCell>
                     <TableCell className="font-medium">{submission.name}</TableCell>
                     <TableCell className="text-muted-foreground">{submission.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal border-accent/20 bg-accent/5">
-                        {submission.subject}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{getTypeBadge(submission.type || 'general')}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{submission.subject}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" className="group-hover:text-accent group-hover:bg-accent/10 transition-colors">
                         <Eye className="h-4 w-4" />
@@ -144,7 +174,7 @@ export default function ContactSubmissionsPage() {
           
           {selectedSubmission && (
             <div className="space-y-6 py-2">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
                     <User className="h-3 w-3" /> From
@@ -156,6 +186,12 @@ export default function ContactSubmissionsPage() {
                     <Mail className="h-3 w-3" /> Email
                   </label>
                   <p className="font-medium text-foreground">{selectedSubmission.email}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Type
+                  </label>
+                  <div className="mt-1">{getTypeBadge(selectedSubmission.type || 'general')}</div>
                 </div>
               </div>
 

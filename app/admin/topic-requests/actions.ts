@@ -23,18 +23,22 @@ export async function getUserEmails(userIds: string[]): Promise<Record<string, s
   const supabaseAdmin = createAdminClient();
   const emailMap: Record<string, string> = {};
 
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-    perPage: 1000,
-  });
+  // Deduplicate user IDs to avoid redundant calls
+  const uniqueUserIds = Array.from(new Set(userIds));
 
-  if (error || !data?.users) return emailMap;
-
-  const idSet = new Set(userIds);
-  for (const user of data.users) {
-    if (idSet.has(user.id) && user.email) {
-      emailMap[user.id] = user.email;
-    }
-  }
+  // Fetch only the specific users needed in parallel
+  await Promise.all(
+    uniqueUserIds.map(async (id) => {
+      try {
+        const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+        if (!error && data?.user?.email) {
+          emailMap[id] = data.user.email;
+        }
+      } catch (err) {
+        console.error(`Error fetching user profile for ID ${id}:`, err);
+      }
+    })
+  );
 
   return emailMap;
 }

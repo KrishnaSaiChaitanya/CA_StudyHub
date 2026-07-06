@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { StudyTimerPill } from "@/components/StudyTimerPill";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
       </main>
       {!isExcluded && <Footer />}
       {!isComingSoon && <StudyTimerPill />}
+      <FeedbackWidget />
     </div>
   );
 }

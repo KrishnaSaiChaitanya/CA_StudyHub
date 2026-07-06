@@ -27,6 +27,7 @@ CREATE TABLE public.profiles (
   full_name text,
   quick_access_preference text[], 
   exam_attempt_month smallint CHECK (exam_attempt_month IS NULL OR (exam_attempt_month >= 1 AND exam_attempt_month <= 12)),
+  feedback jsonb,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -247,6 +248,7 @@ CREATE TABLE public.contact_submissions (
   email text NOT NULL,
   subject text NOT NULL,
   message text NOT NULL,
+  type text NOT NULL DEFAULT 'general',
   created_at timestamptz DEFAULT timezone('utc'::text, now())
 );
 

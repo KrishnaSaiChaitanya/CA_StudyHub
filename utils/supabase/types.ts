@@ -38,10 +38,19 @@ export type SubjectCategory =
 
 export interface Profile {
   id: string; // UUID from auth.users
+  full_name: string | null;
   student_type: StudentLevel | null;
   current_streak: number;
   last_active_date: string | null; // 'YYYY-MM-DD'
   is_perminent_paid_user: boolean;
+  feedback: {
+    overall: number;
+    flashcards: number;
+    nav_ease: number;
+    recommend: number;
+    problem: string;
+    submitted_at: string;
+  } | null;
   created_at: string; // ISO String
   updated_at: string;
 }
@@ -248,6 +257,16 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+export interface ContactSubmission {
+  id: string; // UUID
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  type: string;
+  created_at: string;
+}
+
 // ==========================================
 // 3. SUPABASE DATABASE INTERFACE
 // ==========================================
@@ -277,6 +296,7 @@ export interface Database {
       flashcard_folder_sets: { Row: FlashcardFolderSet; Insert: Partial<FlashcardFolderSet>; Update: Partial<FlashcardFolderSet> };
       flashcard_requests: { Row: FlashcardRequest; Insert: Partial<FlashcardRequest>; Update: Partial<FlashcardRequest> };
       leaderboard_config: { Row: LeaderboardConfig; Insert: Partial<LeaderboardConfig>; Update: Partial<LeaderboardConfig> };
+      contact_submissions: { Row: ContactSubmission; Insert: Partial<ContactSubmission>; Update: Partial<ContactSubmission> };
       user_leaderboard: { Row: LeaderboardEntry; Insert: never; Update: never };
     };
     Views: {

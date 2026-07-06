@@ -87,6 +87,11 @@ export default function FlashcardsDashboard() {
     if (!forceRefresh && cacheSets && selectedSubject === "All" && selectedSource === "All") {
       setSets(cacheSets);
       setSetsLoading(false);
+      if (!userId) {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (user) setUserId(user.id);
+        });
+      }
       return;
     }
     setSetsLoading(true);
@@ -387,7 +392,7 @@ export default function FlashcardsDashboard() {
                       isAdmin={s.is_admin}
                       cardCount={s.cardCount}
                       author={s.is_admin ? "Admin" : "You"}
-                      isRequestedByMe={s.is_admin && s.user_id === userId}
+                      isRequestedByMe={!!userId && s.is_admin && s.user_id === userId}
                       index={i}
                       onClick={() => router.push(`/study/flash-cards/set/${s.id}`)}
                     />

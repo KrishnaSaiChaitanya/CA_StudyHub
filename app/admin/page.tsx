@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Mail, FileText, ArrowUpRight, Clock, Plus, Users, BookOpen, Layers,
-  Save, Trash2, ArrowUp, ArrowDown, Pencil, Loader2
+  Save, Trash2, ArrowUp, ArrowDown, Pencil, Loader2, Star
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function DashboardOverview() {
   const [counts, setCounts] = useState({ planners: 0, tests: 0, faculty: 0 });
@@ -25,6 +26,16 @@ export default function DashboardOverview() {
   const [tickerLoading, setTickerLoading] = useState(true);
   const [tickerSaving, setTickerSaving] = useState(false);
   
+  // Feedback Statistics State
+  const [feedbackStats, setFeedbackStats] = useState({
+    total: 0,
+    overallAvg: 0,
+    flashcardsAvg: 0,
+    navEaseAvg: 0,
+    recommendAvg: 0,
+    problemsDistribution: {} as Record<string, number>,
+  });
+
   // Form State
   const [newTickerMessage, setNewTickerMessage] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -36,7 +47,7 @@ export default function DashboardOverview() {
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
       try {
-        const [pRes, tRes, fRes, cRes, sRes, flashReqRes, contactRes, submissionRes, flashDataRes, tickerRes] = await Promise.all([
+        const [pRes, tRes, fRes, cRes, sRes, flashReqRes, contactRes, submissionRes, flashDataRes, tickerRes, feedbackRes] = await Promise.all([
           supabase.from('study_planners').select('*', { count: 'exact', head: true }),
           supabase.from('tests').select('*', { count: 'exact', head: true }),
           supabase.from('faculty').select('*', { count: 'exact', head: true }),
@@ -46,7 +57,8 @@ export default function DashboardOverview() {
           supabase.from('contact_submissions').select('*').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('community_submissions').select('*').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('flashcard_requests').select('*, profiles(full_name)').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
-          supabase.from('site_content').select('*').eq('page_id', 'dashboard_ticker').maybeSingle()
+          supabase.from('site_content').select('*').eq('page_id', 'dashboard_ticker').maybeSingle(),
+          supabase.from('profiles').select('feedback').not('feedback', 'is', null)
         ]);
 
         setCounts({
@@ -62,6 +74,37 @@ export default function DashboardOverview() {
         setRecentContactData(contactRes.data || []);
         setRecentSubmissionData(submissionRes.data || []);
         setRecentFlashcardData(flashDataRes.data || []);
+
+        const feedbackData = feedbackRes.data || [];
+        const totalFeedback = feedbackData.length;
+
+        let sumOverall = 0;
+        let sumFlashcards = 0;
+        let sumNavEase = 0;
+        let sumRecommend = 0;
+        const problemCounts: Record<string, number> = {};
+
+        feedbackData.forEach(row => {
+          const fb = row.feedback as any;
+          if (fb) {
+            sumOverall += fb.overall || 0;
+            sumFlashcards += fb.flashcards || 0;
+            sumNavEase += fb.nav_ease || 0;
+            sumRecommend += fb.recommend || 0;
+            if (fb.problem) {
+              problemCounts[fb.problem] = (problemCounts[fb.problem] || 0) + 1;
+            }
+          }
+        });
+
+        setFeedbackStats({
+          total: totalFeedback,
+          overallAvg: totalFeedback ? Number((sumOverall / totalFeedback).toFixed(1)) : 0,
+          flashcardsAvg: totalFeedback ? Number((sumFlashcards / totalFeedback).toFixed(1)) : 0,
+          navEaseAvg: totalFeedback ? Number((sumNavEase / totalFeedback).toFixed(1)) : 0,
+          recommendAvg: totalFeedback ? Number((sumRecommend / totalFeedback).toFixed(1)) : 0,
+          problemsDistribution: problemCounts,
+        });
 
         if (tickerRes?.data && tickerRes.data.content && Array.isArray(tickerRes.data.content.messages)) {
           setTickerMessages(tickerRes.data.content.messages);
@@ -236,6 +279,134 @@ export default function DashboardOverview() {
        
         </div>
       </div>
+
+        {/* User Feedback Ratings Section */}
+        {!loading && (
+          <div className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">User Feedback & Ratings</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Overall rating and category-wise performance submitted by students.
+                </p>
+              </div>
+              <Badge variant="outline" className="w-fit border-accent/20 bg-accent/5 text-accent font-bold px-3 py-1 text-xs">
+                {feedbackStats.total} Total Submissions
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Overall Rating Card */}
+              <div className="p-5 rounded-xl bg-muted/10 border border-border/40 flex flex-col items-center justify-center text-center">
+                <span className="text-sm font-semibold text-muted-foreground mb-1">Overall Satisfaction</span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-3xl font-black text-foreground">{feedbackStats.overallAvg}</span>
+                  <span className="text-sm text-muted-foreground">/ 5</span>
+                </div>
+                <div className="flex items-center gap-0.5 text-accent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className={cn(
+                        "fill-current",
+                        i < Math.round(feedbackStats.overallAvg) ? "text-accent" : "text-muted/20"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Quality of Flashcards */}
+              <div className="p-5 rounded-xl bg-muted/10 border border-border/40 flex flex-col items-center justify-center text-center">
+                <span className="text-sm font-semibold text-muted-foreground mb-1">Flashcards & MCQ Mocks</span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-3xl font-black text-foreground">{feedbackStats.flashcardsAvg}</span>
+                  <span className="text-sm text-muted-foreground">/ 5</span>
+                </div>
+                <div className="flex items-center gap-0.5 text-accent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className={cn(
+                        "fill-current",
+                        i < Math.round(feedbackStats.flashcardsAvg) ? "text-accent" : "text-muted/20"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Ease of Navigation */}
+              <div className="p-5 rounded-xl bg-muted/10 border border-border/40 flex flex-col items-center justify-center text-center">
+                <span className="text-sm font-semibold text-muted-foreground mb-1">Website Navigation</span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-3xl font-black text-foreground">{feedbackStats.navEaseAvg}</span>
+                  <span className="text-sm text-muted-foreground">/ 5</span>
+                </div>
+                <div className="flex items-center gap-0.5 text-accent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className={cn(
+                        "fill-current",
+                        i < Math.round(feedbackStats.navEaseAvg) ? "text-accent" : "text-muted/20"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Likelihood to Recommend */}
+              <div className="p-5 rounded-xl bg-muted/10 border border-border/40 flex flex-col items-center justify-center text-center">
+                <span className="text-sm font-semibold text-muted-foreground mb-1">Likelihood to Recommend</span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-3xl font-black text-foreground">{feedbackStats.recommendAvg}</span>
+                  <span className="text-sm text-muted-foreground">/ 5</span>
+                </div>
+                <div className="flex items-center gap-0.5 text-accent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={16}
+                      className={cn(
+                        "fill-current",
+                        i < Math.round(feedbackStats.recommendAvg) ? "text-accent" : "text-muted/20"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Problems Solved Distribution */}
+            {feedbackStats.total > 0 && (
+              <div className="pt-4 border-t border-border/30">
+                <h3 className="text-sm font-bold text-foreground mb-3">Problems Solved for Students</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Saving time", "Finding new resources", "Tracking progress", "Revising topics"].map((prob) => {
+                    const count = feedbackStats.problemsDistribution[prob] || 0;
+                    const percentage = feedbackStats.total ? Math.round((count / feedbackStats.total) * 100) : 0;
+                    return (
+                      <div key={prob} className="p-3.5 rounded-lg border border-border/30 bg-background flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground">{prob}</span>
+                        <div className="flex items-baseline gap-2 mt-2">
+                          <span className="text-xl font-bold text-foreground">{count}</span>
+                          <span className="text-xs text-muted-foreground">({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-muted h-1.5 rounded-full mt-2 overflow-hidden">
+                          <div className="bg-accent h-full rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Contact Us Submissions */}
@@ -585,6 +756,8 @@ export default function DashboardOverview() {
 
           </div>
         )}
+
+      
       </div>
     </div>
   );
