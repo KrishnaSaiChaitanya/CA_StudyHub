@@ -92,13 +92,14 @@ export default function AdminFlashcardsPage() {
         .from("flashcard_sets")
         .select("*, flashcards(count)", { count: 'exact' })
         .eq("is_admin", true)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true });
 
       if (query) {
         q = q.ilike("title", `%${query}%`);
       }
 
-      const from = page * ITEMS_PER_PAGE;
+      const from = append ? sets.length : 0;
       const to = from + ITEMS_PER_PAGE - 1;
       q = q.range(from, to);
 
@@ -371,6 +372,7 @@ export default function AdminFlashcardsPage() {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
+                    <TableHead className="w-[60px] font-bold text-center">#</TableHead>
                     <TableHead className="font-bold">Title</TableHead>
                     <TableHead className="font-bold">Subject</TableHead>
                     <TableHead className="font-bold">State</TableHead>
@@ -380,8 +382,11 @@ export default function AdminFlashcardsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sets.map((set) => (
+                  {sets.map((set, index) => (
                     <TableRow key={set.id} className="hover:bg-muted/20 transition-colors">
+                      <TableCell className="font-bold text-xs text-muted-foreground text-center">
+                        {index + 1}
+                      </TableCell>
                       <TableCell className="font-medium text-sm">{set.title}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-[10px] font-bold py-0.5">

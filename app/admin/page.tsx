@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Mail, FileText, ArrowUpRight, Clock, Plus, Users, BookOpen, Layers,
-  Save, Trash2, ArrowUp, ArrowDown, Pencil, Loader2, Star
+  Save, Trash2, ArrowUp, ArrowDown, Pencil, Loader2, Star, Inbox
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function DashboardOverview() {
-  const [counts, setCounts] = useState({ planners: 0, tests: 0, faculty: 0 });
+  const [counts, setCounts] = useState({ planners: 0, tests: 0, faculty: 0, pendingRequests: 0 });
   const [recentStats, setRecentStats] = useState({ contact: 0, submissions: 0, flashcards: 0 });
   const [recentContactData, setRecentContactData] = useState<any[]>([]);
   const [recentSubmissionData, setRecentSubmissionData] = useState<any[]>([]);
@@ -47,7 +47,7 @@ export default function DashboardOverview() {
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
       try {
-        const [pRes, tRes, fRes, cRes, sRes, flashReqRes, contactRes, submissionRes, flashDataRes, tickerRes, feedbackRes] = await Promise.all([
+        const [pRes, tRes, fRes, cRes, sRes, flashReqRes, contactRes, submissionRes, flashDataRes, tickerRes, feedbackRes, pendingReqRes] = await Promise.all([
           supabase.from('study_planners').select('*', { count: 'exact', head: true }),
           supabase.from('tests').select('*', { count: 'exact', head: true }),
           supabase.from('faculty').select('*', { count: 'exact', head: true }),
@@ -58,13 +58,15 @@ export default function DashboardOverview() {
           supabase.from('community_submissions').select('*').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('flashcard_requests').select('*, profiles(full_name)').gte('created_at', twoDaysAgo).order('created_at', { ascending: false }).limit(3),
           supabase.from('site_content').select('*').eq('page_id', 'dashboard_ticker').maybeSingle(),
-          supabase.from('profiles').select('feedback').not('feedback', 'is', null)
+          supabase.from('profiles').select('feedback').not('feedback', 'is', null),
+          supabase.from('flashcard_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
         ]);
 
         setCounts({
           planners: pRes.count || 0,
           tests: tRes.count || 0,
-          faculty: fRes.count || 0
+          faculty: fRes.count || 0,
+          pendingRequests: pendingReqRes.count || 0
         });
         setRecentStats({
           contact: cRes.count || 0,
@@ -230,7 +232,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="relative overflow-hidden bg-card border border-border/50 p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <BookOpen className="w-20 h-20 text-primary" />
@@ -278,6 +280,24 @@ export default function DashboardOverview() {
           </p>
        
         </div>
+
+        <a
+          href="/admin/topic-requests"
+          className="relative overflow-hidden bg-card border border-border/50 p-6 rounded-2xl shadow-sm hover:shadow-lg hover:border-amber-500/30 transition-all group block"
+        >
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Inbox className="w-20 h-20 text-amber-500" />
+          </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
+              <Inbox className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-lg text-foreground">Pending Requests</h3>
+          </div>
+          <p className="text-5xl font-black text-amber-500 mb-2 tabular-nums">
+            {loading ? '---' : counts.pendingRequests}
+          </p>
+        </a>
       </div>
 
         {/* User Feedback Ratings Section */}
@@ -586,7 +606,7 @@ export default function DashboardOverview() {
           </div>
           
           <div className="p-4 border-t border-border/50 bg-muted/5">
-            <a href="/admin/flash-cards" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5">
+            <a href="/admin/topic-requests" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5">
               Review Requests <ArrowUpRight className="w-3 h-3" />
             </a>
           </div>

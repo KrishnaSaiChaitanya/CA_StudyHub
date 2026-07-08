@@ -30,7 +30,7 @@ export const StudyTimerPill = () => {
         initial={{ opacity: 0, scale: 0.8, x: 20 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
         exit={{ opacity: 0, scale: 0.8, x: 20 }}
-        className="flex items-center gap-2 fixed bottom-6 right-4 z-100"
+        className="flex items-center gap-2 fixed bottom-6 left-4 z-100"
       >
         <button
           onClick={() => router.push("/study/progress")}

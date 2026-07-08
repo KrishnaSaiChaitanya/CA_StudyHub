@@ -43,13 +43,14 @@ export default function AdminTopicRequestsPage() {
         .from("flashcard_requests")
         .select("*, profiles(full_name)", { count: 'exact' })
         .eq("status", "pending")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true });
 
       if (query) {
         q = q.ilike("topic", `%${query}%`);
       }
 
-      const from = page * ITEMS_PER_PAGE;
+      const from = append ? requests.length : 0;
       const to = from + ITEMS_PER_PAGE - 1;
       q = q.range(from, to);
 
@@ -302,9 +303,10 @@ export default function AdminTopicRequestsPage() {
             </div>
           ) : (
             <>
-              <Table>
+               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow>
+                    <TableHead className="w-[60px] font-bold text-center">#</TableHead>
                     <TableHead className="font-bold">Requested By</TableHead>
                     <TableHead className="font-bold">Email</TableHead>
                     <TableHead className="font-bold">Topic</TableHead>
@@ -314,8 +316,11 @@ export default function AdminTopicRequestsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {requests.map((req) => (
+                  {requests.map((req, index) => (
                     <TableRow key={req.id} className="hover:bg-muted/20 transition-colors">
+                      <TableCell className="font-bold text-xs text-muted-foreground text-center">
+                        {index + 1}
+                      </TableCell>
                       <TableCell className="font-semibold text-xs text-foreground italic">
                         {req.profiles?.full_name || "Anonymous"}
                       </TableCell>

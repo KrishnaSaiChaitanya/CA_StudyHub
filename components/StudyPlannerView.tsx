@@ -45,7 +45,8 @@ const StudyPlannerView = ({ onBack }: Props) => {
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [sourceFilter, setSourceFilter] = useState(
     filterFromUrl === 'community' ? 'Community Library' : 
-    filterFromUrl === 'faculty' ? 'Faculty Uploads' : 'All'
+    filterFromUrl === 'faculty' ? 'Faculty Uploads' : 
+    filterFromUrl === 'admin' ? 'Admin' : 'All'
   );
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -207,13 +208,14 @@ const handleDownload = async (planner: PlannerType) => {
     const matchesSource = 
       sourceFilter === "All" ? true :
       sourceFilter === "Community Library" ? p.is_community :
-      !p.is_community; // Faculty Uploads
+      sourceFilter === "Admin" ? (!p.is_community && !p.faculty_name) :
+      (!p.is_community && !!p.faculty_name); // Faculty Uploads
 
     return matchesSearch && matchesSubject && matchesBookmark && matchesSource;
   });
 
   const subjectOptions = ["All", ...subjects];
-  const sourceOptions = ["All", "Community Library", "Faculty Uploads"];
+  const sourceOptions = ["All", "Admin", "Faculty Uploads", "Community Library"];
 
   return (
     <div>

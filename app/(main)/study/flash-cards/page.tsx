@@ -121,8 +121,8 @@ export default function FlashcardsDashboard() {
       } else if (selectedSource === "Requested") {
         setsQuery = setsQuery.eq("is_admin", true).eq("user_id", user.id);
       } else {
-     setsQuery = setsQuery.or(
-  `user_id.eq.${user.id},and(is_admin.eq.true,state.eq.published)`
+   setsQuery = setsQuery.or(
+  `user_id.eq.${user.id},and(is_admin.eq.true,state.eq.published,user_id.is.null)`
 );
 
       }
