@@ -5,12 +5,12 @@ import { Check, Crown, Zap, Star, Upload, Gift, ArrowRight, Clock, Calendar, Boo
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Footer from "@/components/Footer";
+import Footer from "@/components/shared/Footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { useSubscription } from "@/components/SubscriptionProvider";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
 import { fetchAndCacheAuthState } from "@/utils/auth";
 
 const freeFeatures = [

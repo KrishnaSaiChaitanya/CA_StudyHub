@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { SUBJECT_MAPPING, formatSubjectName } from "@/utils/subjects";
 import { Plus, Trash2, Loader2, Sparkles } from "lucide-react";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 
 interface CreateSetDialogProps {
   open: boolean;

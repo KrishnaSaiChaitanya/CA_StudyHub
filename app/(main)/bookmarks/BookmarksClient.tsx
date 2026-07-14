@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/shared/Navbar";
+import Footer from "@/components/shared/Footer";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,11 @@ import {
   Eye,
   ExternalLink
 } from "lucide-react";
-import { ProFeatureLock } from "@/components/ProFeatureLock";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { createClient } from "@/utils/supabase/client";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { BookmarkItem, DbNote } from "./types";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { formatSubjectName } from "@/utils/subjects";
 import { useRouter } from "next/navigation";
 

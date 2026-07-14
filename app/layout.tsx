@@ -35,9 +35,9 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-import { ConditionalLayout } from "@/components/ConditionalLayout";
-import WelcomeModal from "@/components/welcomeModel";
-import { PWARegister } from "@/components/PWARegister";
+import { ConditionalLayout } from "@/components/shared/ConditionalLayout";
+import WelcomeModal from "@/components/shared/WelcomeModal";
+import { PWARegister } from "@/components/shared/PwaRegister";
 
 export default function RootLayout({
   children,

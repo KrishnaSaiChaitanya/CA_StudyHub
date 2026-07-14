@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 import NotificationsBell from "@/components/notifications/Notification";
 import {
   BarChart3,
@@ -40,7 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { format } from "date-fns";
 import { getTargetDateForMonth } from "@/utils/exam-attempts";
 
@@ -91,7 +90,7 @@ const quickAccessOptions: QuickAccessOption[] = [
   { icon: CalendarDays, title: "Calendar", path: "/study/events" },
   { icon: MessageCircle, title: "Community Library", path: "/community/upload" },
   { icon: BookOpen, title: "Study Resources", path: "/study/planner" },
-  { icon: Lightbulb, title: "Notes & Bookmarks", path: "/study/bookmarks" },
+  { icon: Lightbulb, title: "Notes & Bookmarks", path: "/bookmarks" },
   { icon: Layers, title: "Flashcards", path: "/study/flash-cards" },
   { icon: Megaphone, title: "Announcements", path: "/study/announcements" },
   { icon: Trophy, title: "Leaderboard", path: "/community/leaderboard" },
@@ -378,7 +377,7 @@ const Home = () => {
       {/* <Navbar /> */}
 
 
-    {announcementsList?.length > 0 && (() => {
+      {announcementsList?.length > 0 && (() => {
         const repeatCount = Math.max(10, Math.ceil(20 / announcementsList.length));
         const singleSet = Array.from({ length: repeatCount }, (_, setIdx) =>
           announcementsList.map((ann: string, idx: number) => (
@@ -480,73 +479,73 @@ const Home = () => {
                       </DialogDescription>
                     </DialogHeader>
 
-                  <div className="mt-6 space-y-3">
-  <div className="flex items-center justify-between">
-    <p className="text-sm font-medium text-muted-foreground">Quick Access</p>
-    <span className="text-xs font-medium px-2 py-1 bg-secondary rounded-full">
-      {selectedQuickAccess.length}/4 selected
-    </span>
-  </div>
+                    <div className="mt-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-muted-foreground">Quick Access</p>
+                        <span className="text-xs font-medium px-2 py-1 bg-secondary rounded-full">
+                          {selectedQuickAccess.length}/4 selected
+                        </span>
+                      </div>
 
-  {/* 1. Mobile: Single column with horizontal scroll or vertical list 
+                      {/* 1. Mobile: Single column with horizontal scroll or vertical list 
       2. sm: Grid with 2 columns
       3. Added 'max-h' and custom scrollbar for better mobile containment
   */}
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1 pb-2 scrollbar-thin">
-    {quickAccessOptions.map((option) => {
-      const isSelected = selectedQuickAccess.includes(option.path);
-      const isDisabled = !isSelected && selectedQuickAccess.length >= 4;
-      
-      return (
-        <button
-          key={option.path}
-          type="button"
-          onClick={() => handleToggleQuickAccess(option.path)}
-          // 4. Enhanced active state for touch (active:scale-[0.98])
-          className={`
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1 pb-2 scrollbar-thin">
+                        {quickAccessOptions.map((option) => {
+                          const isSelected = selectedQuickAccess.includes(option.path);
+                          const isDisabled = !isSelected && selectedQuickAccess.length >= 4;
+
+                          return (
+                            <button
+                              key={option.path}
+                              type="button"
+                              onClick={() => handleToggleQuickAccess(option.path)}
+                              // 4. Enhanced active state for touch (active:scale-[0.98])
+                              className={`
             flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all 
             active:scale-[0.98] touch-manipulation
-            ${isSelected 
-              ? 'border-accent bg-accent/10 shadow-sm ring-1 ring-accent/30' 
-              : 'border-border bg-background'
-            } 
+            ${isSelected
+                                  ? 'border-accent bg-accent/10 shadow-sm ring-1 ring-accent/30'
+                                  : 'border-border bg-background'
+                                } 
             ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-accent/50'}
           `}
-          disabled={isDisabled}
-        >
-          {/* 5. Icon Container: Slightly larger on mobile for better visibility */}
-          <div className={`
+                              disabled={isDisabled}
+                            >
+                              {/* 5. Icon Container: Slightly larger on mobile for better visibility */}
+                              <div className={`
             flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-colors
             ${isSelected ? 'bg-accent text-white' : 'bg-secondary text-accent'}
           `}>
-            <option.icon className="h-6 w-6" />
-          </div>
+                                <option.icon className="h-6 w-6" />
+                              </div>
 
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent' : 'text-foreground'}`}>
-              {option.title}
-            </p>
-            <p className="text-[11px] text-muted-foreground truncate opacity-80">
-              {option.path}
-            </p>
-          </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent' : 'text-foreground'}`}>
+                                  {option.title}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground truncate opacity-80">
+                                  {option.path}
+                                </p>
+                              </div>
 
-          {/* 6. Selection Indicator: Visual feedback is crucial on small screens */}
-          <div className={`
+                              {/* 6. Selection Indicator: Visual feedback is crucial on small screens */}
+                              <div className={`
             h-5 w-5 rounded-full border flex items-center justify-center transition-all
             ${isSelected ? 'bg-accent border-accent' : 'border-border'}
           `}>
-            {isSelected && (
-              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </div>
-        </button>
-      );
-    })}
-  </div>
-</div>
+                                {isSelected && (
+                                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                    <path d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     <DialogFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <DialogClose asChild>
@@ -629,7 +628,7 @@ const Home = () => {
               View all
             </Link> */}
           </div>
-          
+
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x">
             {isLoading ? (
               // Loading Skeletons
@@ -649,35 +648,35 @@ const Home = () => {
             ) : (
               recentPapers.map((paper) => (
                 <Link href={paper.pdf_url} prefetch={false} target="_blank">
-                <Card key={paper.id} className="group flex-shrink-0 w-52 snap-start cursor-pointer border-border transition-all hover:shadow-md hover:border-accent/30">
-                  <CardContent className="p-0">
-                    <div className="relative flex aspect-video w-full items-center justify-center bg-secondary rounded-t-lg border-b">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background shadow-sm">
-                          <FileText className="h-5 w-5 text-accent" />
+                  <Card key={paper.id} className="group flex-shrink-0 w-52 snap-start cursor-pointer border-border transition-all hover:shadow-md hover:border-accent/30">
+                    <CardContent className="p-0">
+                      <div className="relative flex aspect-video w-full items-center justify-center bg-secondary rounded-t-lg border-b">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background shadow-sm">
+                            <FileText className="h-5 w-5 text-accent" />
+                          </div>
+                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wider line-clamp-1">
+                            {paper.type ?? "Study Planner"}
+                          </span>
                         </div>
-                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wider line-clamp-1">
-                          {paper.type ?? "Study Planner"}
-                        </span>
                       </div>
-                    </div>
-                    <div className="p-3.5">
-                      <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2" title={paper.title}>
-                        {paper.title}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        <Badge variant="outline" className="text-[9px] px-1.5 font-medium border-border line-clamp-1">
-                          {formatSubjectName(paper.subject)}
-                        </Badge>
+                      <div className="p-3.5">
+                        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2" title={paper.title}>
+                          {paper.title}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <Badge variant="outline" className="text-[9px] px-1.5 font-medium border-border line-clamp-1">
+                            {formatSubjectName(paper.subject)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <span className="capitalize">{paper.level}</span>
+                          <span>·</span>
+                          <span>{timeAgo(paper.created_at)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <span className="capitalize">{paper.level}</span>
-                        <span>·</span>
-                        <span>{timeAgo(paper.created_at)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))
             )}

@@ -1,6 +1,6 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import PaperBrowser from "@/components/PracticePapers";
+import Navbar from "@/components/shared/Navbar";
+import Footer from "@/components/shared/Footer";
+import PaperBrowser from "@/components/study/PracticePapers";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 

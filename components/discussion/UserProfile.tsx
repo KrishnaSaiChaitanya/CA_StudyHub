@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Post, Profile } from "./types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {

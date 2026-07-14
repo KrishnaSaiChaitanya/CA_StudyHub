@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation";
-import MockExam from "@/components/MockExam";
+import MockExam from "@/components/study/MockExam";
 
 export default function MockExamClientWrapper({ id }: { id: string }) {
   const router = useRouter();

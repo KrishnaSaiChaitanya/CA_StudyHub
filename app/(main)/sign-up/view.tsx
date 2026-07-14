@@ -6,11 +6,12 @@ import Link from "next/link";
 import { signInWithGoogle, signUpAction } from "@/app/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SubmitButton } from "@/components/submit-button";
-import { FormMessage, Message } from "@/components/form-message";
+
 import React from "react";
 
 import { LogoElement } from "@/assets/logo";
+import { FormMessage, Message } from "@/components/shared/FormMessage";
+import { SubmitButton } from "@/components/shared/SubmitButton";
 
 export default function SignUpView({ searchParams }: { searchParams: Message | undefined }) {
   return (

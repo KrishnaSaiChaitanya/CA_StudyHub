@@ -1,10 +1,9 @@
 "use client"
 
-import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { BookOpen, Timer, CalendarDays, Target, BarChart3, ClipboardList, Bot, Bell, Award, Layers } from "lucide-react";
 import Link from "next/link";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 
 const tools = [
   { icon: BookOpen, title: "Study Resources", description: "Study planners, key questions, and mnemonics from faculty & community", path: "/study/planner" },

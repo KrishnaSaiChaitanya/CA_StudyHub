@@ -6,7 +6,7 @@ import { Star, User, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 
 export interface FacultyDisplayData {
   id: string;

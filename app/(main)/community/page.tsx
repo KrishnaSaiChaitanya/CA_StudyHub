@@ -23,8 +23,8 @@ const sections = [
  
 ];
 
-import { ProFeatureLock } from "@/components/ProFeatureLock";
-import Footer from "@/components/Footer";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
+import Footer from "@/components/shared/Footer";
 
 
 const Community = () => (

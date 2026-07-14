@@ -2,18 +2,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Footer from "@/components/Footer";
-import MockExam from "@/components/MockExam";
-import PerformanceHistory from "@/components/PerformanceHistory";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, ClipboardCheck, Clock, Award, Lock, Crown, X, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { ProFeatureLock } from "@/components/ProFeatureLock";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
+import MockExam from "@/components/study/MockExam";
+import PerformanceHistory from "@/components/dashboard/PerformanceHistory";
 
 
 const Practice = () => {

@@ -15,7 +15,7 @@ import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
 import RequestTopicDialog from "@/components/flash-cards/RequestTopicDialog";
 import { cn } from "@/lib/utils";
 import { SUBJECT_MAPPING, SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 import {
   Select,
   SelectContent,

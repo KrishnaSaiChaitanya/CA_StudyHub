@@ -1,7 +1,6 @@
 "use client"
 
-import PerformanceHistory from "@/components/PerformanceHistory";
-import Footer from "@/components/Footer";
+import PerformanceHistory from "@/components/dashboard/PerformanceHistory";
 import { useRouter } from "next/navigation";
 
 export default function PerformancePage() {

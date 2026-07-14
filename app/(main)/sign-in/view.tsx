@@ -6,8 +6,8 @@ import Link from "next/link";
 import { signInWithGoogle, signInAction } from "@/app/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SubmitButton } from "@/components/submit-button";
-import { FormMessage, Message } from "@/components/form-message";
+import { SubmitButton } from "@/components/shared/SubmitButton";
+import { FormMessage, Message } from "@/components/shared/FormMessage";
 import React from "react";
 import { LogoElement } from "@/assets/logo";
 

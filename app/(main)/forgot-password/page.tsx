@@ -1,4 +1,5 @@
-import { Message } from "@/components/form-message";
+
+import { Message } from "@/components/shared/FormMessage";
 import ForgotPasswordView from "./view";
 
 export default async function ForgotPassword(props: {

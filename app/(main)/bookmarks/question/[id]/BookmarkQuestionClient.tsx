@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-import Footer from "@/components/Footer";
+import Footer from "@/components/shared/Footer";
 
 interface Question {
   id: string;

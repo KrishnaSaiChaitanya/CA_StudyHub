@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import MockExam from "@/components/MockExam";
+import MockExam from "@/components/study/MockExam";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { FileText, Clock, ChevronRight, BookOpen, Sparkles, TrendingUp, History, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { formatSubjectName } from "@/utils/subjects";

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Video, ArrowLeft, Loader2, Users, X, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { formatSubjectName } from "@/utils/subjects";
 import { SubjectCategory } from "@/utils/supabase/types";

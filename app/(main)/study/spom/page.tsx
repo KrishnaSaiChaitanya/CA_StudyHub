@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import SPOMView from "@/components/SOPM";
-import Footer from "@/components/Footer";
+
 
 const SpomPage = () => {
   const router = useRouter();
