@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import FacultyProfile from "@/components/FacultyProfile";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Star, User, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
+import FacultyProfile from "@/components/faculty/FacultyProfile";
 
 export interface FacultyDisplayData {
   id: string;
@@ -39,9 +39,9 @@ const Faculty = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const filteredFaculty = facultyList.filter(f => 
-    f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    f.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredFaculty = facultyList.filter(f =>
+    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.level.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -123,7 +123,7 @@ const Faculty = () => {
                     transition={{ delay: i * 0.06 }}
                     className="rounded-xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-card-hover hover:border-accent/30"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-primary-foreground" style={{backgroundImage: `url(${f.profile_picture})`, backgroundSize: "cover", backgroundPosition: "center"}}>
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-primary-foreground" style={{ backgroundImage: `url(${f.profile_picture})`, backgroundSize: "cover", backgroundPosition: "center" }}>
                       {f.profile_picture ? (
                         <img src={f.profile_picture} alt={f.name} className="h-full w-full object-cover" />
                       ) : (

@@ -1,13 +1,14 @@
-import HeroSection from "@/components/HeroSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import CTASection from "@/components/CTASection";
+import CtaSection from "@/components/marketing/CtaSection";
+import FeaturesSection from "@/components/marketing/FeaturesSection";
+import HeroSection from "@/components/marketing/HeroSection";
+
 
 const Index = () => (
- <div className="w-full">
-    <HeroSection />
-    <FeaturesSection />
-    <CTASection />
- </div>
+   <div className="w-full">
+      <HeroSection />
+      <FeaturesSection />
+      <CtaSection />
+   </div>
 );
 
 export default Index;
