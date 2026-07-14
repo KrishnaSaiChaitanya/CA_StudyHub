@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import BulkUploadStepper from "@/components/admin/BulkUploadStepper";
 import { deleteFlashcardRequest, getUserEmails } from "./actions";
 import InfiniteScrollLoader from "@/components/admin/InfiniteScrollLoader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export default function AdminTopicRequestsPage() {
   const supabase = createClient();
@@ -33,22 +35,27 @@ export default function AdminTopicRequestsPage() {
   const [emailMap, setEmailMap] = useState<Record<string, string>>({});
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("pending");
 
   const ITEMS_PER_PAGE = 10;
 
-  const fetchTopicRequests = async (page = 0, append = false, query = searchRequests) => {
+  const fetchTopicRequests = async (page = 0, append = false, query = searchRequests, currentStatus = statusFilter) => {
     setLoadingRequests(true);
     try {
       let q = supabase
         .from("flashcard_requests")
-        .select("*, profiles(full_name)", { count: 'exact' })
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: true });
+        .select("*, profiles(full_name, student_type)", { count: 'exact' });
+
+      if (currentStatus !== "all") {
+        q = q.eq("status", currentStatus);
+      }
 
       if (query) {
         q = q.ilike("topic", `%${query}%`);
       }
+
+      q = q.order("created_at", { ascending: false })
+        .order("id", { ascending: true });
 
       const from = append ? requests.length : 0;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -86,10 +93,15 @@ export default function AdminTopicRequestsPage() {
   useEffect(() => {
     setPageRequests(0);
     const timeout = setTimeout(() => {
-      fetchTopicRequests(0, false, searchRequests);
+      fetchTopicRequests(0, false, searchRequests, statusFilter);
     }, 500);
     return () => clearTimeout(timeout);
   }, [searchRequests]);
+
+  useEffect(() => {
+    setPageRequests(0);
+    fetchTopicRequests(0, false, searchRequests, statusFilter);
+  }, [statusFilter]);
 
   const sentinelRequestsRef = useRef<HTMLDivElement | null>(null);
 
@@ -98,7 +110,7 @@ export default function AdminTopicRequestsPage() {
       if (entries[0].isIntersecting && hasMoreRequests && !loadingRequests) {
         setPageRequests((prev) => {
           const next = prev + 1;
-          fetchTopicRequests(next, true, searchRequests);
+          fetchTopicRequests(next, true, searchRequests, statusFilter);
           return next;
         });
       }
@@ -106,7 +118,7 @@ export default function AdminTopicRequestsPage() {
 
     if (sentinelRequestsRef.current) observer.observe(sentinelRequestsRef.current);
     return () => observer.disconnect();
-  }, [hasMoreRequests, loadingRequests, searchRequests]);
+  }, [hasMoreRequests, loadingRequests, searchRequests, statusFilter]);
 
   const handleDeleteRequest = async (requestId: string) => {
     if (!confirm("Are you sure you want to dismiss this request?")) return;
@@ -115,7 +127,11 @@ export default function AdminTopicRequestsPage() {
     try {
       await deleteFlashcardRequest(requestId);
 
-      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+      setRequests((prev) => 
+        statusFilter === "pending"
+          ? prev.filter((r) => r.id !== requestId)
+          : prev.map((r) => r.id === requestId ? { ...r, status: "dismissed" } : r)
+      );
       toast({ title: "Request dismissed" });
     } catch (err: any) {
       toast({ title: "Failed to dismiss request", description: err.message, variant: "destructive" });
@@ -249,7 +265,15 @@ export default function AdminTopicRequestsPage() {
         .from("flashcard_requests")
         .update({ status: "created" })
         .eq("id", selectedRequestId);
-      if (reqErr) console.error("Error closing request status:", reqErr);
+      if (reqErr) {
+        console.error("Error closing request status:", reqErr);
+      } else {
+        setRequests((prev) => 
+          statusFilter === "pending"
+            ? prev.filter((r) => r.id !== selectedRequestId)
+            : prev.map((r) => r.id === selectedRequestId ? { ...r, status: "created" } : r)
+        );
+      }
     }
   };
 
@@ -277,6 +301,19 @@ export default function AdminTopicRequestsPage() {
             <CardDescription>Review student requested topics and bulk upload flashcard sets.</CardDescription>
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="w-[150px]">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 bg-background border-border/60">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="created">Created</SelectItem>
+                  <SelectItem value="dismissed">Dismissed</SelectItem>
+                  <SelectItem value="all">History (All)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -286,7 +323,7 @@ export default function AdminTopicRequestsPage() {
                 onChange={(e) => setSearchRequests(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => fetchTopicRequests(0, false, searchRequests)} disabled={loadingRequests}>
+            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => fetchTopicRequests(0, false, searchRequests, statusFilter)} disabled={loadingRequests}>
               <RefreshCw className={`h-4 w-4 ${loadingRequests && !requests.length ? "animate-spin" : ""}`} />
             </Button>
           </div>
@@ -325,13 +362,20 @@ export default function AdminTopicRequestsPage() {
                         {req.profiles?.full_name || "Anonymous"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {emailMap[req.user_id] || "—"}
+                        <div className="flex flex-col gap-1">
+                          <span>{emailMap[req.user_id] || "—"}</span>
+                          {req.profiles?.student_type && (
+                            <Badge variant="secondary" className="w-fit text-[10px] py-0 px-1.5 capitalize font-medium">
+                              {req.profiles.student_type}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium text-sm text-foreground">{req.topic}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px]">
                         {req.notes ? (
                           <div className="flex items-center gap-2">
-                            <span className="truncate">{req.notes}</span>
+                            {/* <span className="truncate">{req.notes}</span> */}
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0">
@@ -349,29 +393,42 @@ export default function AdminTopicRequestsPage() {
                         {new Date(req.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteRequest(req.id)}
-                            className="h-8 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive transition-all"
-                            disabled={actionId === req.id}
+                        {req.status !== "pending" ? (
+                          <Badge 
+                            className={cn(
+                              "font-semibold px-2 py-0.5 text-xs capitalize",
+                              req.status === "created" 
+                                ? "bg-green-500/10 text-green-500 hover:bg-green-500/10 border-green-500/20" 
+                                : "bg-zinc-500/10 text-zinc-500 hover:bg-zinc-500/10 border-zinc-500/20"
+                            )}
                           >
-                            Dismiss
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUserId(req.user_id);
-                              setSelectedRequestId(req.id);
-                              setShowBulkUpload(true);
-                            }}
-                            className="h-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm transition-all text-xs font-bold"
-                            disabled={actionId === req.id}
-                          >
-                            Create Set
-                          </Button>
-                        </div>
+                            {req.status === "created" ? "Created" : "Dismissed"}
+                          </Badge>
+                        ) : (
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteRequest(req.id)}
+                              className="h-8 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive transition-all"
+                              disabled={actionId === req.id}
+                            >
+                              Dismiss
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUserId(req.user_id);
+                                setSelectedRequestId(req.id);
+                                setShowBulkUpload(true);
+                              }}
+                              className="h-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm transition-all text-xs font-bold"
+                              disabled={actionId === req.id}
+                            >
+                              Create Set
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

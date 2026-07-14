@@ -234,6 +234,7 @@ export interface FlashcardRequest {
   user_id: string | null;
   topic: string;
   notes: string | null;
+  status: string;
   created_at: string;
 }
 
@@ -264,6 +265,7 @@ export interface ContactSubmission {
   subject: string;
   message: string;
   type: string;
+  status: string;
   created_at: string;
 }
 

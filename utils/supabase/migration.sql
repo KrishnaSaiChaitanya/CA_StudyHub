@@ -249,6 +249,7 @@ CREATE TABLE public.contact_submissions (
   subject text NOT NULL,
   message text NOT NULL,
   type text NOT NULL DEFAULT 'general',
+  status text NOT NULL DEFAULT 'pending',
   created_at timestamptz DEFAULT timezone('utc'::text, now())
 );
 

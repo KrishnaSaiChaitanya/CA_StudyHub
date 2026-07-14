@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Play, Pause } from "lucide-react";
+import { Clock, Play, Pause, Timer } from "lucide-react";
 import { useStudyTimer } from "./StudyTimerProvider";
 import { getSubjectColor } from "@/utils/subjects";
 
@@ -22,7 +22,8 @@ export const StudyTimerPill = () => {
   const displayTime = timerMode === 'stopwatch' ? seconds : remaining;
   const subjectColor = activeSubject ? getSubjectColor(activeSubject) : "hsl(var(--accent))";
 
-  if (displayTime === 0 && !running && timerMode === 'stopwatch') return null;
+  // Hide the pill if timer is not running and time is 0 (both for timer and stopwatch)
+  if (!running && displayTime === 0) return null;
 
   return (
     <AnimatePresence>
@@ -30,14 +31,16 @@ export const StudyTimerPill = () => {
         initial={{ opacity: 0, scale: 0.8, x: 20 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
         exit={{ opacity: 0, scale: 0.8, x: 20 }}
-        className="flex items-center gap-2 fixed bottom-6 left-4 z-100"
+        className="flex items-center gap-2 fixed bottom-6 left-4 z-[100]"
       >
         <button
           onClick={() => router.push("/study/progress")}
-          className="group relative flex items-center gap-2.5 rounded-full border border-white/10 px-3.5 py-2 backdrop-blur-md shadow-lg transition-all hover:scale-105 active:scale-95"
+          className={`group relative flex items-center gap-2.5 rounded-full border px-3.5 py-2 backdrop-blur-md shadow-lg transition-all hover:scale-105 active:scale-95 ${
+            running ? "border-white/20" : "border-white/10 opacity-80 saturate-75"
+          }`}
           style={{ 
-            backgroundColor: subjectColor,
-            boxShadow: `0 4px 14px 0 ${subjectColor}40`
+            backgroundColor: running ? subjectColor : `${subjectColor}cc`, // slightly faded subject color when paused
+            boxShadow: running ? `0 4px 14px 0 ${subjectColor}60` : "0 2px 8px 0 rgba(0,0,0,0.2)"
           }}
           title="Go to Study Progress"
         >
@@ -50,7 +53,11 @@ export const StudyTimerPill = () => {
                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                  className="flex items-center justify-center"
                >
-                 <Clock className="h-3 w-3 text-white" />
+                 {timerMode === 'timer' ? (
+                   <Timer className="h-3 w-3 text-white" />
+                 ) : (
+                   <Clock className="h-3 w-3 text-white" />
+                 )}
                </motion.div>
             ) : (
               <Pause className="h-3 w-3 text-white" />

@@ -16,7 +16,7 @@ import { SubjectCategory, Todo as TodoType } from "@/utils/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useStudent } from "./StudentTypeProvider";
 import { useStudyTimer } from "./StudyTimerProvider";
-import { formatSubjectName, getSubjectAbbreviation, SUBJECT_COLORS, getSubjectColor as getGlobalSubjectColor } from "@/utils/subjects";
+import { formatSubjectName, getSubjectAbbreviation, SUBJECT_COLORS, getSubjectColor as getGlobalSubjectColor, SUBJECT_ABBREVIATIONS } from "@/utils/subjects";
 import { ProFeatureLock } from "@/components/ProFeatureLock";
 import { useSubscription } from "@/components/SubscriptionProvider";
 
@@ -734,7 +734,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                     }`}
                     style={isSelected ? { backgroundColor: subjColor } : {}}
                   >
-                    {s.label}
+                   {SUBJECT_ABBREVIATIONS[s.value as SubjectCategory]}
                   </button>
                 );
               })}

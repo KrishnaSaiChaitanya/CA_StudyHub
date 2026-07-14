@@ -41,6 +41,12 @@ export const StudyTimerProvider = ({ children }: { children: React.ReactNode }) 
   const [running, setRunning] = useState(false);
   const [activeSubject, setActiveSubjectState] = useState<SubjectCategory | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // New helper states for inactive tracking and persistence
+  const [startTime, setStartTime] = useState<number>(0);
+  const [accumulatedSeconds, setAccumulatedSeconds] = useState<number>(0);
+  const [accumulatedRemaining, setAccumulatedRemaining] = useState<number>(0);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const { subjects } = useStudent();
   const { toast } = useToast();
@@ -54,42 +60,100 @@ export const StudyTimerProvider = ({ children }: { children: React.ReactNode }) 
     const savedMode = localStorage.getItem("studyTimer_mode") as 'stopwatch' | 'timer' | null;
     const savedRunning = localStorage.getItem("studyTimer_running");
     const savedSubject = localStorage.getItem("studyTimer_activeSubject");
-    const savedTime = localStorage.getItem("studyTimer_lastSavedTime");
+    const savedStartTime = localStorage.getItem("studyTimer_startTime");
+    const savedAccumulatedSeconds = localStorage.getItem("studyTimer_accumulatedSeconds");
+    const savedAccumulatedRemaining = localStorage.getItem("studyTimer_accumulatedRemaining");
 
-    if (savedMode) setTimerModeState(savedMode);
-    if (savedDuration) setTimerDuration(parseInt(savedDuration, 10));
-
-    if (savedSeconds) {
-      let secs = parseInt(savedSeconds, 10);
-      let rem = savedRemaining ? parseInt(savedRemaining, 10) : 0;
-      
-      // Calculate elapsed time if it was running before reload for accuracy
-      if (savedRunning === "true" && savedTime) {
-         const elapsed = Math.floor((Date.now() - parseInt(savedTime, 10)) / 1000);
-         if (savedMode === 'stopwatch') {
-           secs += elapsed;
-         } else {
-           rem = Math.max(0, rem - elapsed);
-         }
-      }
-      setSeconds(secs);
-      setRemaining(rem);
+    let mode: 'stopwatch' | 'timer' = 'stopwatch';
+    if (savedMode === 'stopwatch' || savedMode === 'timer') {
+      mode = savedMode;
+      setTimerModeState(mode);
     }
-    
-    if (savedSubject) setActiveSubjectState(savedSubject as SubjectCategory);
-    setRunning(false);
-  }, []);
 
-  // Save to localStorage whenever state changes
+    let duration = 0;
+    if (savedDuration) {
+      duration = parseInt(savedDuration, 10);
+      setTimerDurationState(duration);
+    }
+
+    if (savedSubject) setActiveSubjectState(savedSubject as SubjectCategory);
+
+    let run = savedRunning === "true";
+    let st = savedStartTime ? parseInt(savedStartTime, 10) : 0;
+    let accSec = savedAccumulatedSeconds ? parseInt(savedAccumulatedSeconds, 10) : 0;
+    let accRem = savedAccumulatedRemaining ? parseInt(savedAccumulatedRemaining, 10) : 0;
+
+    // Check 24 hour scrap condition
+    if (run && st > 0) {
+      const elapsedMs = Date.now() - st;
+      if (elapsedMs > 24 * 60 * 60 * 1000) {
+        // Scrap session since it was active for > 24 hours
+        run = false;
+        st = 0;
+        accSec = 0;
+        accRem = 0;
+        
+        // Use timeout to ensure toaster/DOM is ready
+        setTimeout(() => {
+          toast({
+            title: "Study Session Scrapped",
+            description: "Your previous study session was discarded because it ran for more than 24 hours.",
+            variant: "destructive"
+          });
+        }, 100);
+      } else {
+        // Active and < 24 hours. Calculate progress.
+        const elapsedSec = Math.floor(elapsedMs / 1000);
+        if (mode === 'stopwatch') {
+          setSeconds(accSec + elapsedSec);
+          setAccumulatedSeconds(accSec);
+        } else {
+          const rem = Math.max(0, accRem - elapsedSec);
+          setRemaining(rem);
+          setAccumulatedRemaining(accRem);
+          if (rem === 0) {
+            run = false;
+            st = 0;
+            setAccumulatedRemaining(0);
+            setTimeout(() => {
+              toast({
+                title: "Timer Completed",
+                description: "Your study timer completed while you were away!"
+              });
+            }, 100);
+          }
+        }
+      }
+    } else {
+      // Not running, restore paused stats
+      setSeconds(accSec);
+      setRemaining(accRem);
+      setAccumulatedSeconds(accSec);
+      setAccumulatedRemaining(accRem);
+    }
+
+    setStartTime(st);
+    setRunning(run);
+    setIsLoaded(true);
+  }, [toast]);
+
+  // Save to localStorage whenever state changes after isLoaded is true
   useEffect(() => {
+    if (!isLoaded) return;
     localStorage.setItem("studyTimer_seconds", seconds.toString());
     localStorage.setItem("studyTimer_remaining", remaining.toString());
     localStorage.setItem("studyTimer_duration", timerDuration.toString());
     localStorage.setItem("studyTimer_mode", timerMode);
     localStorage.setItem("studyTimer_running", running.toString());
-    if (activeSubject) localStorage.setItem("studyTimer_activeSubject", activeSubject);
-    localStorage.setItem("studyTimer_lastSavedTime", Date.now().toString());
-  }, [seconds, remaining, timerDuration, timerMode, running, activeSubject]);
+    if (activeSubject) {
+      localStorage.setItem("studyTimer_activeSubject", activeSubject);
+    } else {
+      localStorage.removeItem("studyTimer_activeSubject");
+    }
+    localStorage.setItem("studyTimer_startTime", startTime.toString());
+    localStorage.setItem("studyTimer_accumulatedSeconds", accumulatedSeconds.toString());
+    localStorage.setItem("studyTimer_accumulatedRemaining", accumulatedRemaining.toString());
+  }, [seconds, remaining, timerDuration, timerMode, running, activeSubject, startTime, accumulatedSeconds, accumulatedRemaining, isLoaded]);
 
   // Set default subject if none selected
   useEffect(() => {
@@ -100,65 +164,138 @@ export const StudyTimerProvider = ({ children }: { children: React.ReactNode }) 
     }
   }, [subjects, activeSubject]);
 
+  // Smoother 500ms tick interval for inactive / throttled tab adjustments
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (running) {
-      interval = setInterval(() => {
-        if (timerMode === 'stopwatch') {
-          setSeconds((s) => s + 1);
-        } else {
-          setRemaining((r) => {
-            if (r <= 1) {
-              setRunning(false);
-              return 0;
-            }
-            return r - 1;
+    if (!running || !isLoaded || startTime === 0) return;
+
+    const interval = setInterval(() => {
+      const elapsedMs = Date.now() - startTime;
+
+      // 24 hour scrap check
+      if (elapsedMs >= 24 * 60 * 60 * 1000) {
+        setRunning(false);
+        setSeconds(0);
+        setRemaining(0);
+        setStartTime(0);
+        setAccumulatedSeconds(0);
+        setAccumulatedRemaining(0);
+        toast({
+          title: "Study Session Scrapped",
+          description: "Your session was scrapped because it ran for more than 24 hours.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const elapsedSec = Math.floor(elapsedMs / 1000);
+
+      if (timerMode === 'stopwatch') {
+        setSeconds(accumulatedSeconds + elapsedSec);
+      } else {
+        const rem = Math.max(0, accumulatedRemaining - elapsedSec);
+        setRemaining(rem);
+        if (rem === 0) {
+          setRunning(false);
+          setStartTime(0);
+          setAccumulatedRemaining(0);
+          toast({
+            title: "Timer Completed",
+            description: "Your study timer has completed!",
           });
         }
-      }, 1000);
-    }
+      }
+    }, 500);
+
     return () => clearInterval(interval);
-  }, [running, timerMode]);
+  }, [running, isLoaded, startTime, timerMode, accumulatedSeconds, accumulatedRemaining, toast]);
 
   const startTimer = useCallback(() => {
     if (timerMode === 'timer' && remaining === 0) return;
+    
+    const now = Date.now();
+    setStartTime(now);
+    setAccumulatedSeconds(seconds);
+    setAccumulatedRemaining(remaining);
     setRunning(true);
-  }, [timerMode, remaining]);
+  }, [timerMode, remaining, seconds]);
 
-  const pauseTimer = useCallback(() => setRunning(false), []);
+  const pauseTimer = useCallback(() => {
+    setRunning(false);
+
+    if (startTime > 0) {
+      const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+      if (timerMode === 'stopwatch') {
+        const newAcc = accumulatedSeconds + elapsedSec;
+        setAccumulatedSeconds(newAcc);
+        setSeconds(newAcc);
+      } else {
+        const newAcc = Math.max(0, accumulatedRemaining - elapsedSec);
+        setAccumulatedRemaining(newAcc);
+        setRemaining(newAcc);
+      }
+    }
+    setStartTime(0);
+  }, [startTime, timerMode, accumulatedSeconds, accumulatedRemaining]);
   
   const resetTimer = useCallback(() => {
     setRunning(false);
+    setStartTime(0);
+    setAccumulatedSeconds(0);
+    setAccumulatedRemaining(0);
     if (timerMode === 'stopwatch') {
       setSeconds(0);
     } else {
       setRemaining(timerDuration);
+      setAccumulatedRemaining(timerDuration);
     }
   }, [timerMode, timerDuration]);
 
   const setActiveSubject = useCallback((subject: SubjectCategory) => {
     if (!running) {
-      if (timerMode === 'stopwatch') setSeconds(0);
+      if (timerMode === 'stopwatch') {
+        setSeconds(0);
+        setAccumulatedSeconds(0);
+      }
     }
     setActiveSubjectState(subject);
   }, [running, timerMode]);
 
   const setTimerMode = useCallback((mode: 'stopwatch' | 'timer') => {
     setRunning(false);
+    setStartTime(0);
+    setAccumulatedSeconds(0);
+    setAccumulatedRemaining(0);
     setTimerModeState(mode);
-  }, []);
+    if (mode === 'stopwatch') {
+      setSeconds(0);
+    } else {
+      setRemaining(timerDuration);
+    }
+  }, [timerDuration]);
 
   const setTimerDuration = useCallback((secs: number) => {
     setTimerDurationState(secs);
     setRemaining(secs);
+    setAccumulatedRemaining(secs);
   }, []);
 
   const saveSession = useCallback(async (tag?: string) => {
     let sessionSeconds = 0;
-    if (timerMode === 'stopwatch') {
-      sessionSeconds = seconds;
+    
+    if (running && startTime > 0) {
+      // Calculate current live duration if saving while running
+      const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+      if (timerMode === 'stopwatch') {
+        sessionSeconds = accumulatedSeconds + elapsedSec;
+      } else {
+        sessionSeconds = timerDuration - Math.max(0, accumulatedRemaining - elapsedSec);
+      }
     } else {
-      sessionSeconds = timerDuration - remaining;
+      if (timerMode === 'stopwatch') {
+        sessionSeconds = seconds;
+      } else {
+        sessionSeconds = timerDuration - remaining;
+      }
     }
 
     if (sessionSeconds <= 0 || !activeSubject) return false;
@@ -186,18 +323,19 @@ export const StudyTimerProvider = ({ children }: { children: React.ReactNode }) 
     }
 
     toast({ title: "Session saved successfully!" });
-    if (timerMode === 'stopwatch') {
-      setSeconds(0);
-    } else {
-      // For timer mode, we might want to reset to original duration or keep as is.
-      // Resetting seems cleaner.
-      setRemaining(0);
-      setTimerDuration(0);
-    }
+    
+    // Completely reset state upon save
     setRunning(false);
+    setStartTime(0);
+    setAccumulatedSeconds(0);
+    setAccumulatedRemaining(0);
+    setSeconds(0);
+    setRemaining(0);
+    setTimerDuration(0);
+
     setIsSaving(false);
     return true;
-  }, [seconds, remaining, timerDuration, timerMode, activeSubject, supabase, toast]);
+  }, [seconds, remaining, timerDuration, timerMode, activeSubject, supabase, toast, running, startTime, accumulatedSeconds, accumulatedRemaining]);
 
   return (
     <StudyTimerContext.Provider

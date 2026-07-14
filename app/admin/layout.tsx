@@ -159,7 +159,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-10">
-          <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="max-w-8xl mx-auto animate-in fade-in slide-in-from-bottom-3 duration-500">
             {children}
           </div>
         </main>

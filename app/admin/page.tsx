@@ -81,18 +81,34 @@ export default function DashboardOverview() {
         const totalFeedback = feedbackData.length;
 
         let sumOverall = 0;
+        let countOverall = 0;
         let sumFlashcards = 0;
+        let countFlashcards = 0;
         let sumNavEase = 0;
+        let countNavEase = 0;
         let sumRecommend = 0;
+        let countRecommend = 0;
         const problemCounts: Record<string, number> = {};
 
         feedbackData.forEach(row => {
           const fb = row.feedback as any;
           if (fb) {
-            sumOverall += fb.overall || 0;
-            sumFlashcards += fb.flashcards || 0;
-            sumNavEase += fb.nav_ease || 0;
-            sumRecommend += fb.recommend || 0;
+            if (fb.overall && fb.overall > 0) {
+              sumOverall += fb.overall;
+              countOverall++;
+            }
+            if (fb.flashcards && fb.flashcards > 0) {
+              sumFlashcards += fb.flashcards;
+              countFlashcards++;
+            }
+            if (fb.nav_ease && fb.nav_ease > 0) {
+              sumNavEase += fb.nav_ease;
+              countNavEase++;
+            }
+            if (fb.recommend && fb.recommend > 0) {
+              sumRecommend += fb.recommend;
+              countRecommend++;
+            }
             if (fb.problem) {
               problemCounts[fb.problem] = (problemCounts[fb.problem] || 0) + 1;
             }
@@ -101,10 +117,10 @@ export default function DashboardOverview() {
 
         setFeedbackStats({
           total: totalFeedback,
-          overallAvg: totalFeedback ? Number((sumOverall / totalFeedback).toFixed(1)) : 0,
-          flashcardsAvg: totalFeedback ? Number((sumFlashcards / totalFeedback).toFixed(1)) : 0,
-          navEaseAvg: totalFeedback ? Number((sumNavEase / totalFeedback).toFixed(1)) : 0,
-          recommendAvg: totalFeedback ? Number((sumRecommend / totalFeedback).toFixed(1)) : 0,
+          overallAvg: countOverall ? Number((sumOverall / countOverall).toFixed(1)) : 0,
+          flashcardsAvg: countFlashcards ? Number((sumFlashcards / countFlashcards).toFixed(1)) : 0,
+          navEaseAvg: countNavEase ? Number((sumNavEase / countNavEase).toFixed(1)) : 0,
+          recommendAvg: countRecommend ? Number((sumRecommend / countRecommend).toFixed(1)) : 0,
           problemsDistribution: problemCounts,
         });
 
