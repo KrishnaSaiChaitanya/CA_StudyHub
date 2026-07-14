@@ -2,58 +2,314 @@
 trigger: always_on
 ---
 
-### 1. AI Assistant Context File (`.cursorrules` or `.agents/rules/castudyhub.md`)
+Here's a refined and more structured version of your project instructions that is clearer, removes ambiguity, and follows modern Next.js and Supabase best practices.
 
-Save this file at the root of your project or in your `.agents/rules/` directory. This tells the AI exactly how to behave within your specific stack and database schema.
+---
 
-```markdown
-# CA StudyHub - AI Assistant Rules & Context
+# CA StudyHub – AI Development Guidelines
 
 ## Project Overview
-CA StudyHub is a comprehensive learning and resource-sharing platform for Chartered Accountancy (CA) aspirants. It features study planners, practice papers, flashcards, a community forum, mock exams, and SPOM (Self-Paced Online Modules) tracking.
 
-## Tech Stack
-- **Framework:** Next.js (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS, Shadcn UI
-- **Database/Auth:** Supabase (PostgreSQL)
-- **State/Fetching:** React Query (where applicable), Server Actions
-- **Editor:** Tiptap (for forums)
+CA StudyHub is a comprehensive learning platform for Chartered Accountancy (CA) aspirants. The platform includes:
 
-## Database Schema Highlights
-The primary database is PostgreSQL via Supabase. Key tables include:
-- `profiles`: Extends Supabase auth. Stores `student_type`, `current_streak`, and subscription status.
-- `study_planners` & `community_submissions`: Pdfs/resources uploaded by admins or users.
-- `practice_papers`: MTPs, RTPs, PYQs.
-- `forum_posts`, `forum_replies`, `forum_groups`: Community discussion architecture.
-- `flashcards`, `flashcard_sets`, `flashcard_folders`: Spaced repetition features.
-- `tests`, `questions`, `test_attempts`: Mock exam infrastructure.
-- `spom_content`: Tracks Self-Paced Online Modules.
+* Study planners
+* Practice papers
+* Flashcards
+* Community forum
+* Mock examinations
+* Resource sharing
+* AI-powered learning features
 
-## Coding Conventions & Best Practices
+---
 
-### 1. Next.js App Router
-- Use React Server Components (RSC) by default.
-- Only add `'use client'` when hooks (`useState`, `useEffect`), browser APIs, or interactivity are strictly required.
-- Use **Server Actions** for all database mutations (e.g., creating a post, uploading a planner). Keep them in `app/actions.ts` or feature-specific action files (e.g., `app/admin/flash-cards/actions.ts`).
+# Tech Stack
 
-### 2. Supabase Integration
-- ALWAYS use the `@supabase/ssr` package for server-side auth and data fetching.
-- Utilize the utility functions in `utils/supabase/` (`server.ts`, `client.ts`, `middleware.ts`).
-- Never perform direct database updates from Client Components without going through an API route or Server Action.
+| Category         | Technology                     |
+| ---------------- | ------------------------------ |
+| Framework        | Next.js (App Router)           |
+| Language         | TypeScript                     |
+| Styling          | Tailwind CSS                   |
+| UI Library       | Shadcn UI                      |
+| Database         | PostgreSQL (Supabase)          |
+| Authentication   | Supabase Auth                  |
+| State Management | React Query (where applicable) |
+| Mutations        | Next.js Server Actions         |
+| Rich Text Editor | Tiptap                         |
 
-### 3. Styling & UI
-- Use Tailwind CSS for all styling.
-- Use Shadcn UI components from `components/ui/`.
-- Maintain the Bento grid aesthetics and modern dark/light themes where implemented.
+---
 
-### 4. TypeScript
-- Strictly type all Supabase responses using the generated types in `utils/supabase/types.ts`.
-- Avoid `any`. Use generic types for API responses.
+# Database
 
-### 5. File Structure
-- `app/(auth-pages)`: Contains routes requiring authentication.
-- `components/`: Reusable UI elements.
-- `utils/`: Helpers and Supabase clients.
+The application uses PostgreSQL through Supabase.
+
+For any schema-related information, always refer to:
 
 ```
+utils/supabase/complete_schema.sql
+```
+
+Do not make assumptions about table structures or relationships if they can be verified from the schema.
+
+Always use the generated database types located in:
+
+```
+utils/supabase/types.ts
+```
+
+---
+
+# Development Standards
+
+## 1. Next.js App Router
+
+* Use **React Server Components** by default.
+
+* Only use `"use client"` when absolutely necessary, such as when using:
+
+  * React hooks (`useState`, `useEffect`, etc.)
+  * Browser APIs
+  * Event handlers
+  * Client-side interactivity
+
+* Prefer Server Components whenever possible.
+
+* Keep business logic on the server.
+
+---
+
+## 2. Server Actions
+
+Use **Server Actions** for every database mutation, including but not limited to:
+
+* Create
+* Update
+* Delete
+* File uploads
+* Status changes
+
+Examples:
+
+```
+app/actions.ts
+```
+
+or feature-specific actions:
+
+```
+app/admin/flashcards/actions.ts
+app/forum/actions.ts
+```
+
+Never perform database mutations directly from Client Components.
+
+---
+
+## 3. Supabase
+
+Always use the utilities provided inside:
+
+```
+utils/supabase/
+```
+
+Specifically:
+
+* `server.ts`
+* `client.ts`
+* `middleware.ts`
+
+Use the `@supabase/ssr` package for all authenticated server-side operations.
+
+Never:
+
+* Create custom Supabase clients unnecessarily
+* Access the database directly from Client Components
+* Bypass Server Actions or API routes for mutations
+
+---
+
+## 4. TypeScript
+
+* Use strict typing everywhere.
+* Never use `any` unless there is absolutely no alternative.
+* Always use generated Supabase database types from:
+
+```
+utils/supabase/types.ts
+```
+
+* Use generic types where appropriate.
+* Keep components and utility functions fully typed.
+
+---
+
+## 5. Styling
+
+Use:
+
+* Tailwind CSS
+* Shadcn UI components from:
+
+```
+components/ui/
+```
+
+Maintain the existing design language:
+
+* Modern
+* Minimal
+* Bento-style layouts
+* Responsive
+* Accessible
+* Consistent spacing and typography
+
+---
+
+## 6. Color System
+
+Always use the project's design tokens instead of hardcoded colors.
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 5%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 5%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 5%;
+
+  --primary: 0 0% 5%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 5%;
+
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent: 197 100% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 92%;
+  --input: 0 0% 92%;
+  --ring: 197 100% 50%;
+
+  --radius: 0.75rem;
+
+  --sidebar-background: 0 0% 2%;
+  --sidebar-foreground: 0 0% 90%;
+  --sidebar-primary: 197 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 10%;
+  --sidebar-accent-foreground: 0 0% 90%;
+  --sidebar-border: 0 0% 15%;
+  --sidebar-ring: 197 100% 50%;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04),
+                 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+}
+```
+
+### Hover States
+
+When creating interactive elements:
+
+* Always define meaningful hover states.
+* Never make buttons appear washed out or lighter unless intentionally designed.
+* Hover colors should be a darker or richer variation of the base color while maintaining sufficient contrast.
+* Ensure hover, active, and focus states are visually consistent across the application.
+
+---
+
+# Component Architecture
+
+For every new feature:
+
+Create a dedicated folder inside:
+
+```
+components/
+```
+
+Example:
+
+```
+components/
+    flashcards/
+        flashcards.tsx
+        flashcard-list.tsx
+        flashcard-item.tsx
+        flashcard-dialog.tsx
+```
+
+Each feature folder should contain:
+
+* A main entry component
+* Reusable child components
+* Shared utilities specific to that feature (if needed)
+
+Pages inside the `app/` directory should remain lightweight and primarily compose feature components.
+
+For example:
+
+```
+app/dashboard/page.tsx
+```
+
+should simply render:
+
+```tsx
+<Dashboard />
+```
+
+where `Dashboard` is exported from:
+
+```
+components/dashboard/dashboard.tsx
+```
+
+Avoid placing large amounts of UI or business logic directly inside the `app/` directory.
+
+---
+
+# Reusability
+
+Whenever implementing new functionality:
+
+* Prefer reusable components over duplicated code.
+* Extract repeated UI into shared components.
+* Create reusable hooks where appropriate.
+* Reuse utility functions instead of duplicating logic.
+* Keep components focused on a single responsibility.
+
+---
+
+# Code Quality
+
+Always:
+
+* Follow clean architecture principles.
+* Keep functions small and focused.
+* Use descriptive naming conventions.
+* Remove unused imports and dead code.
+* Keep components easy to read and maintain.
+* Avoid unnecessary client-side rendering.
+* Prefer composition over deeply nested components.
+* Preserve existing functionality when refactoring.
+
+---
+
+# General Rules
+
+* Do not change existing functionality unless explicitly requested.
+* Preserve all business logic during refactoring.
+* Ensure imports, exports, renamed files, and references are updated consistently whenever files or symbols are renamed.
+* Follow the existing project structure and coding patterns unless instructed otherwise.
+* Prioritize performance, readability, maintainability, and accessibility in every implementation.
