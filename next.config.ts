@@ -17,7 +17,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
+  webpack: (config, { dev, isServer }) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "pdfjs-dist": "pdfjs-dist/legacy/build/pdf.mjs",
+    };
+    if (dev && !isServer) {
+      config.devtool = "source-map";
+    }
+    return config;
+  },
+  experimental: {
+    esmExternals: "loose",
+  },
 };
 
 export default nextConfig;

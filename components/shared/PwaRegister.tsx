@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export function PWARegister() {
   const { toast } = useToast();
@@ -60,8 +61,23 @@ export function PWARegister() {
     const handleOffline = () => {
       toast({
         title: "You are Offline",
-        description: "Some features may be limited. You can still access cached planners, flashcards, and notes.",
+        description: (
+          <div className="flex flex-col gap-2 mt-1">
+            <span>Some features may be limited. You can access your offline downloads to continue studying.</span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-background text-foreground self-start text-xs h-7"
+              onClick={() => {
+                window.location.href = "/downloads";
+              }}
+            >
+              Go to Downloads
+            </Button>
+          </div>
+        ),
         variant: "destructive",
+        duration: 10000,
       });
     };
 

@@ -59,7 +59,33 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
     const fetchExamData = async () => {
       try {
         const userRes = await supabase.auth.getUser();
-        
+        if (userRes.data.user) {
+          setUserId(userRes.data.user.id);
+        }
+
+        // Check IndexedDB first
+        try {
+          const { getOfflineItem } = await import("@/utils/offline-db");
+          const offlineTest = await getOfflineItem(testId);
+          if (offlineTest) {
+            setTest({
+              id: offlineTest.id,
+              name: offlineTest.title,
+              questions_count: offlineTest.metadata?.questions_count || 0,
+              duration: offlineTest.metadata?.duration,
+            });
+            setQuestions(offlineTest.data || []);
+            const durationInMinutes = offlineTest.metadata?.duration || (offlineTest.data ? offlineTest.data.length * 1.5 : 30);
+            setTimeLeft(Math.floor(durationInMinutes * 60));
+            setLoading(false);
+            if (typeof window !== "undefined" && !navigator.onLine) {
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch offline exam data:", e);
+        }
+
         const { data: testData, error: testErr } = await supabase
           .from('tests')
           .select('*')
@@ -85,7 +111,6 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
 
         if (userRes.data.user) {
           const uid = userRes.data.user.id;
-          setUserId(uid);
           const { data: bData } = await supabase
             .from('user_bookmarks')
             .select('question_id')
@@ -98,8 +123,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
         }
       } catch (err: any) {
         console.error(err);
-        toast.error("Failed to load exam data.");
-        onExit();
+        toast.error("Failed to load exam. Please check your connection.");
       } finally {
         setLoading(false);
       }
@@ -211,16 +235,33 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      if (!userId) {
-        toast.error("Please login to submit the exam.");
-        return;
-      }
-
       const currentScore = calculateScore();
       setScore(currentScore);
 
       const totalTimeSeconds = (test?.duration || questions.length * 1.5) * 60;
       const timeUsed = totalTimeSeconds - timeLeft;
+
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        const { saveOfflineMcqAttempt } = await import("@/utils/offline-db");
+        await saveOfflineMcqAttempt({
+          id: Math.random().toString(36).substr(2, 9),
+          testId: testId,
+          testName: test?.name || "Mock Exam",
+          score: currentScore,
+          totalQuestions: questions.length,
+          answers: answers,
+          timeTaken: timeUsed
+        });
+        setSubmitted(true);
+        setShowResults(true);
+        toast.success("Exam submitted successfully! Attempt saved locally.");
+        return;
+      }
+
+      if (!userId) {
+        toast.error("Please login to submit the exam.");
+        return;
+      }
 
       const { data: attempt, error: attemptErr } = await supabase
         .from('test_attempts')
@@ -257,7 +298,28 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
       toast.success("Exam submitted successfully!");
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to submit exam.");
+      try {
+        const currentScore = calculateScore();
+        const totalTimeSeconds = (test?.duration || questions.length * 1.5) * 60;
+        const timeUsed = totalTimeSeconds - timeLeft;
+        
+        const { saveOfflineMcqAttempt } = await import("@/utils/offline-db");
+        await saveOfflineMcqAttempt({
+          id: Math.random().toString(36).substr(2, 9),
+          testId: testId,
+          testName: test?.name || "Mock Exam",
+          score: currentScore,
+          totalQuestions: questions.length,
+          answers: answers,
+          timeTaken: timeUsed
+        });
+        setSubmitted(true);
+        setShowResults(true);
+        toast.success("Saved attempt locally due to connection error.");
+      } catch (saveErr) {
+        console.error("Offline save failure:", saveErr);
+        toast.error("Failed to submit exam.");
+      }
     } finally {
       setSubmitting(false);
     }

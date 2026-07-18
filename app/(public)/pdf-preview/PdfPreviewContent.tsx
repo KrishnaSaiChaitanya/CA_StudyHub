@@ -1,25 +1,64 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileWarning, Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getOfflineItem } from "@/utils/offline-db";
 
 // 1. Import react-pdf components and styles
 import { Document, Page, pdfjs } from "react-pdf";
 
 // 2. Set up the PDF worker (Crucial for performance)
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 export default function PdfPreviewContent() {
   const searchParams = useSearchParams();
   const url = searchParams.get("url");
+  const offlineId = searchParams.get("offlineId");
 
-  const [numPages, setNumPages] = useState(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [loadingOffline, setLoadingOffline] = useState(!!offlineId);
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
 
-  if (!url) {
+  useEffect(() => {
+    let active = true;
+    let localBlobUrl = "";
+
+    if (offlineId) {
+      setLoadingOffline(true);
+      getOfflineItem(offlineId)
+        .then((item) => {
+          if (!active) return;
+          if (item?.pdfBlob) {
+            localBlobUrl = URL.createObjectURL(item.pdfBlob);
+            setFileUrl(localBlobUrl);
+          } else {
+            console.error("No pdfBlob found for offline planner");
+          }
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (active) setLoadingOffline(false);
+        });
+    } else if (url) {
+      setFileUrl(url);
+    }
+
+    return () => {
+      active = false;
+      if (localBlobUrl) {
+        URL.revokeObjectURL(localBlobUrl);
+      }
+    };
+  }, [url, offlineId]);
+
+  if (!url && !offlineId) {
     return (
       <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background text-foreground">
         <FileWarning className="mb-4 h-16 w-16 text-muted-foreground" />
@@ -31,8 +70,19 @@ export default function PdfPreviewContent() {
     );
   }
 
+  if (loadingOffline || !fileUrl) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-accent" />
+        <p className="mt-4 text-sm font-medium text-muted-foreground animate-pulse">
+          Loading offline document...
+        </p>
+      </div>
+    );
+  }
+
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages as any);
+    setNumPages(numPages);
     setPageNumber(1);
   }
 
@@ -84,7 +134,7 @@ export default function PdfPreviewContent() {
           <div className="mx-2 h-6 w-px bg-border"></div> {/* Divider */}
           
           <Button size="sm" asChild className="gap-2">
-            <a href={url} download target="_blank" rel="noopener noreferrer">
+            <a href={fileUrl} download target="_blank" rel="noopener noreferrer">
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Download</span>
             </a>
@@ -95,7 +145,7 @@ export default function PdfPreviewContent() {
       {/* PDF Viewer Container */}
       <div className="flex-1 overflow-auto bg-muted/30 p-4 md:p-8 flex justify-center">
         <Document
-          file={url}
+          file={fileUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={
             <div className="flex flex-col items-center gap-4 mt-20">

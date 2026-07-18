@@ -26,8 +26,10 @@ import {
   HelpCircle,
   ArrowLeft,
   Eye,
-  ExternalLink
+  ExternalLink,
+  Download
 } from "lucide-react";
+
 import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { createClient } from "@/utils/supabase/client";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
@@ -353,14 +355,19 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
       <section className="container max-w-4xl py-10">
         <ProFeatureLock label="Unlock Bookmarks with Pro Subscription">
           <Tabs defaultValue="bookmarks" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 w-full max-w-xs">
-              <TabsTrigger value="bookmarks" className="flex-1 gap-1.5">
-                <Bookmark className="h-3.5 w-3.5" /> Bookmarks
-              </TabsTrigger>
-              <TabsTrigger value="notes" className="flex-1 gap-1.5">
-                <StickyNote className="h-3.5 w-3.5" /> Notes
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+              <TabsList className="w-full max-w-xs mb-0">
+                <TabsTrigger value="bookmarks" className="flex-1 gap-1.5">
+                  <Bookmark className="h-3.5 w-3.5" /> Bookmarks
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="flex-1 gap-1.5">
+                  <StickyNote className="h-3.5 w-3.5" /> Notes
+                </TabsTrigger>
+              </TabsList>
+              <Button onClick={() => router.push("/downloads")} variant="outline" size="sm" className="gap-1.5 text-accent border-accent/20 hover:bg-accent/5">
+                <Download className="h-3.5 w-3.5" /> View Offline Downloads
+              </Button>
+            </div>
 
             <TabsContent value="bookmarks">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">

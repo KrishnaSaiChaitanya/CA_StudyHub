@@ -13,6 +13,8 @@ import SetCard from "@/components/flash-cards/SetCard";
 import CreateFolderDialog from "@/components/flash-cards/CreateFolderDialog";
 import CreateSetDialog from "@/components/flash-cards/CreateSetDialog";
 import RequestTopicDialog from "@/components/flash-cards/RequestTopicDialog";
+import { saveOfflineItem, deleteOfflineItem, listOfflineItems } from "@/utils/offline-db";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SUBJECT_MAPPING, SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
@@ -37,6 +39,58 @@ export default function FlashcardsDashboard() {
   const [foldersLoading, setFoldersLoading] = useState(!cacheFolders);
   const [setsLoading, setSetsLoading] = useState(!cacheSets);
   const [userId, setUserId] = useState<string | null>(null);
+  const [offlineSetIds, setOfflineSetIds] = useState<string[]>([]);
+
+  const fetchOfflineSets = async () => {
+    try {
+      const offlineList = await listOfflineItems("flashcard");
+      setOfflineSetIds(offlineList.map(item => item.id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchOfflineSets();
+  }, []);
+
+  const handleToggleOfflineSet = async (s: any) => {
+    const isOffline = offlineSetIds.includes(s.id);
+    try {
+      if (isOffline) {
+        await deleteOfflineItem(s.id);
+        setOfflineSetIds(prev => prev.filter(id => id !== s.id));
+        toast.success("Removed flashcard set from offline storage");
+      } else {
+        toast.info("Saving flashcard set offline...");
+        const { data: cardsData, error } = await supabase
+          .from("flashcards")
+          .select("*")
+          .eq("set_id", s.id)
+          .order("position", { ascending: true });
+
+        if (error) throw error;
+
+        await saveOfflineItem({
+          id: s.id,
+          type: "flashcard",
+          title: s.title,
+          subject: s.subject,
+          metadata: {
+            is_admin: s.is_admin,
+            cardCount: s.cardCount
+          },
+          data: cardsData || []
+        });
+
+        setOfflineSetIds(prev => [...prev, s.id]);
+        toast.success("Flashcard set saved offline successfully!");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to save flashcards offline");
+    }
+  };
 
   // Filters & Pagination
   const [search, setSearch] = useState("");
@@ -394,6 +448,8 @@ export default function FlashcardsDashboard() {
                       author={s.is_admin ? "Admin" : "You"}
                       isRequestedByMe={!!userId && s.is_admin && s.user_id === userId}
                       index={i}
+                      isOffline={offlineSetIds.includes(s.id)}
+                      onToggleOffline={() => handleToggleOfflineSet(s)}
                       onClick={() => router.push(`/study/flash-cards/set/${s.id}`)}
                     />
                   ))}

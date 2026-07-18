@@ -16,9 +16,11 @@ import {
   XCircle,
   Loader2,
   Trophy,
+  Download,
 } from "lucide-react";
 import { formatSubjectName } from "@/utils/subjects";
 import SaveToFolderPopover from "@/components/flash-cards/SaveToFolderPopover";
+import { saveOfflineItem, deleteOfflineItem, getOfflineItem } from "@/utils/offline-db";
 
 // Global cache variables for SWR caching
 const cacheSetDetails: Record<string, any> = {};
@@ -44,6 +46,52 @@ export default function StudyPage({ params }: StudyPageProps) {
   const [knownIds, setKnownIds] = useState<string[]>([]);
   const [sessionComplete, setSessionComplete] = useState(false);
 
+  const [isOfflineCached, setIsOfflineCached] = useState(false);
+  const [savingOffline, setSavingOffline] = useState(false);
+
+  const checkOfflineStatus = async () => {
+    try {
+      const item = await getOfflineItem(setId);
+      setIsOfflineCached(!!item);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    checkOfflineStatus();
+  }, [setId]);
+
+  const handleToggleOffline = async () => {
+    setSavingOffline(true);
+    try {
+      if (isOfflineCached) {
+        await deleteOfflineItem(setId);
+        setIsOfflineCached(false);
+        toast({ title: "Removed offline copy", description: "This set has been removed from offline storage." });
+      } else {
+        if (!set) return;
+        await saveOfflineItem({
+          id: setId,
+          type: "flashcard",
+          title: set.title,
+          subject: set.subject,
+          metadata: {
+            is_admin: set.is_admin || false,
+            cardCount: cards.length
+          },
+          data: cards
+        });
+        setIsOfflineCached(true);
+        toast({ title: "Saved Offline", description: "This set is now available for offline study." });
+      }
+    } catch (e: any) {
+      toast({ title: "Offline Save Failed", description: e.message || "Could not save set offline", variant: "destructive" });
+    } finally {
+      setSavingOffline(false);
+    }
+  };
+
   const fetchSetDetails = async (forceRefresh = false) => {
     if (!forceRefresh && cacheSetDetails[setId] && cacheSetCards[setId]) {
       setSet(cacheSetDetails[setId]);
@@ -52,6 +100,27 @@ export default function StudyPage({ params }: StudyPageProps) {
       // Background revalidation
     } else {
       setLoading(true);
+    }
+
+    try {
+      const offlineItem = await getOfflineItem(setId);
+      if (offlineItem) {
+        setSet({
+          id: offlineItem.id,
+          title: offlineItem.title,
+          subject: offlineItem.subject,
+          is_admin: offlineItem.metadata?.is_admin,
+          cardCount: offlineItem.metadata?.cardCount
+        });
+        setCards(offlineItem.data || []);
+        setIsOfflineCached(true);
+        setLoading(false);
+        if (typeof window !== "undefined" && !navigator.onLine) {
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("IndexedDB error loading details:", err);
     }
 
     try {
@@ -177,6 +246,23 @@ export default function StudyPage({ params }: StudyPageProps) {
           <Badge variant="secondary" className="text-[10px] font-bold py-0.5 bg-secondary/80 text-muted-foreground select-none">
             {formatSubjectName(set.subject)}
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleOffline}
+            disabled={savingOffline}
+            className="h-8 px-2 flex items-center gap-1 text-xs"
+            title={isOfflineCached ? "Remove from offline storage" : "Save Offline"}
+          >
+            {savingOffline ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : isOfflineCached ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            <span className="hidden sm:inline">{isOfflineCached ? "Saved Offline" : "Save Offline"}</span>
+          </Button>
           <SaveToFolderPopover setId={setId} />
         </div>
       </div>

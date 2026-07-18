@@ -1,11 +1,12 @@
 "use client";
 
-import { Layers, ShieldCheck, User } from "lucide-react";
+import { Layers, ShieldCheck, User, Download, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { formatSubjectName, getSubjectAbbreviation } from "@/utils/subjects";
 
 interface SetCardProps {
+  id?: string;
   title: string;
   subject: string;
   isAdmin: boolean;
@@ -14,6 +15,8 @@ interface SetCardProps {
   onClick: () => void;
   index: number;
   isRequestedByMe?: boolean;
+  isOffline?: boolean;
+  onToggleOffline?: (e: React.MouseEvent) => void;
 }
 
 export default function SetCard({
@@ -25,6 +28,8 @@ export default function SetCard({
   onClick,
   index,
   isRequestedByMe,
+  isOffline = false,
+  onToggleOffline,
 }: SetCardProps) {
   const SourceIcon = isAdmin ? ShieldCheck : User;
   const sourceLabel = isAdmin ? "Admin" : "You";
@@ -68,7 +73,25 @@ export default function SetCard({
           <Badge variant="secondary" className="text-[9px] font-bold py-0 bg-secondary/80 text-muted-foreground">
             {getSubjectAbbreviation(subject as any)}
           </Badge>
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap">{cardCount} cards</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">{cardCount} cards</span>
+            {onToggleOffline && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleOffline(e);
+                }}
+                className="rounded-full p-1 hover:bg-secondary transition-colors"
+                title={isOffline ? "Remove from offline storage" : "Save Offline"}
+              >
+                {isOffline ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <Download className="h-3.5 w-3.5 text-muted-foreground hover:text-accent" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, Bookmark, BookOpen, Download, Calendar, User, Loader2, ExternalLink, FileText, ArrowLeft } from "lucide-react";
+import { Search, SlidersHorizontal, Bookmark, BookOpen, Download, Calendar, User, Loader2, ExternalLink, FileText, ArrowLeft, ArrowDownCircle, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
@@ -8,6 +8,8 @@ import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { formatSubjectName } from "@/utils/subjects";
 import { useSearchParams } from "next/navigation";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { saveOfflineItem, deleteOfflineItem, listOfflineItems } from "@/utils/offline-db";
+import { toast } from "sonner";
 
 interface PlannerType {
   id: string;
@@ -37,6 +39,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingIds, setDownloadingIds] = useState<string[]>([]);
+  const [offlinePlannerIds, setOfflinePlannerIds] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -52,9 +55,19 @@ const StudyPlannerView = ({ onBack }: Props) => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [plannerToUnbookmark, setPlannerToUnbookmark] = useState<string | null>(null);
 
+  const fetchOfflinePlanners = async () => {
+    try {
+      const offlineList = await listOfflineItems("planner");
+      setOfflinePlannerIds(offlineList.map(item => item.id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     if (!studentLoading) {
       fetchData();
+      fetchOfflinePlanners();
     }
   }, [studentLoading, subjects]);
 
@@ -185,6 +198,40 @@ const StudyPlannerView = ({ onBack }: Props) => {
       setTimeout(() => {
         setDownloadingIds(prev => prev.filter(id => id !== planner.id));
       }, 1000);
+    }
+  };
+
+  const handleToggleOffline = async (planner: PlannerType) => {
+    const isOffline = offlinePlannerIds.includes(planner.id);
+    setDownloadingIds(prev => [...prev, planner.id]);
+    try {
+      if (isOffline) {
+        await deleteOfflineItem(planner.id);
+        setOfflinePlannerIds(prev => prev.filter(id => id !== planner.id));
+        toast.success("Removed study planner from offline storage");
+      } else {
+        const response = await fetch(planner.pdf_url);
+        if (!response.ok) throw new Error("Could not download PDF file. Ensure CORS headers are enabled.");
+        const blob = await response.blob();
+        await saveOfflineItem({
+          id: planner.id,
+          type: "planner",
+          title: planner.title,
+          subject: planner.category,
+          metadata: {
+            faculty_name: planner.faculty_name,
+            pages: planner.pages,
+          },
+          pdfBlob: blob
+        });
+        setOfflinePlannerIds(prev => [...prev, planner.id]);
+        toast.success("Saved planner offline successfully!");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Failed to toggle offline download");
+    } finally {
+      setDownloadingIds(prev => prev.filter(id => id !== planner.id));
     }
   };
 
@@ -390,6 +437,20 @@ const StudyPlannerView = ({ onBack }: Props) => {
                       title="Open in new tab"
                     >
                       <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => handleToggleOffline(planner)}
+                      disabled={downloadingIds.includes(planner.id)}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-secondary shrink-0"
+                      title={offlinePlannerIds.includes(planner.id) ? "Remove from offline storage" : "Save Offline"}
+                    >
+                      {downloadingIds.includes(planner.id) ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      ) : offlinePlannerIds.includes(planner.id) ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 fill-green-500/10" />
+                      ) : (
+                        <ArrowDownCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
                     </button>
                     <button
                       onClick={() => toggleBookmark(planner.id)}

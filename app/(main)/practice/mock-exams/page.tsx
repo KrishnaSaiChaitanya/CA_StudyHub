@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import MockExam from "@/components/study/MockExam";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
-import { FileText, Clock, ChevronRight, BookOpen, Sparkles, TrendingUp, History, CheckCircle2, ArrowLeft } from "lucide-react";
+import { FileText, Clock, ChevronRight, BookOpen, Sparkles, TrendingUp, History, CheckCircle2, ArrowLeft, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { formatSubjectName } from "@/utils/subjects";
 import Link from "next/link";
+import { saveOfflineItem, deleteOfflineItem, listOfflineItems } from "@/utils/offline-db";
 
 interface Test {
   id: string;
@@ -40,6 +41,65 @@ export default function MockExamsPage() {
   const router = useRouter();
   const supabase = createClient();
   const { subjects, loading: studentLoading } = useStudent();
+
+  const [offlineTestIds, setOfflineTestIds] = useState<string[]>([]);
+  const [downloadingIds, setDownloadingIds] = useState<string[]>([]);
+
+  const fetchOfflineTests = async () => {
+    try {
+      const offlineList = await listOfflineItems("mcq");
+      setOfflineTestIds(offlineList.map(item => item.id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchOfflineTests();
+  }, []);
+
+  const handleToggleOfflineTest = async (test: Test) => {
+    const isOffline = offlineTestIds.includes(test.id);
+    setDownloadingIds(prev => [...prev, test.id]);
+    try {
+      if (isOffline) {
+        await deleteOfflineItem(test.id);
+        setOfflineTestIds(prev => prev.filter(id => id !== test.id));
+        toast.success("Removed mock exam from offline storage");
+      } else {
+        toast.info("Saving exam offline...");
+        const { data: questionsData, error: qErr } = await supabase
+          .from("questions")
+          .select("*")
+          .eq("test_id", test.id);
+
+        if (qErr) throw qErr;
+
+        await saveOfflineItem({
+          id: test.id,
+          type: "mcq",
+          title: test.name,
+          subject: test.category,
+          metadata: {
+            duration: test.duration,
+            questions_count: test.questions_count,
+            level: test.level,
+            description: test.description,
+            test_no: test.test_no,
+          },
+          data: questionsData || []
+        });
+
+        setOfflineTestIds(prev => [...prev, test.id]);
+        toast.success("Mock exam saved offline successfully!");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to toggle offline exam");
+    } finally {
+      setDownloadingIds(prev => prev.filter(id => id !== test.id));
+    }
+  };
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -329,14 +389,35 @@ export default function MockExamsPage() {
   </div>
 
   {/* Action Area */}
-  <Button 
-    onClick={() => handleStartTest(test.id)}
-    variant={isAttempted ? "outline" : "default"}
-    className="w-full group/btn h-12 rounded-xl font-semibold "
-  >
-    {isAttempted ? "Retake Exam" : "Start Exam"}
-    <ChevronRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
-  </Button>
+  <div className="flex gap-2 w-full mt-auto">
+    <Button 
+      onClick={() => handleStartTest(test.id)}
+      variant={isAttempted ? "outline" : "default"}
+      className="flex-1 group/btn h-12 rounded-xl font-semibold "
+    >
+      {isAttempted ? "Retake Exam" : "Start Exam"}
+      <ChevronRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
+    </Button>
+    <Button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleToggleOfflineTest(test);
+      }}
+      disabled={downloadingIds.includes(test.id)}
+      variant="outline"
+      size="icon"
+      className="h-12 w-12 rounded-xl"
+      title={offlineTestIds.includes(test.id) ? "Remove from offline storage" : "Save Offline"}
+    >
+      {downloadingIds.includes(test.id) ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : offlineTestIds.includes(test.id) ? (
+        <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" />
+      ) : (
+        <Download className="h-4 w-4" />
+      )}
+    </Button>
+  </div>
 </motion.div>
                   );
                 })}
