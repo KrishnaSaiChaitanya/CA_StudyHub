@@ -3,17 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowLeft, 
-  Trash2, 
-  BookOpen, 
-  Layers, 
-  FileText, 
-  CheckCircle2, 
-  Search, 
-  ExternalLink, 
-  Calendar, 
-  WifiOff, 
+import {
+  ArrowLeft,
+  Trash2,
+  BookOpen,
+  Layers,
+  FileText,
+  CheckCircle2,
+  Search,
+  ExternalLink,
+  Calendar,
+  WifiOff,
   Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,13 @@ import { Badge } from "@/components/ui/badge";
 import { listOfflineItems, deleteOfflineItem, OfflineItem } from "@/utils/offline-db";
 import { formatSubjectName } from "@/utils/subjects";
 import { toast } from "sonner";
+import { SubjectCategory } from "@/utils/supabase/types";
 
 export default function Downloads() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  
+
   const [items, setItems] = useState<OfflineItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -62,9 +63,9 @@ export default function Downloads() {
   };
 
   const filteredItems = items.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.subject.toLowerCase().includes(searchQuery.toLowerCase());
-    
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.subject.toLowerCase().includes(searchQuery.toLowerCase());
+
     if (activeTab === "all") return matchesSearch;
     return item.type === activeTab && matchesSearch;
   });
@@ -79,9 +80,9 @@ export default function Downloads() {
     <div className="min-h-screen bg-background">
       <section className="bg-primary py-12 md:py-16">
         <div className="container max-w-5xl px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 16 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
             className="flex flex-col justify-between items-start gap-4"
           >
             <div>
@@ -139,7 +140,7 @@ export default function Downloads() {
               <AnimatePresence>
                 {filteredItems.map((item, i) => {
                   const ItemIcon = item.type === "planner" ? FileText : item.type === "flashcard" ? Layers : CheckCircle2;
-                  
+
                   return (
                     <motion.div
                       key={item.id}
@@ -156,7 +157,7 @@ export default function Downloads() {
                             </div>
                             <div className="flex flex-col items-end gap-1 shrink-0 text-right">
                               <Badge variant="secondary" className="text-[9px] font-semibold py-0.5 capitalize max-w-[120px] truncate">
-                                {formatSubjectName(item.subject)}
+                                {formatSubjectName(item.subject as SubjectCategory)}
                               </Badge>
                               <span className="text-[9px] text-muted-foreground font-medium">
                                 {getSourceLabel(item)}
@@ -210,7 +211,7 @@ export default function Downloads() {
                                 <CheckCircle2 className="h-3.5 w-3.5" /> Start Exam
                               </Button>
                             )}
-                            
+
                             <Button
                               size="icon"
                               variant="outline"
