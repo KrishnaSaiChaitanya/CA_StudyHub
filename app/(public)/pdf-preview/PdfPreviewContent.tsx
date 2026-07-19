@@ -16,10 +16,12 @@ import { Button } from "@/components/ui/button";
 import { getOfflineItem } from "@/utils/offline-db";
 
 // 1. Import react-pdf components and styles
+// 1. Import react-pdf components and styles
 import { Document, Page, pdfjs } from "react-pdf";
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css'; // Removed /esm/
+import 'react-pdf/dist/Page/TextLayer.css';       // Removed /esm/
 
+// 2. Set up the PDF worker
 // 2. Set up the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
