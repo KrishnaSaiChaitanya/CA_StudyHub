@@ -1,5 +1,5 @@
 import "server-only";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 // --- Configuration & Constants ---
 const BRAND_COLOR = "#3B82F6";
@@ -7,30 +7,27 @@ const TEXT_DARK = "#0F172A";
 const TEXT_MUTED = "#475569";
 const BORDER_COLOR = "#E2E8F0";
 
-
-
-// --- Email Transporter ---
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// --- Resend Client ---
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async ({ to, subject, html, fromEmail }: { to: string; subject: string; html: string, fromEmail?: string }) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"${process.env.SMTP_FROM_NAME || "CAStudyHub"}" <${fromEmail || process.env.SMTP_FROM_EMAIL}>`,
+    const fromAddress = fromEmail || process.env.SMTP_FROM_EMAIL || "onboarding@resend.dev";
+    const { data, error } = await resend.emails.send({
+      from: `"${process.env.SMTP_FROM_NAME || "CAStudyHub"}" <${fromAddress}>`,
       to,
       subject,
       html,
     });
-    return { success: true, messageId: info.messageId };
+
+    if (error) {
+      console.error("Resend error sending email:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
   } catch (error: any) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email via Resend:", error);
     return { success: false, error: error.message };
   }
 };
