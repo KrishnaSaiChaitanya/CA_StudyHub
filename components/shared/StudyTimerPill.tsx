@@ -29,34 +29,33 @@ export const StudyTimerPill = () => {
         initial={{ opacity: 0, scale: 0.8, x: 20 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
         exit={{ opacity: 0, scale: 0.8, x: 20 }}
-        className="flex items-center gap-2 fixed bottom-6 left-4 z-[100]"
+        className="flex items-center gap-2 fixed bottom-20 md:bottom-6 left-4 z-[100]"
       >
         <button
           onClick={() => router.push("/study/progress")}
-          className={`group relative flex items-center gap-2.5 rounded-full border px-3.5 py-2 backdrop-blur-md shadow-lg transition-all hover:scale-105 active:scale-95 ${
-            running ? "border-white/20" : "border-white/10 opacity-80 saturate-75"
-          }`}
-          style={{ 
+          className={`group relative flex items-center gap-2.5 rounded-full border px-3.5 py-2 backdrop-blur-md shadow-lg transition-all hover:scale-105 active:scale-95 ${running ? "border-white/20" : "border-white/10 opacity-80 saturate-75"
+            }`}
+          style={{
             backgroundColor: running ? subjectColor : `${subjectColor}cc`,
             boxShadow: running ? `0 4px 14px 0 ${subjectColor}60` : "0 2px 8px 0 rgba(0,0,0,0.2)"
           }}
           title="Go to Study Progress"
         >
-          <div 
+          <div
             className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20"
           >
             {running ? (
-               <motion.div
-                 animate={{ rotate: 360 }}
-                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                 className="flex items-center justify-center"
-               >
-                 {timerMode === 'timer' ? (
-                   <Timer className="h-3 w-3 text-white" />
-                 ) : (
-                   <Clock className="h-3 w-3 text-white" />
-                 )}
-               </motion.div>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="flex items-center justify-center"
+              >
+                {timerMode === 'timer' ? (
+                  <Timer className="h-3 w-3 text-white" />
+                ) : (
+                  <Clock className="h-3 w-3 text-white" />
+                )}
+              </motion.div>
             ) : (
               <Pause className="h-3 w-3 text-white" />
             )}
@@ -68,7 +67,7 @@ export const StudyTimerPill = () => {
             <div className="h-3 w-[1px] bg-white/30 mx-0.5" />
           )}
           {activeSubject && (
-            <span 
+            <span
               className="text-[10px] font-bold text-white/90 uppercase tracking-tighter"
             >
               {activeSubject.split('_').map((w: string) => w[0]).join('').slice(0, 3)}

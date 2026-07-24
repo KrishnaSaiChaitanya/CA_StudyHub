@@ -204,7 +204,7 @@ const FeedbackWidget = () => {
   ];
 
   return (
-    <div className="fixed right-4 bottom-4 z-50 md:right-6 md:bottom-6 flex flex-col items-end gap-3">
+    <div className="fixed right-4 bottom-20 z-50 md:right-6 md:bottom-6 flex flex-col items-end gap-3">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -219,7 +219,7 @@ const FeedbackWidget = () => {
                 <h3 className="text-sm font-semibold text-foreground">Share feedback</h3>
                 <p className="text-xs text-muted-foreground">Help us improve CA Study Hub</p>
               </div>
-              <Image width={60} height={50}  alt="star gif" src = "https://res.cloudinary.com/dsfems7vy/image/upload/v1783190647/Star_rating_glqwzr.gif" />
+              <Image width={60} height={50} alt="star gif" src="https://res.cloudinary.com/dsfems7vy/image/upload/v1783190647/Star_rating_glqwzr.gif" />
             </div>
 
             <div className="flex gap-1 border-b border-border p-2 bg-muted/20">

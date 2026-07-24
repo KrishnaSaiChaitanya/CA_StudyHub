@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Menu, X, User as UserIcon, LogOut, Crown, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,19 +33,20 @@ const authRoutes = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isSubscribed: isPro, planName, expiryDate } = useSubscription();
   const { studentLevel, examAttemptMonth, examAttemptYear, refreshProfile } = useStudent();
   const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === 'true';
-  
+
   const [editName, setEditName] = useState("");
   const [editStudentType, setEditStudentType] = useState("");
   const [editExamAttempt, setEditExamAttempt] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const prevPathname = useRef(pathname);
-  
+
   const supabase = createClient();
   const router = useRouter();
 
@@ -65,7 +68,7 @@ const Navbar = () => {
   const handleSaveProfile = async () => {
     if (!user) return;
     setIsSaving(true);
-    
+
     try {
       if (editName !== user.user_metadata?.full_name) {
         const { data } = await supabase.auth.updateUser({
@@ -79,14 +82,14 @@ const Navbar = () => {
 
       await supabase
         .from("profiles")
-        .update({ 
+        .update({
           student_type: editStudentType,
           full_name: editName,
           exam_attempt_month: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[0], 10) : null,
           exam_attempt_year: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[1], 10) : null,
         })
         .eq("id", user.id);
-      
+
       await refreshProfile();
     } catch (err) {
       console.error("Error saving profile:", err);
@@ -151,7 +154,7 @@ const Navbar = () => {
       };
       hydrateUser();
     }
-    
+
     prevPathname.current = pathname;
   }, [pathname, supabase]);
 
@@ -173,14 +176,112 @@ const Navbar = () => {
     ? getUpcomingAttempts(editStudentType as StudentLevel, 4)
     : [];
 
-  const renderUserPopover = (mobile = false) => (
+  const renderProfileForm = (idSuffix: string) => {
+    return (
+      <div className="grid gap-4 mt-2">
+        <div className="grid gap-3">
+          {/* Email Field */}
+          <div className="grid grid-cols-3 items-center gap-4 text-sm">
+            <Label className="font-medium text-foreground">Email</Label>
+            <div className="col-span-2 px-3 flex items-center h-8 rounded-md bg-secondary/30 border border-border/50 text-sm font-medium text-muted-foreground truncate">
+              {user?.email}
+            </div>
+          </div>
+
+          {/* Name Field */}
+          <div className="grid grid-cols-3 items-center gap-4 text-sm">
+            <Label htmlFor={`name-${idSuffix}`} className="font-medium text-foreground">Name</Label>
+            <Input
+              id={`name-${idSuffix}`}
+              value={editName}
+              className="col-span-2 h-8 text-sm"
+              onChange={(e) => setEditName(e.target.value)}
+            />
+          </div>
+
+          {/* Level Field */}
+          <div className="grid grid-cols-3 items-center gap-4 text-sm">
+            <Label htmlFor={`level-${idSuffix}`} className="font-medium text-foreground">Level</Label>
+            <div className="col-span-2">
+              <Select value={editStudentType} onValueChange={(val) => {
+                setEditStudentType(val);
+                setEditExamAttempt("");
+              }}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="foundation">Foundation</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="final">Final</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Attempt Field */}
+          {editStudentType && attemptOptions.length > 0 && (
+            <div className="grid grid-cols-3 items-center gap-4 text-sm">
+              <Label htmlFor={`attempt-${idSuffix}`} className="font-medium text-foreground">Attempt</Label>
+              <div className="col-span-2">
+                <Select value={editExamAttempt} onValueChange={setEditExamAttempt}>
+                  <SelectTrigger className="h-8 text-sm flex items-center gap-2">
+                    <div className="flex items-center gap-2 truncate">
+                      <Calendar className="h-3.5 w-3.5 opacity-70" />
+                      <SelectValue placeholder={attemptOptions[0].label} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{attemptOptions[0].label}</SelectItem>
+                    {attemptOptions.slice(1, 5).map((opt) => (
+                      <SelectItem key={`${opt.month}-${opt.targetDate.getFullYear()}`} value={`${opt.month}-${opt.targetDate.getFullYear()}`}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <Button size="sm" onClick={handleSaveProfile} disabled={isSaving} className="mt-4 w-full">
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+
+        {/* Payment / Plan Section */}
+        {requirePayment && (
+          <div className="border-t border-border pt-4 mt-2">
+            <h4 className="font-medium leading-none text-sm mb-3">Current Plan</h4>
+            {isPro ? (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">{planName || "Pro Plan Active"}</span>
+                <Crown className="h-4 w-4 text-accent" />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Free Plan</span>
+                </div>
+                <Link href="/pricing" className="w-full text-foreground hover:text-foreground">
+                  <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border-transparent transition-all flex items-center justify-center gap-2">
+                    Upgrade to Pro <Crown className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderUserPopover = () => (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={`flex items-center gap-2 text-sm font-medium text-foreground bg-secondary/50 hover:bg-secondary/70 transition-colors border border-border ${
-          mobile ? "px-3 py-2 rounded-lg w-full text-left" : "px-3 py-1.5 rounded-full"
-        }`}>
+        <button className="flex items-center gap-2 text-sm font-medium text-foreground bg-secondary/50 hover:bg-secondary/70 transition-colors border border-border px-3 py-1.5 rounded-full">
           <UserIcon className="h-4 w-4 text-accent shrink-0" />
-          <span className="truncate flex-1 text-left">
+          <span className="truncate max-w-[120px] text-left">
             {user?.user_metadata?.full_name || user?.email || "User"}
           </span>
         </button>
@@ -193,88 +294,7 @@ const Navbar = () => {
               Update your details.
             </p>
           </div>
-          <div className="grid gap-3">
-            <div className="grid grid-cols-3 items-center gap-4 text-sm mt-2">
-              <Label className="text-muted-foreground">Email</Label>
-              <div className="col-span-2 px-3 py-1.5 rounded-md bg-secondary/30 border border-border/50 text-xs font-medium text-muted-foreground truncate">
-                {user?.email}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 items-center gap-4 text-sm">
-              <Label htmlFor={`name-${mobile ? 'mobile' : 'desktop'}`}>Name</Label>
-              <Input
-                id={`name-${mobile ? 'mobile' : 'desktop'}`}
-                value={editName}
-                className="col-span-2 h-8"
-                onChange={(e) => setEditName(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-3 items-center gap-4 text-sm">
-              <Label htmlFor={`level-${mobile ? 'mobile' : 'desktop'}`}>Level</Label>
-              <div className="col-span-2">
-                <Select value={editStudentType} onValueChange={(val) => {
-                  setEditStudentType(val);
-                  setEditExamAttempt("");
-                }}>
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="foundation">Foundation</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="final">Final</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            {editStudentType && attemptOptions.length > 0 && (
-              <div className="grid grid-cols-3 items-start gap-4 text-sm">
-                <Label htmlFor={`attempt-${mobile ? 'mobile' : 'desktop'}`}>Attempt</Label>
-                <div className="col-span-2">
-                  <Select value={editExamAttempt} onValueChange={setEditExamAttempt}>
-                    <SelectTrigger className="h-8">
-                      <Calendar className="h-3.5 w-3 " />
-                      <SelectValue placeholder={attemptOptions[0].label} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{attemptOptions[0].label}</SelectItem>
-                      {attemptOptions.slice(1, 5).map((opt) => (
-                        <SelectItem key={`${opt.month}-${opt.targetDate.getFullYear()}`} value={`${opt.month}-${opt.targetDate.getFullYear()}`}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-            <Button size="sm" onClick={handleSaveProfile} disabled={isSaving} className="mt-2 w-full">
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-          
-          {requirePayment && (
-            <div className="border-t border-border pt-4">
-              <h4 className="font-medium leading-none text-sm mb-3">Current Plan</h4>
-              {isPro ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{planName || "Pro Plan Active"}</span>
-                  <Crown className="h-4 w-4 text-accent" />
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Free Plan</span>
-                  </div>
-                  <Link href="/pricing" className="w-full text-foreground hover:text-foreground">
-                    <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border-transparent transition-all">
-                      Upgrade to Pro <Crown className="ml-2 h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
+          {renderProfileForm("desktop")}
         </div>
       </PopoverContent>
     </Popover>
@@ -285,13 +305,58 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-xl bg-white">
-      <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 h-14 w-14">
-          <LogoElement />
-        </Link>
+    <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-xl bg-white w-full">
+      <div className="container flex h-16 items-center justify-between px-8 md:px-4">
+        {/* Left Side: Mobile Hamburger Drawer Button & Logo */}
+        <div className="flex items-center gap-2">
+          {/* Hamburger Menu (Mobile Only) */}
+          {/* <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg">
+                <Menu className="h-5.5 w-5.5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] p-6 flex flex-col justify-between">
+              <div>
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="text-left font-bold flex items-center gap-2">
+                    <span className="h-8 w-8"><LogoElement /></span>
+                    <span className="text-gradient-blue text-lg">CA StudyHub</span>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-2 mt-4">
+                  {navItems.filter((i) => i.path === "/pricing" ? (requirePayment && !isPro) : true).map((item) => {
+                    const isActive = item.path === "/" ? pathname === "/" || pathname === "/dashboard" : pathname.includes(item.path);
+                    return (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        onClick={() => setMobileOpen(false)}
+                        className={`py-2.5 px-3 rounded-lg text-sm font-semibold transition-all ${isActive
+                            ? "bg-accent/10 text-accent font-bold"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="text-[11px] text-muted-foreground text-center border-t border-border pt-4">
+                © {new Date().getFullYear()} CA StudyHub
+              </div>
+            </SheetContent>
+          </Sheet> */}
 
-        <div className="hidden items-center gap-1 md:flex mr-[-120px]">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 h-12 w-12">
+            <LogoElement />
+          </Link>
+        </div>
+
+        {/* Center: Desktop Navigation Items */}
+        <div className="hidden items-center gap-1 md:flex">
           {navItems.filter((i) => i.path === "/pricing" ? (requirePayment && !isPro) : true).map((item) => {
             const isActive = item.path === "/" ? pathname === "/" || pathname === "/dashboard" : pathname.includes(item.path);
             return (
@@ -316,6 +381,8 @@ const Navbar = () => {
           })}
         </div>
 
+        {/* Right Side Actions: Desktop & Mobile */}
+        {/* Desktop Actions */}
         <div className="hidden items-center gap-3 md:flex !font-semibold">
           {isLoading ? (
             <div className="flex items-center gap-3">
@@ -330,8 +397,8 @@ const Navbar = () => {
                   PRO
                 </div>
               )}
-              {renderUserPopover(false)}
-              <Button variant="ghost" size="sm" type="button" onClick={handleSignOut} className="text-muted-foreground hover:text-white">
+              {renderUserPopover()}
+              <Button variant="ghost" size="sm" type="button" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
                 <LogOut className="h-4 w-4 mr-2" />
                 Log out
               </Button>
@@ -350,65 +417,59 @@ const Navbar = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="border-t border-border bg-background px-4 pb-4 md:hidden"
-        >
-          {navItems.filter((i) => i.path === "/pricing" ? (requirePayment && !isPro) : true).map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              onClick={() => setMobileOpen(false)}
-              className={`block py-3 text-sm font-medium ${
-                pathname === item.path ? "text-foreground" : "text-muted-foreground"
-              }`}
-              prefetch={false}
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Mobile Actions: Top Right beside Profile Icon */}
+        <div className="flex items-center gap-1 md:hidden">
           {isLoading ? (
-            <div className="mt-4 flex flex-col gap-2">
-              <div className="h-10 w-full bg-secondary/50 animate-pulse rounded-lg"></div>
-              <div className="h-10 w-full bg-accent/20 animate-pulse rounded-lg"></div>
-            </div>
+            <div className="h-8 w-8 bg-secondary/50 animate-pulse rounded-full"></div>
           ) : user ? (
-            <>
-              {requirePayment && isPro && (
-                <div className="mt-4 flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-accent-foreground bg-accent rounded-lg shadow-sm justify-center">
-                  <Crown className="h-4 w-4" />
-                  {planName?.toUpperCase() || "PRO PLAN ACTIVE"}
-                </div>
-              )}
-              <div className={`${(requirePayment && isPro) ? 'mt-2' : 'mt-4'} mb-2 flex flex-col gap-2`}>
-                {renderUserPopover(true)}
-                <Button variant="ghost" size="sm" type="button" onClick={handleSignOut} className="w-full justify-start text-muted-foreground hover:text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Log out
-                </Button>
-              </div>
-            </>
+            <div className="flex items-center gap-1">
+              {/* Logout Button beside Profile */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                title="Log out"
+              >
+                <LogOut className="h-4.5 w-4.5" />
+              </Button>
+
+              {/* Profile Icon triggers Dialog Modal */}
+              <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full bg-secondary/70 hover:bg-secondary border border-border"
+                  >
+                    <UserIcon className="h-4.5 w-4.5 text-accent" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%] max-w-[420px] rounded-2xl p-6">
+                  <DialogHeader>
+                    <DialogTitle>Profile Settings</DialogTitle>
+                    <DialogDescription>Update your personal details and preferences.</DialogDescription>
+                  </DialogHeader>
+                  {renderProfileForm("mobile")}
+                </DialogContent>
+              </Dialog>
+            </div>
           ) : (
-            <div className="mt-4 flex flex-col gap-2">
-              <Link href="/sign-in" prefetch={false} onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">Log in</Button>
+            <div className="flex items-center gap-1">
+              <Link href="/sign-in">
+                <Button variant="ghost" size="sm" className="text-muted-foreground text-xs font-semibold px-2.5 h-8">
+                  Log in
+                </Button>
               </Link>
-              <Link href="/sign-in" prefetch={false} onClick={() => setMobileOpen(false)}>
-                <Button size="sm" className="w-full bg-accent text-accent-foreground">Get Started</Button>
+              <Link href="/sign-in" prefetch={false}>
+                <Button size="sm" className="bg-accent text-accent-foreground text-xs font-semibold px-3 h-8 shadow-accent">
+                  Get Started
+                </Button>
               </Link>
             </div>
           )}
-        </motion.div>
-      )}
+        </div>
+      </div>
     </nav>
   );
 };

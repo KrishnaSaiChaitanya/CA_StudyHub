@@ -82,7 +82,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
   const { toast } = useToast();
   const { subjects, loading: studentLoading } = useStudent();
   const { isSubscribed } = useSubscription();
-  
+
   const dynamicSubjects = useMemo(() => {
     return subjects.map((subj) => ({
       label: formatSubjectName(subj),
@@ -128,7 +128,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
   }, [subjects, activeSubject, setActiveSubject]);
 
   const [userId, setUserId] = useState<string | null>(null);
-  
+
   const [todos, setTodos] = useState<TodoType[]>([]);
   const [todoFilter, setTodoFilter] = useState<string>("All");
   const [newTodo, setNewTodo] = useState("");
@@ -157,7 +157,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
   }, [dayKey]);
 
   const [selectedDay, setSelectedDay] = useState<string>(todayKey);
-  
+
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [sessionTag, setSessionTag] = useState("");
 
@@ -190,7 +190,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
   };
 
   const fetchSessions = async (uid: string) => {
-    const today = new Date().toDateString(); 
+    const today = new Date().toDateString();
     let sessionsQuery = supabase
       .from('study_sessions')
       .select('*')
@@ -245,7 +245,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
     if (!newTodo.trim() || !userId) return;
     setIsAddingTodo(true);
     const subject = todoFilter === "All" ? 'general' as SubjectCategory : (todoFilter as SubjectCategory);
-    
+
     const { data, error } = await supabase.from('todos').insert({
       user_id: userId,
       text: newTodo.trim(),
@@ -283,7 +283,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
       return matchesDay && matchesSubject;
     });
   }, [todos, selectedDay, todoFilter]);
-  
+
   const dailyDataMap = sessions.reduce((acc, curr) => {
     if (!acc[curr.category]) acc[curr.category] = 0;
     acc[curr.category] += curr.duration_seconds;
@@ -293,12 +293,12 @@ const ProgressDashboardView = ({ onBack }: Props) => {
   const dailyData = Object.entries(dailyDataMap).map(([category, duration_seconds]) => ({
     category,
     hours: duration_seconds / 3600
-  })).filter(x => x.hours > 0).sort((a,b) => b.hours - a.hours);
+  })).filter(x => x.hours > 0).sort((a, b) => b.hours - a.hours);
 
   const totalHours = sessions.reduce((s, d) => s + d.duration_seconds, 0) / 3600;
 
   return (
-   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-background text-foreground">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-background text-foreground">
       <section className="bg-primary py-16 mx-auto">
         <div className="container">
           <motion.div
@@ -324,7 +324,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
 
       <div className="container py-6">
         <div className="grid gap-5 lg:grid-cols-[280px_1fr_300px]">
-          
+
           <div className="space-y-5">
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
               <div className="p-5 pb-0 flex items-center justify-between">
@@ -384,7 +384,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 pb-0">
-               <h2 className="text-sm font-semibold">Study Timer</h2>
+              <h2 className="text-sm font-semibold">Study Timer</h2>
             </div>
             <ProFeatureLock label="Unlock Study timer with Pro Subscription">
               <div className="p-6 flex flex-col items-center">
@@ -392,23 +392,21 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                   <div className="inline-flex rounded-lg border border-border bg-secondary p-1">
                     <button
                       onClick={() => setTimerMode("stopwatch")}
-                      className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
-                        timerMode === "stopwatch"
+                      className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${timerMode === "stopwatch"
                           ? "bg-accent text-accent-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
-                      }`}
-                       disabled={running}
+                        }`}
+                      disabled={running}
                     >
                       <Clock className="h-3.5 w-3.5" /> Stopwatch
                     </button>
                     <button
                       onClick={() => setTimerMode("timer")}
-                      className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${
-                        timerMode === "timer"
+                      className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50 ${timerMode === "timer"
                           ? "bg-accent text-accent-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
-                      }`}
-                       disabled={running}
+                        }`}
+                      disabled={running}
                     >
                       <Timer className="h-3.5 w-3.5" /> Timer
                     </button>
@@ -460,12 +458,11 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                       key={s.value}
                       onClick={() => { setActiveSubject(s.value); }}
                       disabled={running}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                        activeSubject === s.value ? "text-white shadow-sm" : "bg-secondary text-muted-foreground"
-                      } ${running ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${activeSubject === s.value ? "text-white shadow-sm" : "bg-secondary text-muted-foreground"
+                        } ${running ? "opacity-50 grayscale cursor-not-allowed" : ""}`}
                       style={activeSubject === s.value ? { backgroundColor: running ? "#94a3b8" : s.color } : {}}
                     >
-                      {s.label}
+                      {SUBJECT_ABBREVIATIONS[s.value as SubjectCategory]}
                     </button>
                   ))}
                 </div>
@@ -477,13 +474,13 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                       cx="110" cy="110" r="95" fill="none" stroke={getSubjectColor(activeSubject || subjects[0])}
                       strokeWidth="6" strokeLinecap="round" strokeDasharray={2 * Math.PI * 95}
                       strokeDashoffset={
-                        timerMode === 'stopwatch' 
-                        ? -(2 * Math.PI * 95 * ((Math.min(seconds, 3600) / 3600)))
-                        : -(2 * Math.PI * 95 * (1 - (timerDuration > 0 ? remaining / timerDuration : 0)))
+                        timerMode === 'stopwatch'
+                          ? -(2 * Math.PI * 95 * ((Math.min(seconds, 3600) / 3600)))
+                          : -(2 * Math.PI * 95 * (1 - (timerDuration > 0 ? remaining / timerDuration : 0)))
                       }
                       style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
-                      animate={{ 
-                        strokeDashoffset: timerMode === 'stopwatch' 
+                      animate={{
+                        strokeDashoffset: timerMode === 'stopwatch'
                           ? -(2 * Math.PI * 95 * ((Math.min(seconds, 3600) / 3600)))
                           : -(2 * Math.PI * 95 * (1 - (timerDuration > 0 ? remaining / timerDuration : 0)))
                       }}
@@ -507,7 +504,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
-                  
+
                   <Button
                     className="h-14 w-14 rounded-full shadow-md"
                     style={{ backgroundColor: getSubjectColor(activeSubject || subjects[0]) }}
@@ -573,8 +570,8 @@ const ProgressDashboardView = ({ onBack }: Props) => {
 
           <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
             <DialogContent className="sm:max-w-md border-none shadow-2xl overflow-hidden p-0">
-               <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary" />
-               <div className="p-6">
+              <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary" />
+              <div className="p-6">
                 <DialogHeader>
                   <DialogTitle className="text-xl flex items-center gap-2">
                     <div className="p-2 rounded-lg bg-accent/10">
@@ -622,7 +619,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                     )}
                   </Button>
                 </DialogFooter>
-               </div>
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -650,11 +647,10 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                   <button
                     key={key}
                     onClick={() => setSelectedDay(key)}
-                    className={`relative flex flex-col items-center rounded-lg py-1.5 transition-all ${
-                      isSelected
+                    className={`relative flex flex-col items-center rounded-lg py-1.5 transition-all ${isSelected
                         ? "bg-accent text-accent-foreground"
                         : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <span className="text-[9px] font-medium uppercase">
                       {d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3)}
@@ -674,20 +670,19 @@ const ProgressDashboardView = ({ onBack }: Props) => {
               {selectedDay === todayKey
                 ? "Today's tasks"
                 : new Date(selectedDay).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
             </p>
 
             <div className="flex flex-wrap gap-1.5 mb-4 max-h-24 overflow-y-auto shrink-0">
               <button
                 onClick={() => setTodoFilter("All")}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${
-                  todoFilter === "All"
+                className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${todoFilter === "All"
                     ? "bg-accent text-accent-foreground"
                     : "bg-secondary text-muted-foreground hover:text-foreground"
-                }`}
+                  }`}
               >
                 All
               </button>
@@ -698,14 +693,13 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                   <button
                     key={s.value}
                     onClick={() => setTodoFilter(s.value)}
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${
-                      isSelected
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${isSelected
                         ? "text-white shadow-sm"
                         : "bg-secondary text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                     style={isSelected ? { backgroundColor: subjColor } : {}}
                   >
-                   {SUBJECT_ABBREVIATIONS[s.value as SubjectCategory]}
+                    {SUBJECT_ABBREVIATIONS[s.value as SubjectCategory]}
                   </button>
                 );
               })}
@@ -738,19 +732,17 @@ const ProgressDashboardView = ({ onBack }: Props) => {
                   >
                     <button
                       onClick={() => toggleTodo(todo.id)}
-                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${
-                        todo.done
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-all ${todo.done
                           ? "border-accent bg-accent"
                           : "border-border hover:border-accent/50"
-                      }`}
+                        }`}
                     >
                       {todo.done && <Check className="h-2.5 w-2.5 text-accent-foreground" />}
                     </button>
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-xs leading-relaxed ${
-                          todo.done ? "text-muted-foreground line-through" : "text-card-foreground"
-                        }`}
+                        className={`text-xs leading-relaxed ${todo.done ? "text-muted-foreground line-through" : "text-card-foreground"
+                          }`}
                       >
                         {todo.text}
                       </p>

@@ -58,7 +58,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-border bg-background w-full">
+    <footer className="hidden md:block border-t border-border bg-background w-full">
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="flex flex-col justify-between">
