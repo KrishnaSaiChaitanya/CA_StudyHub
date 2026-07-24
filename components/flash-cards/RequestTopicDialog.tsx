@@ -8,6 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Send, Loader2 } from "lucide-react";
+import { syncFlashcardRequestAction } from "@/app/public-api-actions";
+
+/** Map Supabase student_type enum to a human-readable exam level string. */
+function toExamLevel(studentType: string | null | undefined): string {
+  switch (studentType) {
+    case "foundation": return "CA Foundation";
+    case "intermediate": return "CA Intermediate";
+    case "final": return "CA Final";
+    default: return "CA Student";
+  }
+}
 
 interface RequestTopicDialogProps {
   open: boolean;
@@ -29,9 +40,18 @@ export default function RequestTopicDialog({ open, onOpenChange }: RequestTopicD
 
     setSubmitting(true);
     try {
+      // 1. Resolve authenticated user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Authentication required");
 
+      // 2. Fetch profile for display name + exam level (used by external API only)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, student_type")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      // 3. Save to Supabase — this is the source of truth
       const { error } = await supabase.from("flashcard_requests").insert({
         user_id: user.id,
         topic: topic.trim(),
@@ -39,6 +59,17 @@ export default function RequestTopicDialog({ open, onOpenChange }: RequestTopicD
       });
 
       if (error) throw error;
+
+      // 4. Mirror to external tracker — fire-and-forget, errors are silent
+      syncFlashcardRequestAction({
+        studentName: profile?.full_name || user.email || "Unknown",
+        email: user.email ?? "",
+        examLevel: toExamLevel(profile?.student_type),
+        topic: topic.trim(),
+        notes: notes.trim() || "",
+      }).catch((e) => {
+        console.log("[API] Sync failed (non-fatal)", e);
+      });
 
       toast({
         title: "Request submitted!",

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { submitFeedbackRatingAction, submitFeedbackSubmissionAction } from "@/app/actions";
+import { syncContactRequestAction } from "@/app/public-api-actions";
 import Image from "next/image";
 
 type Tab = "rating" | "bug" | "feature";
@@ -61,6 +62,7 @@ const FeedbackWidget = () => {
   const [hasRated, setHasRated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [userName, setUserName] = useState("");
 
   const [overall, setOverall] = useState(0);
   const [flashcards, setFlashcards] = useState(0);
@@ -79,12 +81,13 @@ const FeedbackWidget = () => {
           setUser(authUser);
           const { data: profile } = await supabase
             .from("profiles")
-            .select("feedback")
+            .select("feedback, full_name")
             .eq("id", authUser.id)
             .maybeSingle();
 
           const userHasRated = !!profile?.feedback;
           setHasRated(userHasRated);
+          setUserName(profile?.full_name || authUser.email || "");
 
           if (userHasRated) {
             setTab("bug");
@@ -169,6 +172,14 @@ const FeedbackWidget = () => {
           message,
         });
         if (res.success) {
+          // Mirror to external tracker — fire-and-forget, errors are silent
+          syncContactRequestAction({
+            name: userName || user?.email || "Unknown",
+            email: user?.email ?? "",
+            subject: tab === "bug" ? "Bug Report" : "Feature Request",
+            message,
+          }).catch(() => { /* silently ignored — never surfaces to the user */ });
+
           toast({ title: "Feedback submitted! 💙", description: "Thank you for helping us improve." });
           localStorage.setItem("feedback_widget_dismissed", "true");
           setOpen(false);
