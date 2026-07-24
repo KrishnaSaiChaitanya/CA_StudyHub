@@ -647,7 +647,7 @@ const ExamCalendarView = () => {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30"
                                         onClick={(e) => { e.stopPropagation(); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
                                       >
                                         <Trash2 className="h-3 w-3" /> Delete

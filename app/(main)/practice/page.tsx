@@ -119,9 +119,9 @@ const Practice = () => {
                           <Skeleton className="h-3 w-16" />
                         ) : (
                           <>
-                          {!res.isDisabled && <span className="text-xs font-medium text-accent">
-                            {counts[res.type] || 0} {res.unit}
-                          </span>}
+                            {!res.isDisabled && <span className="text-xs font-medium text-accent">
+                              {counts[res.type] || 0} {res.unit}
+                            </span>}
                           </>
                         )}
                         {res.isDisabled && <Badge variant="secondary" className="text-[10px] py-0 h-4 uppercase bg-muted text-muted-foreground border-none">Coming Soon</Badge>}
@@ -129,19 +129,19 @@ const Practice = () => {
                     </div>
                   </div>
                   <p className="mt-3 flex-1 text-xs text-muted-foreground">{res.description}</p>
-                  
+
                   {res.type === "rtp" ? (
                     <Button variant="outline" size="sm" className="mt-4 w-full text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
                       {res.isDisabled ? "Coming soon" : <Link href={res.link}>Browse Papers</Link>}
                     </Button>
                   ) : (
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                       <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
-                          {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=questions`}>Questions</Link>}
-                       </Button>
-                       <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
-                          {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=solutions`}>Solutions</Link>}
-                       </Button>
+                      <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
+                        {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=questions`}>Questions</Link>}
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
+                        {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=solutions`}>Solutions</Link>}
+                      </Button>
                     </div>
                   )}
                 </motion.div>
@@ -161,13 +161,13 @@ const Practice = () => {
               <p className="mt-2 text-xs text-primary-foreground/50"> Revise concepts, strengthen recall, and excel confidently.</p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
-                <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent hover:bg-accent/10">View My Performance</Button>
+                <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent">View My Performance</Button>
               </div>
             </motion.div>
           </ProFeatureLock>
         </section>
       </main>
-      
+
     </div>
   );
 };
