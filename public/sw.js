@@ -8,8 +8,8 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/Logo.png',
   '/icon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/icon-pwa-192.png',
+  '/icon-pwa-512.png',
   '/favicon.ico',
 ];
 

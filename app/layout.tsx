@@ -10,12 +10,22 @@ const defaultUrl = process.env.VERCEL_URL
 
 const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
 
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "CA StudyHub",
   description: "Comprehensive learning and resource-sharing platform for CA aspirants.",
   icons: {
     icon: "/icon.svg",
+    apple: "/icon-pwa-192.png",
   },
   ...(enablePWA ? {
     manifest: "/manifest.json",
