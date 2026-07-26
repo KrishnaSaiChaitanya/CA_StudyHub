@@ -369,7 +369,7 @@ const ExamCalendarView = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_220px]">
+        <div className="grid gap-6 lg:grid-cols-[3fr_1fr]">
           {/* ============ MOBILE CALENDAR (< sm) ============ */}
           <div className="sm:hidden w-full min-w-0" ref={calendarRef}>
             {/* Month nav */}

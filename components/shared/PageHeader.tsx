@@ -21,7 +21,7 @@ export default function PageHeader({
   backText = "Back to Study Tools",
   size = "md",
 }: PageHeaderProps) {
-  const isLarge = size === "md";
+  const isLarge = false;
 
   return (
     <section
@@ -37,7 +37,7 @@ export default function PageHeader({
           animate={{ opacity: 1, y: 0 }}
           className={
             isLarge
-              ? "mx-auto max-w-xl text-center"
+              ? "mx-auto max-w-xl text-center text-center"
               : "mx-auto flex flex-col items-center text-center"
           }
         >
