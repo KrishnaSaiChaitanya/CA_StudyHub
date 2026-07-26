@@ -375,7 +375,7 @@ const Navbar = () => {
           </span>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" sideOffset={8}>
+      <PopoverContent className="w-80 p-4" sideOffset={8} onOpenAutoFocus={(e) => e.preventDefault()}>
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Profile Settings</h4>
@@ -571,7 +571,7 @@ const Navbar = () => {
                       <UserIcon className="h-4.5 w-4.5 text-accent" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="w-[90%] max-w-[420px] rounded-2xl p-6">
+                  <DialogContent className="w-[90%] max-w-[420px] rounded-2xl p-6" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
                       <DialogTitle>Profile Settings</DialogTitle>
                       <DialogDescription>Update your personal details and preferences.</DialogDescription>
