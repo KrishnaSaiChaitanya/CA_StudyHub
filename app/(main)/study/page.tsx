@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Timer, CalendarDays, Target, BarChart3, ClipboardList, Bot, Bell, Award, Layers } from "lucide-react";
 import Link from "next/link";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
+import PageHeader from "@/components/shared/PageHeader";
 
 const tools = [
   { icon: BookOpen, title: "Study Resources", description: "Study planners, key questions, and mnemonics from faculty & community", path: "/study/planner" },
@@ -12,7 +13,7 @@ const tools = [
   { icon: ClipboardList, title: "Notes & Bookmarks", description: "Save notes, bookmark resources, and organize materials.", path: "/bookmarks" },
   { icon: Layers, title: "Flashcards", description: "Master concepts faster with digital flashcards organized by folders.", path: "/study/flash-cards" },
 
-  { icon: Bell, title: "Announcements", description: "Stay updated with the latest ICAI announcements and official notices.", path: "/study/announcements", comingSoon: false  },
+  { icon: Bell, title: "Announcements", description: "Stay updated with the latest ICAI announcements and official notices.", path: "/study/announcements", comingSoon: false },
   // { icon: Bot, title: "AI Chatbot", description: "Instant AI-powered doubt solving and personalized study assistance.", comingSoon: true },
 ];
 
@@ -20,28 +21,26 @@ const Study = () => {
   const { studentLevel } = useStudent();
 
   const studyTools = [...tools];
-if (studentLevel === "final") {
-  studyTools.splice(Math.max(studyTools.length, 0), 0, {
-    icon: Award,
-    title: "SPOM (Self-Paced)",
-    description: "Access Set A–D papers, study materials, and peer observations.",
-    path: "/study/spom",
-    comingSoon: true 
-  });
-}
+  if (studentLevel === "final") {
+    studyTools.splice(Math.max(studyTools.length, 0), 0, {
+      icon: Award,
+      title: "SPOM (Self-Paced)",
+      description: "Access Set A–D papers, study materials, and peer observations.",
+      path: "/study/spom",
+      comingSoon: true
+    });
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background flex flex-col w-full">
       <div className="flex-1 w-full">
-        <section className="bg-primary py-20 w-full">
-          <div className="container">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl text-center">
-              <h1 className="text-4xl font-bold text-primary-foreground">Study <span className="text-gradient-blue">Smarter</span></h1>
-              <p className="mt-4 text-sm text-primary-foreground/50">Plan, focus, and track your CA preparation with powerful tools.</p>
-            </motion.div>
-          </div>
-        </section>
-        <section className="container py-16">
+        <PageHeader
+          title="Study"
+          gradientTitle="Smarter"
+          description="Plan, focus, and track your CA preparation with powerful tools."
+          size="lg"
+        />
+        <section className="container py-12">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {studyTools.map((tool, i) => (
               <motion.div
@@ -78,7 +77,7 @@ if (studentLevel === "final") {
           </div>
         </section>
       </div>
-      
+
     </div>
   );
 };

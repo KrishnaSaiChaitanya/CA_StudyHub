@@ -11,6 +11,7 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import PageHeader from "@/components/shared/PageHeader";
 
 
 type DbCalendarEvent = {
@@ -61,10 +62,10 @@ const formatSubjectName = (subject: string) => {
 const ExamCalendarView = () => {
   const supabase = createClient();
   const router = useRouter();
-  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [filterCategory, setFilterCategory] = useState<EventCategory | null>(null);
-  
+
   const { studentLevel, subjects, loading: studentLoading } = useStudent();
   const [events, setEvents] = useState<DbCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,12 +88,12 @@ const ExamCalendarView = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (studentLoading) return;
-      
+
       try {
         setIsLoading(true);
         // User's subjects + general events
         const allowedSubjects = ['general', ...subjects];
-        
+
         // 1. Fetch Calendar Events
         const { data: calendarEvents } = await supabase
           .from("calendar_events")
@@ -211,7 +212,7 @@ const ExamCalendarView = () => {
       toast({ title: "Failed to mark as complete", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Task marked as complete!" });
-      setEvents(prev => prev.map(e => 
+      setEvents(prev => prev.map(e =>
         e.id === todoId ? { ...e, done: true, event_time: "Completed" } : e
       ));
     }
@@ -258,12 +259,12 @@ const ExamCalendarView = () => {
       setEvents(prev => prev.map(e =>
         e.id === editingTodo.id
           ? {
-              ...e,
-              title: `To-Do: ${editText.trim()}`,
-              event_month: dateObj.getMonth() + 1,
-              event_year: dateObj.getFullYear(),
-              event_date: dateObj.getDate(),
-            }
+            ...e,
+            title: `To-Do: ${editText.trim()}`,
+            event_month: dateObj.getMonth() + 1,
+            event_year: dateObj.getFullYear(),
+            event_date: dateObj.getDate(),
+          }
           : e
       ));
     }
@@ -310,493 +311,489 @@ const ExamCalendarView = () => {
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-  if (isLoading) return  <motion.div 
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center p-24"
-              >
-                <div className="relative h-16 w-16">
-                  <div className="absolute inset-0 rounded-full border-t-2 border-accent animate-spin"></div>
-                  <div className="absolute inset-2 rounded-full border-r-2 border-indigo-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-                </div>
-                <p className="mt-4 text-muted-foreground text-sm font-medium">Loading Calendar Events...</p>
-              </motion.div>;
+  if (isLoading) return <motion.div
+    key="loading"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="flex flex-col items-center justify-center p-24"
+  >
+    <div className="relative h-16 w-16">
+      <div className="absolute inset-0 rounded-full border-t-2 border-accent animate-spin"></div>
+      <div className="absolute inset-2 rounded-full border-r-2 border-indigo-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+    </div>
+    <p className="mt-4 text-muted-foreground text-sm font-medium">Loading Calendar Events...</p>
+  </motion.div>;
 
   return (
-    <><section className="bg-primary py-16 mx-auto w-full text-center">
-            <div className="container">
-              <div className="mx-auto">
-                <button onClick={onBack} className="mb-4 flex items-center gap-1.5 text-xs text-primary-foreground/50  mx-auto hover:text-primary-foreground transition-colors">
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Tools
-                </button>
-                <h1 className="text-3xl font-bold text-primary-foreground">Calendar <span className="text-gradient-blue">Events</span></h1>
-                <p className="mt-2 text-sm text-primary-foreground/50">ICAI exam dates, registration alerts, and reminders.</p>
-              </div>
-            </div>
-          </section>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
-      {/* <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
+    <>
+      <PageHeader
+        title="Calendar"
+        gradientTitle="Events"
+        description="ICAI exam dates, registration alerts, and reminders."
+        onBack={onBack}
+        size="md"
+      />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-screen-2xl mx-auto px-6 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
+        {/* <Button variant="ghost" onClick={onBack} className="mb-6 gap-2 text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Study Tools
       </Button> */}
 
-     
 
-      {/* Category Filters - horizontally scrollable on mobile */}
-      <div className="mb-4 sm:mb-6 -mx-2 sm:mx-0 px-2 sm:px-0 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-1.5 sm:gap-2 sm:flex-wrap w-max sm:w-auto">
-          <Button
-            size="sm"
-            variant={filterCategory === null ? "default" : "outline"}
-            onClick={() => setFilterCategory(null)}
-            className={`text-xs sm:text-sm shrink-0 ${filterCategory === null ? "bg-accent text-accent-foreground" : ""}`}
-          >
-            All
-          </Button>
-          {EVENT_CATEGORIES.map((cat) => (
+
+        {/* Category Filters - horizontally scrollable on mobile */}
+        <div className="mb-4 sm:mb-6 -mx-2 sm:mx-0 px-2 sm:px-0 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1.5 sm:gap-2 sm:flex-wrap w-max sm:w-auto">
             <Button
-              key={cat}
               size="sm"
-              variant="outline"
-              onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
-              className={`text-xs sm:text-sm shrink-0 ${
-                filterCategory === cat
+              variant={filterCategory === null ? "default" : "outline"}
+              onClick={() => setFilterCategory(null)}
+              className={`text-xs sm:text-sm shrink-0 ${filterCategory === null ? "bg-accent text-accent-foreground" : ""}`}
+            >
+              All
+            </Button>
+            {EVENT_CATEGORIES.map((cat) => (
+              <Button
+                key={cat}
+                size="sm"
+                variant="outline"
+                onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
+                className={`text-xs sm:text-sm shrink-0 ${filterCategory === cat
                   ? `${CATEGORY_COLORS[cat]} ring-1 !ring-current shadow-sm`
                   : "bg-background text-muted-foreground border-border hover:bg-secondary hover:text-foreground transition-all"
-              }`}
-            >
-              {cat}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_220px]">
-        {/* ============ MOBILE CALENDAR (< sm) ============ */}
-        <div className="sm:hidden w-full min-w-0" ref={calendarRef}>
-          {/* Month nav */}
-          <div className="flex items-center justify-between mb-3">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-sm font-semibold">{MONTHS[month - 1]} {year}</h2>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={nextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 mb-1">
-            {DAYS.map((d) => (
-              <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">{d}</div>
+                  }`}
+              >
+                {cat}
+              </Button>
             ))}
           </div>
+        </div>
 
-          {/* Day cells - compact circular */}
-          <div className="grid grid-cols-7">
-            {cells.map((day, i) => {
-              if (day === null) return <div key={`empty-${i}`} className="h-11" />;
+        <div className="grid gap-6 lg:grid-cols-[1fr_220px]">
+          {/* ============ MOBILE CALENDAR (< sm) ============ */}
+          <div className="sm:hidden w-full min-w-0" ref={calendarRef}>
+            {/* Month nav */}
+            <div className="flex items-center justify-between mb-3">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h2 className="text-sm font-semibold">{MONTHS[month - 1]} {year}</h2>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
 
-              const dayEvents = getEventsForDay(day);
-              const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
-              const isTapped = mobileSheetDay === day;
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-1">
+              {DAYS.map((d) => (
+                <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1">{d}</div>
+              ))}
+            </div>
 
-              return (
-                <button
-                  key={day}
-                  onClick={() => setMobileSheetDay(mobileSheetDay === day ? null : day)}
-                  className="flex flex-col items-center justify-center h-11 relative"
-                >
-                  <span
-                    className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-medium transition-colors
+            {/* Day cells - compact circular */}
+            <div className="grid grid-cols-7">
+              {cells.map((day, i) => {
+                if (day === null) return <div key={`empty-${i}`} className="h-11" />;
+
+                const dayEvents = getEventsForDay(day);
+                const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
+                const isTapped = mobileSheetDay === day;
+
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setMobileSheetDay(mobileSheetDay === day ? null : day)}
+                    className="flex flex-col items-center justify-center h-11 relative"
+                  >
+                    <span
+                      className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-medium transition-colors
                       ${isTapped ? "bg-accent text-accent-foreground" : ""}
                       ${isToday && !isTapped ? "bg-accent/20 text-accent font-bold ring-1 ring-accent/40" : ""}
                       ${!isToday && !isTapped ? "text-foreground" : ""}
                     `}
-                  >
-                    {day}
-                  </span>
-                  {/* Event dots */}
-                  {dayEvents.length > 0 && (
-                    <div className="flex gap-[2px] mt-[2px] justify-center">
-                      {dayEvents.slice(0, 3).map((ev) => (
-                        <span key={ev.id} className={`h-1 w-1 rounded-full ${DOT_COLORS[ev.category] || "bg-primary"}`} />
-                      ))}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Category legend */}
-          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 mb-4 px-1">
-            {EVENT_CATEGORIES.map((cat) => (
-              <div key={cat} className="flex items-center gap-1">
-                <span className={`h-2 w-2 rounded-full ${DOT_COLORS[cat]}`} />
-                <span className="text-[10px] text-muted-foreground">{cat}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Selected day events list (inline, below calendar) */}
-          <AnimatePresence mode="wait">
-            {mobileSheetDay !== null && (
-              <motion.div
-                key={mobileSheetDay}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.2 }}
-                className="mb-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5 text-accent" />
-                    {MONTHS[month - 1]} {mobileSheetDay}, {year}
-                  </h3>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMobileSheetDay(null)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                {(() => {
-                  const dayEvs = getEventsForDay(mobileSheetDay);
-                  if (dayEvs.length === 0) return (
-                    <div className="rounded-lg border bg-muted/30 py-6 flex flex-col items-center text-muted-foreground">
-                      <CalendarDays className="h-6 w-6 mb-1.5 opacity-40" />
-                      <p className="text-xs">No events on this day</p>
-                    </div>
-                  );
-                  return (
-                    <div className="space-y-2">
-                      {dayEvs.map((ev) => (
-                        <div key={ev.id} className={`rounded-lg border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className={`h-2 w-2 rounded-full ${DOT_COLORS[ev.category]}`} />
-                            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{ev.category}</span>
-                          </div>
-                          <p className="text-sm font-medium leading-snug">{ev.title}</p>
-                          {ev.event_time && (
-                            <div className="mt-1 flex items-center gap-1 opacity-80">
-                              <Clock className="h-3 w-3" />
-                              <span className="text-xs">{ev.event_time}</span>
-                            </div>
-                          )}
-                          {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
-                          {ev.url && (
-                            <a href={ev.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
-                              View <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                          {ev.type === "todo" && (
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              {!ev.done && (
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30" onClick={() => handleMarkComplete(ev.id)}>
-                                  <Check className="h-3 w-3" /> Done
-                                </Button>
-                              )}
-                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1" onClick={() => openEditDialog(ev)}>
-                                <Pencil className="h-3 w-3" /> Edit
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30" onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* ============ DESKTOP CALENDAR (>= sm) ============ */}
-        <Card className="shadow-card overflow-hidden hidden sm:block">
-          <CardHeader className="flex-row items-center justify-between pb-4 p-6">
-            <Button variant="ghost" size="icon" onClick={prevMonth}>
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <CardTitle className="text-lg">{MONTHS[month - 1]} {year}</CardTitle>
-            <Button variant="ghost" size="icon" onClick={nextMonth}>
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            {/* Day headers */}
-            <div className="mb-2 grid grid-cols-7 gap-1">
-              {DAYS.map((d) => (
-                <div key={d} className="py-1 text-center text-xs font-semibold text-muted-foreground">{d}</div>
-              ))}
-            </div>
-            
-            {/* Date cells */}
-            <div className="grid grid-cols-7 gap-1">
-              {cells.map((day, i) => {
-                if (day === null) return <div key={`empty-${i}`} className="aspect-square" />;
-                
-                const dayEvents = getEventsForDay(day);
-                const isSelected = selectedDate === day;
-                const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
-
-                return (
-                  <div key={day} className="relative aspect-square">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedDate(isSelected ? null : day)}
-                      className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-colors
-                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : "hover:bg-secondary"}
-                        ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}
-                      `}
                     >
-                      <span className={`text-xs font-medium ${isToday ? "font-bold" : ""}`}>{day}</span>
-                      {dayEvents.length > 0 && (
-                        <div className="mt-1 flex w-full flex-col gap-1 px-1">
-                          <div className="flex flex-col gap-1 w-full">
-                            {dayEvents.slice(0, 3).map((ev) => {
-                              const categoryColor = CATEGORY_COLORS[ev.category] || "bg-primary text-primary-foreground border border-input";
-                              return (
-                                <div
-                                  key={ev.id}
-                                  className={`${categoryColor} w-full truncate rounded-md px-1.5 py-[2px] text-[10px] font-medium`}
-                                >
-                                  {ev.event_time ? `${ev.event_time} ` : ''}
-                                  {ev.title}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {dayEvents.length > 3 && (
-                            <span className="text-[9px] font-medium text-muted-foreground pl-1">
-                              +{dayEvents.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </motion.button>
-
-                    {/* Desktop popover */}
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                          className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border bg-background p-4 shadow-xl"
-                        >
-                          <div className="mb-3 flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-foreground">
-                              {MONTHS[month - 1]} {day}, {year}
-                            </h4>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedDate(null)}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          
-                          <div className="max-h-[200px] space-y-3 overflow-y-auto pr-1">
-                            {dayEvents.length === 0 ? (
-                              <p className="text-xs text-muted-foreground">No events scheduled.</p>
-                            ) : (
-                              dayEvents.map((ev) => (
-                                <div key={ev.id} className={`rounded-lg border p-2.5 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
-                                  <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
-                                    {ev.category}
-                                  </span>
-                                  <p className="mt-0.5 text-sm font-medium leading-tight">{ev.title}</p>
-                                  {ev.event_time && (
-                                    <div className="mt-1.5 flex items-center gap-1 opacity-80">
-                                      <Clock className="h-3 w-3" />
-                                      <span className="text-[10px]">{ev.event_time}</span>
-                                    </div>
-                                  )}
-                                  {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
-                                  {ev.url && (
-                                    <a
-                                      href={ev.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline"
-                                    >
-                                      View Announcement <ExternalLink className="h-2.5 w-2.5" />
-                                    </a>
-                                  )}
-                                  {ev.type === "todo" && (
-                                    <div className="mt-2 flex items-center gap-1.5">
-                                      {!ev.done && (
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
-                                          onClick={(e) => { e.stopPropagation(); handleMarkComplete(ev.id); }}
-                                        >
-                                          <Check className="h-3 w-3" /> Done
-                                        </Button>
-                                      )}
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-6 px-2 text-[10px] gap-1"
-                                        onClick={(e) => { e.stopPropagation(); openEditDialog(ev); }}
-                                      >
-                                        <Pencil className="h-3 w-3" /> Edit
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30"
-                                        onClick={(e) => { e.stopPropagation(); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
-                                      >
-                                        <Trash2 className="h-3 w-3" /> Delete
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                      {day}
+                    </span>
+                    {/* Event dots */}
+                    {dayEvents.length > 0 && (
+                      <div className="flex gap-[2px] mt-[2px] justify-center">
+                        {dayEvents.slice(0, 3).map((ev) => (
+                          <span key={ev.id} className={`h-1 w-1 rounded-full ${DOT_COLORS[ev.category] || "bg-primary"}`} />
+                        ))}
+                      </div>
+                    )}
+                  </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Sidebar - Quick Upcoming Events + Overdue */}
-        <div className="space-y-4 w-full min-w-0">
-          {/* Overdue Tasks */}
-          {overdueTodos.length > 0 && (
-            <Card className="shadow-card border-destructive/30 w-full min-w-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-1.5 text-destructive">
-                  <AlertTriangle className="h-4 w-4" /> Overdue Tasks ({overdueTodos.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {overdueTodos.slice(0, 8).map((ev) => (
-                  <div key={ev.id} className="flex items-start gap-3 group">
-                    <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS["Todo"]}`}>
-                      <span className="text-[10px] font-bold leading-none">{MONTHS[ev.event_month - 1]?.slice(0, 3)}</span>
-                      <span className="text-xs font-bold leading-none">{ev.event_date}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">{ev.description}</p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-5 px-1.5 text-[9px] gap-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
-                          onClick={() => handleMarkComplete(ev.id)}
-                        >
-                          <Check className="h-2.5 w-2.5" /> Complete
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-5 px-1.5 text-[9px] gap-0.5"
-                          onClick={() => openEditDialog(ev)}
-                        >
-                          <Pencil className="h-2.5 w-2.5" /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-5 px-1.5 text-[9px] gap-0.5 text-destructive border-destructive/30 hover:bg-destructive/10"
-                          onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
-                        >
-                          <Trash2 className="h-2.5 w-2.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="shadow-card w-full min-w-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Upcoming This Month</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {monthEvents
-                .filter(e => e.event_date >= new Date().getDate() || month !== (new Date().getMonth() + 1))
-                .sort((a, b) => a.event_date - b.event_date)
-                .slice(0, 5)
-                .map((ev) => (
-                <div key={ev.id} className="flex items-start gap-3">
-                  <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS[ev.category] || ""}`}>
-                    <span className="text-xs font-bold leading-none">{ev.event_date}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {ev.category}
-                    </p>
-                  </div>
+            {/* Category legend */}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 mb-4 px-1">
+              {EVENT_CATEGORIES.map((cat) => (
+                <div key={cat} className="flex items-center gap-1">
+                  <span className={`h-2 w-2 rounded-full ${DOT_COLORS[cat]}`} />
+                  <span className="text-[10px] text-muted-foreground">{cat}</span>
                 </div>
               ))}
-              {monthEvents.length === 0 && (
-                <p className="text-xs text-muted-foreground">No upcoming events this month.</p>
+            </div>
+
+            {/* Selected day events list (inline, below calendar) */}
+            <AnimatePresence mode="wait">
+              {mobileSheetDay !== null && (
+                <motion.div
+                  key={mobileSheetDay}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.2 }}
+                  className="mb-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 text-accent" />
+                      {MONTHS[month - 1]} {mobileSheetDay}, {year}
+                    </h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMobileSheetDay(null)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {(() => {
+                    const dayEvs = getEventsForDay(mobileSheetDay);
+                    if (dayEvs.length === 0) return (
+                      <div className="rounded-lg border bg-muted/30 py-6 flex flex-col items-center text-muted-foreground">
+                        <CalendarDays className="h-6 w-6 mb-1.5 opacity-40" />
+                        <p className="text-xs">No events on this day</p>
+                      </div>
+                    );
+                    return (
+                      <div className="space-y-2">
+                        {dayEvs.map((ev) => (
+                          <div key={ev.id} className={`rounded-lg border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className={`h-2 w-2 rounded-full ${DOT_COLORS[ev.category]}`} />
+                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{ev.category}</span>
+                            </div>
+                            <p className="text-sm font-medium leading-snug">{ev.title}</p>
+                            {ev.event_time && (
+                              <div className="mt-1 flex items-center gap-1 opacity-80">
+                                <Clock className="h-3 w-3" />
+                                <span className="text-xs">{ev.event_time}</span>
+                              </div>
+                            )}
+                            {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
+                            {ev.url && (
+                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
+                                View <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                            {ev.type === "todo" && (
+                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                {!ev.done && (
+                                  <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30" onClick={() => handleMarkComplete(ev.id)}>
+                                    <Check className="h-3 w-3" /> Done
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1" onClick={() => openEditDialog(ev)}>
+                                  <Pencil className="h-3 w-3" /> Edit
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30" onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </motion.div>
               )}
+            </AnimatePresence>
+          </div>
+
+          {/* ============ DESKTOP CALENDAR (>= sm) ============ */}
+          <Card className="shadow-card overflow-hidden hidden sm:block">
+            <CardHeader className="flex-row items-center justify-between pb-4 p-6">
+              <Button variant="ghost" size="icon" onClick={prevMonth}>
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <CardTitle className="text-lg">{MONTHS[month - 1]} {year}</CardTitle>
+              <Button variant="ghost" size="icon" onClick={nextMonth}>
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6 pt-0">
+              {/* Day headers */}
+              <div className="mb-2 grid grid-cols-7 gap-1">
+                {DAYS.map((d) => (
+                  <div key={d} className="py-1 text-center text-xs font-semibold text-muted-foreground">{d}</div>
+                ))}
+              </div>
+
+              {/* Date cells */}
+              <div className="grid grid-cols-7 gap-1">
+                {cells.map((day, i) => {
+                  if (day === null) return <div key={`empty-${i}`} className="aspect-square" />;
+
+                  const dayEvents = getEventsForDay(day);
+                  const isSelected = selectedDate === day;
+                  const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
+
+                  return (
+                    <div key={day} className="relative aspect-square">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedDate(isSelected ? null : day)}
+                        className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-colors
+                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : "hover:bg-secondary"}
+                        ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}
+                      `}
+                      >
+                        <span className={`text-xs font-medium ${isToday ? "font-bold" : ""}`}>{day}</span>
+                        {dayEvents.length > 0 && (
+                          <div className="mt-1 flex w-full flex-col gap-1 px-1">
+                            <div className="flex flex-col gap-1 w-full">
+                              {dayEvents.slice(0, 3).map((ev) => {
+                                const categoryColor = CATEGORY_COLORS[ev.category] || "bg-primary text-primary-foreground border border-input";
+                                return (
+                                  <div
+                                    key={ev.id}
+                                    className={`${categoryColor} w-full truncate rounded-md px-1.5 py-[2px] text-[10px] font-medium`}
+                                  >
+                                    {ev.event_time ? `${ev.event_time} ` : ''}
+                                    {ev.title}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {dayEvents.length > 3 && (
+                              <span className="text-[9px] font-medium text-muted-foreground pl-1">
+                                +{dayEvents.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </motion.button>
+
+                      {/* Desktop popover */}
+                      <AnimatePresence>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                            className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border bg-background p-4 shadow-xl"
+                          >
+                            <div className="mb-3 flex items-center justify-between">
+                              <h4 className="text-sm font-semibold text-foreground">
+                                {MONTHS[month - 1]} {day}, {year}
+                              </h4>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedDate(null)}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="max-h-[200px] space-y-3 overflow-y-auto pr-1">
+                              {dayEvents.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">No events scheduled.</p>
+                              ) : (
+                                dayEvents.map((ev) => (
+                                  <div key={ev.id} className={`rounded-lg border p-2.5 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+                                      {ev.category}
+                                    </span>
+                                    <p className="mt-0.5 text-sm font-medium leading-tight">{ev.title}</p>
+                                    {ev.event_time && (
+                                      <div className="mt-1.5 flex items-center gap-1 opacity-80">
+                                        <Clock className="h-3 w-3" />
+                                        <span className="text-[10px]">{ev.event_time}</span>
+                                      </div>
+                                    )}
+                                    {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
+                                    {ev.url && (
+                                      <a
+                                        href={ev.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline"
+                                      >
+                                        View Announcement <ExternalLink className="h-2.5 w-2.5" />
+                                      </a>
+                                    )}
+                                    {ev.type === "todo" && (
+                                      <div className="mt-2 flex items-center gap-1.5">
+                                        {!ev.done && (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                                            onClick={(e) => { e.stopPropagation(); handleMarkComplete(ev.id); }}
+                                          >
+                                            <Check className="h-3 w-3" /> Done
+                                          </Button>
+                                        )}
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 px-2 text-[10px] gap-1"
+                                          onClick={(e) => { e.stopPropagation(); openEditDialog(ev); }}
+                                        >
+                                          <Pencil className="h-3 w-3" /> Edit
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30"
+                                          onClick={(e) => { e.stopPropagation(); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
+                                        >
+                                          <Trash2 className="h-3 w-3" /> Delete
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </motion.div>
 
+          {/* Sidebar - Quick Upcoming Events + Overdue */}
+          <div className="space-y-4 w-full min-w-0">
+            {/* Overdue Tasks */}
+            {overdueTodos.length > 0 && (
+              <Card className="shadow-card border-destructive/30 w-full min-w-0">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-1.5 text-destructive">
+                    <AlertTriangle className="h-4 w-4" /> Overdue Tasks ({overdueTodos.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {overdueTodos.slice(0, 8).map((ev) => (
+                    <div key={ev.id} className="flex items-start gap-3 group">
+                      <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS["Todo"]}`}>
+                        <span className="text-[10px] font-bold leading-none">{MONTHS[ev.event_month - 1]?.slice(0, 3)}</span>
+                        <span className="text-xs font-bold leading-none">{ev.event_date}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
+                        <p className="truncate text-[10px] text-muted-foreground">{ev.description}</p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-5 px-1.5 text-[9px] gap-0.5 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                            onClick={() => handleMarkComplete(ev.id)}
+                          >
+                            <Check className="h-2.5 w-2.5" /> Complete
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-5 px-1.5 text-[9px] gap-0.5"
+                            onClick={() => openEditDialog(ev)}
+                          >
+                            <Pencil className="h-2.5 w-2.5" /> Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-5 px-1.5 text-[9px] gap-0.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                            onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
+                          >
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
-
-    {/* Delete confirmation modal */}
-    <ConfirmModal
-      isOpen={deleteConfirmOpen}
-      onClose={() => { setDeleteConfirmOpen(false); setTodoToDelete(null); }}
-      onConfirm={handleDeleteTodo}
-      title="Delete Task?"
-      description="Are you sure you want to delete this to-do task? This action cannot be undone."
-      confirmText="Delete"
-      variant="destructive"
-    />
-
-    {/* Edit todo dialog */}
-    <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Task Description</label>
-            <Input
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              placeholder="Task description..."
-            />
+            <Card className="shadow-card w-full min-w-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Upcoming This Month</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {monthEvents
+                  .filter(e => e.event_date >= new Date().getDate() || month !== (new Date().getMonth() + 1))
+                  .sort((a, b) => a.event_date - b.event_date)
+                  .slice(0, 5)
+                  .map((ev) => (
+                    <div key={ev.id} className="flex items-start gap-3">
+                      <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${CATEGORY_COLORS[ev.category] || ""}`}>
+                        <span className="text-xs font-bold leading-none">{ev.event_date}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-foreground">{ev.title}</p>
+                        <p className="truncate text-[10px] text-muted-foreground">
+                          {ev.category}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                {monthEvents.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No upcoming events this month.</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Due Date</label>
-            <Input
-              type="date"
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-            />
-          </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleEditTodo} disabled={!editText.trim() || !editDate}>
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+
+
+
+      {/* Delete confirmation modal */}
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => { setDeleteConfirmOpen(false); setTodoToDelete(null); }}
+        onConfirm={handleDeleteTodo}
+        title="Delete Task?"
+        description="Are you sure you want to delete this to-do task? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      {/* Edit todo dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Task Description</label>
+              <Input
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                placeholder="Task description..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Due Date</label>
+              <Input
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditTodo} disabled={!editText.trim() || !editDate}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -239,7 +239,7 @@ export default function StudyPage({ params }: StudyPageProps) {
         <div>
           <h1 className="text-xl font-bold text-foreground tracking-tight line-clamp-1">{set.title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-            {sessionComplete ? cards.length : cardIdx + 1} of {cards.length} cards 
+            {sessionComplete ? cards.length : cardIdx + 1} of {cards.length} cards
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -314,47 +314,49 @@ export default function StudyPage({ params }: StudyPageProps) {
             {/* 3D Flip Card Container */}
             <div
               onClick={() => setFlipped(!flipped)}
-              className="relative cursor-pointer h-[320px] w-full"
+              className="relative w-full cursor-pointer"
               style={{ perspective: 1200 }}
             >
               <motion.div
-                className="absolute inset-0 w-full h-full"
+                className="relative grid"
                 style={{ transformStyle: "preserve-3d" }}
                 animate={{ rotateY: flipped ? 180 : 0 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
               >
-                {/* Front Side */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-2xl border border-border bg-card p-8 flex flex-col justify-between items-center text-center shadow-sm select-none"
+                  className="col-start-1 row-start-1 rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center shadow-sm select-none"
                   style={{ backfaceVisibility: "hidden" }}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground self-start">
+                  <span className="self-start text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Question
                   </span>
-                  <p className="text-base font-medium text-foreground leading-relaxed max-w-md my-auto px-4">
+
+                  <p className="my-auto text-base font-medium leading-relaxed text-foreground">
                     {currentCard.front}
                   </p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground self-center">
+
+                  <div className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
                     <RotateCw className="h-3 w-3" />
                     Tap to Flip
                   </div>
                 </div>
 
-                {/* Back Side */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-2xl border border-accent/20 bg-accent/5 p-8 flex flex-col justify-between items-center text-center shadow-md select-none"
+                  className="col-start-1 row-start-1 rounded-2xl border border-accent/20 bg-accent/5 p-8 flex flex-col items-center text-center shadow-md select-none"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
                   }}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent self-start">
+                  <span className="self-start text-[10px] font-bold uppercase tracking-wider text-accent">
                     Answer
                   </span>
-                  <p className="text-base font-semibold text-foreground leading-relaxed max-w-md my-auto px-4">
+
+                  <p className="my-8 text-base font-semibold leading-relaxed text-foreground">
                     {currentCard.back}
                   </p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-accent self-center">
+
+                  <div className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-accent">
                     <RotateCw className="h-3 w-3" />
                     Tap to Flip
                   </div>
@@ -373,7 +375,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 <ChevronLeft className="h-4 w-4" /> Prev
               </Button>
 
-           
+
               <Button
                 variant="outline"
                 onClick={handleNext}

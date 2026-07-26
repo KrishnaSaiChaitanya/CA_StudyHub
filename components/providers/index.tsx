@@ -8,6 +8,7 @@ import { useState } from "react";
 import { SubscriptionProvider } from "./SubscriptionProvider";
 import { StudentTypeProvider } from "./StudentTypeProvider";
 import { StudyTimerProvider } from "./StudyTimerProvider";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 const CACHE_KEY = "CA_STUDYHUB_QUERY_CACHE";
 
@@ -48,17 +49,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SubscriptionProvider>
-          <StudentTypeProvider>
-            <StudyTimerProvider>
-              {children}
-            </StudyTimerProvider>
-            <Toaster />
-            <Sonner />
-          </StudentTypeProvider>
-        </SubscriptionProvider>
-      </TooltipProvider>
+      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <TooltipProvider>
+          <SubscriptionProvider>
+            <StudentTypeProvider>
+              <StudyTimerProvider>
+                {children}
+              </StudyTimerProvider>
+              <Toaster />
+              <Sonner />
+            </StudentTypeProvider>
+          </SubscriptionProvider>
+        </TooltipProvider>
+      </NextThemesProvider>
     </QueryClientProvider>
   );
 }

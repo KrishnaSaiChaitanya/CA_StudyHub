@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
+import PageHeader from "@/components/shared/PageHeader";
 
 interface AnnouncementsViewProps {
   onBack: () => void;
@@ -39,7 +40,7 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       if (studentLoading) return;
-      
+
       const supabase = createClient();
       let query = supabase.from('announcements').select('*').order('created_at', { ascending: false });
 
@@ -48,7 +49,7 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
       }
 
       const { data, error } = await query;
-        
+
       if (!error && data) {
         setAnnouncements(data);
       }
@@ -60,29 +61,7 @@ const AnnouncementsView = ({ onBack }: AnnouncementsViewProps) => {
 
   return (
     <div className="w-full flex flex-col">
-      <section className="bg-primary py-16 mx-auto w-full">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto flex flex-col items-center text-center"
-          >
-            <button
-              onClick={onBack}
-              className="mb-4 flex items-center gap-1.5 text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Tools
-            </button>
-            <h1 className="text-3xl font-bold text-primary-foreground">
-              ICAI <span className="text-gradient-blue">Announcements</span>
-            </h1>
-            <p className="mt-2 text-sm text-primary-foreground/50">
-              Latest notices and updates from the Institute of Chartered Accountants of India
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
+      <PageHeader gradientTitle="Announcements" description="Latest notices and updates from the Institute of Chartered Accountants of India" onBack={onBack} />
       <section className="container py-10 flex-1">
         {loading || studentLoading ? (
           <div className="flex justify-center py-20">

@@ -8,6 +8,7 @@ import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { formatSubjectName } from "@/utils/subjects";
 import { useSearchParams } from "next/navigation";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import PageHeader from "@/components/shared/PageHeader";
 import { saveOfflineItem, deleteOfflineItem, listOfflineItems } from "@/utils/offline-db";
 import { toast } from "sonner";
 
@@ -31,7 +32,7 @@ interface Props {
 const StudyPlannerView = ({ onBack }: Props) => {
   const { subjects, loading: studentLoading } = useStudent();
   const supabase = createClient();
-  
+
   const searchParams = useSearchParams();
   const filterFromUrl = searchParams.get('filter');
 
@@ -46,9 +47,9 @@ const StudyPlannerView = ({ onBack }: Props) => {
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState("All");
   const [sourceFilter, setSourceFilter] = useState(
-    filterFromUrl === 'community' ? 'Community Library' : 
-    filterFromUrl === 'faculty' ? 'Faculty Uploads' : 
-    filterFromUrl === 'admin' ? 'Admin' : 'All'
+    filterFromUrl === 'community' ? 'Community Library' :
+      filterFromUrl === 'faculty' ? 'Faculty Uploads' :
+        filterFromUrl === 'admin' ? 'Admin' : 'All'
   );
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -74,14 +75,14 @@ const StudyPlannerView = ({ onBack }: Props) => {
   const fetchData = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
       setUserId(user.id);
       const { data: bookmarksData } = await supabase
         .from('user_bookmarks')
         .select('planner_id')
         .eq('user_id', user.id);
-      
+
       if (bookmarksData) {
         setBookmarks(bookmarksData.map(b => b.planner_id));
       }
@@ -117,7 +118,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
 
   const toggleBookmark = async (id: string) => {
     if (!userId) return;
-    
+
     const isBookmarked = bookmarks.includes(id);
     if (isBookmarked) {
       setPlannerToUnbookmark(id);
@@ -139,7 +140,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
       .delete()
       .eq('user_id', userId)
       .eq('planner_id', plannerToUnbookmark);
-    
+
     setPlannerToUnbookmark(null);
   };
 
@@ -153,9 +154,9 @@ const StudyPlannerView = ({ onBack }: Props) => {
       if (isGoogleDrive) {
         const fileIdMatch = url.match(/[-\w]{25,}/);
         if (!fileIdMatch) throw new Error("Invalid Google Drive URL");
-        
+
         const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
-        
+
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.setAttribute('target', '_blank');
@@ -166,17 +167,17 @@ const StudyPlannerView = ({ onBack }: Props) => {
       } else {
         const response = await fetch(url);
         if (!response.ok) throw new Error("Network response was not ok");
-        
+
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.setAttribute('download', planner.title ? `${planner.title}.pdf` : 'download.pdf'); 
-        
+        link.setAttribute('download', planner.title ? `${planner.title}.pdf` : 'download.pdf');
+
         document.body.appendChild(link);
         link.click();
-        
+
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       }
@@ -187,7 +188,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
         .eq('id', planner.id);
 
       if (!error) {
-        setPlanners(prev => prev.map(p => 
+        setPlanners(prev => prev.map(p =>
           p.id === planner.id ? { ...p, downloads: p.downloads + 1 } : p
         ));
       }
@@ -239,12 +240,12 @@ const StudyPlannerView = ({ onBack }: Props) => {
     const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || p.faculty_name.toLowerCase().includes(search.toLowerCase());
     const matchesSubject = selectedSubject === "All" || p.category === selectedSubject;
     const matchesBookmark = !showBookmarksOnly || bookmarks.includes(p.id);
-    
-    const matchesSource = 
+
+    const matchesSource =
       sourceFilter === "All" ? true :
-      sourceFilter === "Community Library" ? p.is_community :
-      sourceFilter === "Admin" ? (!p.is_community && !p.faculty_name) :
-      (!p.is_community && !!p.faculty_name);
+        sourceFilter === "Community Library" ? p.is_community :
+          sourceFilter === "Admin" ? (!p.is_community && !p.faculty_name) :
+            (!p.is_community && !!p.faculty_name);
 
     return matchesSearch && matchesSubject && matchesBookmark && matchesSource;
   });
@@ -254,28 +255,13 @@ const StudyPlannerView = ({ onBack }: Props) => {
 
   return (
     <div>
-      <section className="bg-primary py-16 mx-auto">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto flex flex-col items-center text-center"
-          >
-            <button
-              onClick={onBack}
-              className="mb-4 flex items-center gap-1.5 text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Tools
-            </button>
-            <h1 className="text-3xl font-bold text-primary-foreground">
-              Study <span className="text-gradient-blue">Resources</span>
-            </h1>
-            <p className="mt-2 text-sm text-primary-foreground/50">
-              Browse and download study planners shared by top faculty.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHeader
+        title="Study"
+        gradientTitle="Resources"
+        description="Browse and download study planners shared by top faculty."
+        onBack={onBack}
+        size="md"
+      />
 
       <section className="container py-8">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -325,11 +311,10 @@ const StudyPlannerView = ({ onBack }: Props) => {
                     <button
                       key={sub}
                       onClick={() => setSelectedSubject(sub)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                        selectedSubject === sub
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${selectedSubject === sub
                           ? "bg-accent text-accent-foreground"
                           : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      }`}
+                        }`}
                     >
                       {sub === "All" ? sub : formatSubjectName(sub as any)}
                     </button>
@@ -341,11 +326,10 @@ const StudyPlannerView = ({ onBack }: Props) => {
                     <button
                       key={opt}
                       onClick={() => setSourceFilter(opt)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                        sourceFilter === opt
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${sourceFilter === opt
                           ? "bg-accent text-accent-foreground"
                           : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      }`}
+                        }`}
                     >
                       {opt}
                     </button>
@@ -397,7 +381,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
                   <h3 className="mt-4 text-sm font-semibold text-card-foreground leading-snug line-clamp-2">{planner.title}</h3>
 
                   <div className="mt-3 space-y-1.5 flex-1">
-                    {!planner.is_community && planner.faculty_name  && (
+                    {!planner.is_community && planner.faculty_name && (
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <User className="h-3 w-3" /> {planner.faculty_name}
                       </div>
@@ -406,16 +390,16 @@ const StudyPlannerView = ({ onBack }: Props) => {
                       <Calendar className="h-3 w-3" /> {new Date(planner.planner_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                     {planner.pages && <><span className="text-xs">{planner.pages} pages</span>
-                      <span>•</span></>}
+                      {planner.pages && <><span className="text-xs">{planner.pages} pages</span>
+                        <span>•</span></>}
                       <span>{planner.downloads} downloads</span>
                     </div>
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 pt-4 border-border mt-auto">
-                    <Button 
-                      size="sm" 
-                      className="flex-1 gap-1.5 text-xs" 
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1.5 text-xs"
                       onClick={() => handleDownload(planner)}
                       disabled={downloadingIds.includes(planner.id)}
                     >

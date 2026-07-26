@@ -16,6 +16,7 @@ import { StatisticsCard } from "./StatisticsCard";
 import { StudyTimerCard } from "./StudyTimerCard";
 import { TodoListCard } from "./TodoListCard";
 import { StatisticsHistory } from "./StatisticsHistory";
+import PageHeader from "@/components/shared/PageHeader";
 
 interface StudySessionType {
   id: string;
@@ -134,28 +135,7 @@ const ProgressDashboardView = ({ onBack }: Props) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-background text-foreground">
-      <section className="bg-primary py-16 mx-auto">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-auto flex flex-col items-center text-center"
-          >
-            <button
-              onClick={onBack}
-              className="mb-4 flex items-center gap-1.5 text-xs text-primary-foreground/50 hover:text-primary-foreground transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Tools
-            </button>
-            <h1 className="text-3xl font-bold text-primary-foreground">
-              Progress <span className="text-gradient-blue">Dashboard</span>
-            </h1>
-            <p className="mt-2 text-sm text-primary-foreground/50">
-              Track focus, manage tasks, and analyze performance in one dashboard
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHeader title="Progress" gradientTitle="Dashboard" description="Track focus, manage tasks, and analyze performance in one dashboard" onBack={onBack} />
 
       <div className="container py-6">
         <div className="grid gap-5 lg:grid-cols-[280px_1fr_300px]">

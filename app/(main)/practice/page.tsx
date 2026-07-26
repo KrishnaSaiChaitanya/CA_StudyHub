@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import MockExam from "@/components/study/MockExam";
 import PerformanceHistory from "@/components/dashboard/PerformanceHistory";
+import PageHeader from "@/components/shared/PageHeader";
 
 
 const Practice = () => {
@@ -89,15 +90,8 @@ const Practice = () => {
   return (
     <div className="bg-background w-full">
       <main className="pb-12">
-        <section className="bg-primary py-20">
-          <div className="container">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl text-center">
-              <h1 className="text-4xl font-bold text-primary-foreground">Practice & <span className="text-gradient-blue">Excel</span></h1>
-              <p className="mt-4 text-sm text-primary-foreground/50">Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills.</p>
-            </motion.div>
-          </div>
-        </section>
-        <section className="container py-16">
+        <PageHeader title="Practice &" gradientTitle="Excel" description="Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills." />
+        <section className="container py-10">
           <div className="grid gap-4 md:grid-cols-2 mb-12">
             {resources.map((res, i) => (
               <div key={res.title} className={res.isDisabled ? "opacity-80" : ""}>
@@ -154,10 +148,10 @@ const Practice = () => {
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="relative overflow-hidden rounded-xl bg-primary p-8 text-center"
+              className="relative overflow-hidden rounded-xl bg-zinc-950 dark:bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
             >
               <Award className="mx-auto h-8 w-8 text-accent" />
-              <h3 className="mt-4 text-xl font-bold text-primary-foreground">Take a MCQ Mock Exam</h3>
+              <h3 className="mt-4 text-xl font-bold text-white">Take a MCQ Mock Exam</h3>
               <p className="mt-2 text-xs text-primary-foreground/50"> Revise concepts, strengthen recall, and excel confidently.</p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>

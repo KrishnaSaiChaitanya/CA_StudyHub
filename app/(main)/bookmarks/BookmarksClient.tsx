@@ -37,6 +37,7 @@ import { BookmarkItem, DbNote } from "./types";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { formatSubjectName } from "@/utils/subjects";
 import { useRouter } from "next/navigation";
+import PageHeader from "@/components/shared/PageHeader";
 
 const typeIcon = {
   pdf: FileText,
@@ -72,14 +73,14 @@ interface BookmarksClientProps {
 const BookmarksClient = ({ userId }: BookmarksClientProps) => {
   const supabase = createClient();
   const router = useRouter();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("bookmarks");
-  
+
   const [notes, setNotes] = useState<DbNote[]>([]);
   const [rawBookmarks, setRawBookmarks] = useState<BookmarkItem[]>([]);
-  
+
   const [isBookmarksLoaded, setIsBookmarksLoaded] = useState(false);
   const [isNotesLoaded, setIsNotesLoaded] = useState(false);
   const [isNotesLoading, setIsNotesLoading] = useState(false);
@@ -90,7 +91,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
   useEffect(() => {
     const fetchBookmarks = async () => {
       if (!userId || activeTab !== "bookmarks" || isBookmarksLoaded) return;
-      
+
       setIsLoading(true);
       try {
         // Fetch SPOM content first to map SPOM bookmarks
@@ -205,12 +206,12 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
 
     fetchNotes();
   }, [userId, activeTab, isNotesLoaded, supabase]);
-  
+
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [newNote, setNewNote] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
 
@@ -229,7 +230,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
           .eq("id", editingNote)
           .select()
           .single();
-          
+
         if (data) setNotes(prev => prev.map(n => n.id === editingNote ? data : n));
       } else {
         const { data, error } = await supabase
@@ -237,7 +238,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
           .insert({ user_id: userId, title: noteTitle, content: noteContent })
           .select()
           .single();
-          
+
         if (data) setNotes(prev => [data, ...prev]);
       }
 
@@ -333,24 +334,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
 
   return (
     <div className="min-h-screen">
-      <section className="bg-primary py-16">
-        <div className="container">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl text-center">
-            <button
-              onClick={onBack}
-              className="mb-4 flex items-center gap-1.5 text-xs text-primary-foreground/50 mx-auto hover:text-primary-foreground transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Tools
-            </button>
-            <h1 className="text-3xl font-bold text-primary-foreground">
-              Notes & <span className="text-accent">Bookmarks</span>
-            </h1>
-            <p className="mt-3 text-sm text-primary-foreground/50">
-              All your saved resources, exam questions, and personal notes in one place.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+      <PageHeader gradientTitle="Bookmarks" description="All your saved resources, exam questions, and personal notes in one place." onBack={onBack} />
 
       <section className="container max-w-4xl py-10">
         <ProFeatureLock label="Unlock Bookmarks with Pro Subscription">
@@ -428,28 +412,46 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                                     {typeLabel[bm.type]}
                                   </span>
                                 </div>
-                                <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                                  <div className="flex items-center gap-3">
-                                    {bm.source}
-                                    {bm.exam_year && <span> · {bm.exam_year}</span>}
-                                    {bm.test_no && <span> · Test {bm.test_no}</span>}
-                                    <span>·</span>
-                                    <span>Saved {bm.savedAt}</span>
+                                <div className="mt-2 flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                                      {bm.source && (
+                                        <span className="truncate max-w-[120px] sm:max-w-[180px]">
+                                          {bm.source}
+                                        </span>
+                                      )}
+
+                                      {bm.exam_year && <span>• {bm.exam_year}</span>}
+
+                                      {bm.test_no && (
+                                        <span className="truncate max-w-[120px] sm:max-w-[180px]">
+                                          • Test {bm.test_no}
+                                        </span>
+                                      )}
+
+                                      <span>• Saved {bm.savedAt}</span>
+                                    </div>
                                   </div>
-                                  <div className="flex gap-1">
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-7 w-7 text-accent" 
+
+                                  <div className="flex shrink-0 gap-1">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 text-accent"
                                       onClick={() => handleViewBookmark(bm)}
                                       title="View"
                                     >
-                                      {bm.type === "question" ? <Eye className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                                      {bm.type === "question" ? (
+                                        <Eye className="h-3.5 w-3.5" />
+                                      ) : (
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                      )}
                                     </Button>
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost" 
-                                      className="h-7 w-7 text-destructive" 
+
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 text-destructive"
                                       onClick={() => handleDeleteBookmark(bm.id, bm.title)}
                                       title="Remove"
                                     >
@@ -501,7 +503,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                           <X className="h-3.5 w-3.5" /> Cancel
                         </Button>
                         <Button size="sm" onClick={handleSaveNote} disabled={isSaving || !noteTitle.trim()} className="gap-1.5">
-                          {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} 
+                          {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                           Save
                         </Button>
                       </div>
@@ -559,7 +561,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
           </Tabs>
         </ProFeatureLock>
       </section>
-      
+
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

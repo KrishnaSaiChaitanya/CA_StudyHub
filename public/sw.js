@@ -7,6 +7,7 @@ const ASSETS_TO_CACHE = [
   '/downloads',
   '/manifest.json',
   '/Logo.png',
+  '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
   '/favicon.ico',

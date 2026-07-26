@@ -32,12 +32,12 @@ const parseExamYear = (yearStr: string) => {
   if (!yearStr) return new Date(0);
   const parts = yearStr.split(' ');
   if (parts.length !== 2) return new Date(0);
-  
+
   const monthNames: Record<string, number> = {
     'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
     'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
   };
-  
+
   const month = monthNames[parts[0]] ?? 0;
   const year = parseInt(parts[1]) || 0;
   return new Date(year, month, 1);
@@ -99,7 +99,7 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
         const { data: papersData, error: papersError } = await papersQuery;
 
         if (papersData) {
-          const sortedData = [...papersData].sort((a, b) => 
+          const sortedData = [...papersData].sort((a, b) =>
             parseExamYear(b.exam_year).getTime() - parseExamYear(a.exam_year).getTime()
           );
           setPapers(sortedData);
@@ -159,13 +159,13 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
           .from("user_bookmarks")
           .delete()
           .match({ user_id: userId, practice_paper_id: id });
-          
+
         toast({ title: "Bookmark removed", description: paperTitle });
       } else {
         await supabase
           .from("user_bookmarks")
           .insert({ user_id: userId, practice_paper_id: id });
-          
+
         toast({ title: "Bookmarked!", description: paperTitle });
       }
     } catch (error) {
@@ -216,7 +216,7 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
   const displayTitle = category ? `${title} (${category.charAt(0).toUpperCase() + category.slice(1)})` : title;
 
   return (
-    <div className="container py-10">
+    <div className="container py-12">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-foreground">{displayTitle}</h1>

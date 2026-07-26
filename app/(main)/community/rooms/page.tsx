@@ -28,7 +28,7 @@ const CommunityRooms = () => {
       const { data, error } = await supabase
         .from("subject_meet_links")
         .select("subject_id, meet_url");
-      
+
       if (!error && data) {
         const links: Record<string, string> = {};
         data.forEach((item) => {
@@ -58,7 +58,7 @@ const CommunityRooms = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col selection:bg-accent/30">
-      
+
       {/* --- BANNER AREA (Dark/Primary Background) --- */}
       <main className="py-12 bg-black">
         <div className="container">
@@ -69,9 +69,7 @@ const CommunityRooms = () => {
             </Link>
             <h1 className="text-4xl font-bold text-primary-foreground">Study <span className="text-gradient-blue">Rooms</span></h1>
             <p className="mt-4 text-sm text-primary-foreground/50">Join subject-specific Google Meet rooms to study with peers.</p>
-            <div className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary border border-primary/20 capitalize">
-              {studentLevel} Level
-            </div>
+
           </motion.div>
         </div>
       </main>
@@ -79,10 +77,10 @@ const CommunityRooms = () => {
 
       {/* --- MAIN CONTENT AREA (White Background) --- */}
       <div className="flex-1 bg-white pt-8 pb-16">
-        
+
         {/* Control Bar for Private Room */}
         <div className="container flex justify-center md:justify-end pb-8">
-          <Button 
+          <Button
             onClick={() => setIsModalOpen(true)}
             className="bg-accent hover:bg-accent/90 text-white rounded-full px-6 py-6 font-medium shadow-[0_8px_20px_rgba(var(--accent),0.25)] hover:shadow-[0_12px_25px_rgba(var(--accent),0.35)] transition-all hover:-translate-y-0.5 flex items-center gap-2"
           >
@@ -115,7 +113,7 @@ const CommunityRooms = () => {
                   Live discussion and study group for {studentLevel?.charAt(0).toUpperCase()}{studentLevel?.slice(1)} {subject.title}.
                 </p>
               </div>
-              
+
               <Button asChild className="relative z-10 mt-8 w-full bg-gray-50 hover:bg-accent text-gray-700 hover:text-white border border-gray-200 hover:border-transparent transition-all duration-300 shadow-sm">
                 <a href={subject.meetUrl} target="_blank" rel="noopener noreferrer">
                   Join Room
@@ -129,13 +127,13 @@ const CommunityRooms = () => {
       {/* Private Room Modal (Light Mode) */}
       <AnimatePresence>
         {isModalOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -150,7 +148,7 @@ const CommunityRooms = () => {
                   <Users className="w-5 h-5 text-accent" />
                   Private Study Room
                 </h3>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-400 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100"
                 >
@@ -162,7 +160,7 @@ const CommunityRooms = () => {
               <div className="p-6 space-y-6">
                 <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 text-sm text-gray-600 leading-relaxed">
                   <p className="mb-3">
-                    You are about to create a brand new, secure Google Meet room. 
+                    You are about to create a brand new, secure Google Meet room.
                   </p>
                   <p>
                     <span className="text-gray-900 font-medium">Instructions:</span> Once the room opens in a new tab, copy the URL from your browser's address bar and share it with the peers you want to invite.
@@ -170,9 +168,9 @@ const CommunityRooms = () => {
                 </div>
 
                 <Button asChild className="w-full bg-accent hover:bg-accent/90 text-white py-6 rounded-xl font-semibold shadow-[0_8px_20px_rgba(var(--accent),0.25)] transition-all flex items-center justify-center gap-2 text-base">
-                  <a 
-                    href="https://meet.google.com/new" 
-                    target="_blank" 
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsModalOpen(false)}
                   >

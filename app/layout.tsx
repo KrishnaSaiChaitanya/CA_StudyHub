@@ -1,5 +1,4 @@
 import { Poppins } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@vercel/analytics/next";
@@ -15,6 +14,9 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "CA StudyHub",
   description: "Comprehensive learning and resource-sharing platform for CA aspirants.",
+  icons: {
+    icon: "/icon.svg",
+  },
   ...(enablePWA ? {
     manifest: "/manifest.json",
     appleWebApp: {

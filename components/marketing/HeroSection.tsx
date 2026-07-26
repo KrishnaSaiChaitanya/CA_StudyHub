@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const HeroSection = () => {
   return (
-    <section className="relative overflow-hidden bg-primary">
+    <section className="relative overflow-hidden bg-zinc-950 dark:bg-gradient-to-b dark:from-[#0b132b] dark:to-[#080c1d]">
       {/* Subtle grid pattern */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, hsl(0 0% 100%) 1px, transparent 0)",
@@ -14,6 +14,10 @@ const HeroSection = () => {
       }} />
       {/* Blue glow */}
       <div className="absolute -right-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-accent/10 blur-[120px]" />
+
+      {/* Edge gradient fades to the sides - dark mode only */}
+      <div className="hidden dark:block absolute top-0 bottom-0 left-0 w-24 sm:w-48 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+      <div className="hidden dark:block absolute top-0 bottom-0 right-0 w-24 sm:w-48 bg-gradient-to-l from-background to-transparent pointer-events-none" />
 
       <div className="container relative z-10 py-24 lg:py-36">
         <div className="mx-auto max-w-3xl text-center">
@@ -27,7 +31,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-8 text-4xl font-bold leading-tight text-primary-foreground md:text-6xl"
+            className="mt-8 text-4xl font-bold leading-tight text-white md:text-6xl"
           >
             All-in-One Platform for{" "}
             <span className="text-gradient-blue">CA Students</span>
@@ -37,7 +41,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-6 text-lg leading-relaxed text-primary-foreground/50"
+            className="mt-6 text-lg leading-relaxed text-zinc-400"
           >
             Study smarter with curated resources, mock tests, expert faculty, and a thriving community — everything you need to crack CA exams.
           </motion.p>
@@ -55,7 +59,7 @@ const HeroSection = () => {
             </Button>
             </Link>
             <Link href="#feature-section">
-            <Button size="lg" variant="outline" className="border-primary-foreground/15 text-black bg-white">
+            <Button size="lg" variant="outline" className="border-white/20 text-zinc-300 hover:text-white hover:bg-white/10 bg-transparent transition-all">
               Explore Features
             </Button>
             </Link>

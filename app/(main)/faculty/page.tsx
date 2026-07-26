@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import FacultyProfile from "@/components/faculty/FacultyProfile";
+import PageHeader from "@/components/shared/PageHeader";
 
 export interface FacultyDisplayData {
   id: string;
@@ -87,14 +88,7 @@ const Faculty = () => {
         <FacultyProfile faculty={selectedFaculty} onBack={() => setSelectedFaculty(null)} />
       ) : (
         <>
-          <section className="bg-primary py-20">
-            <div className="container">
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl text-center">
-                <h1 className="text-4xl font-bold text-primary-foreground">Expert <span className="text-gradient-blue">Faculty</span></h1>
-                <p className="mt-4 text-sm text-primary-foreground/50">Connect with India's top CA educators.</p>
-              </motion.div>
-            </div>
-          </section>
+          <PageHeader title="Meet the" gradientTitle="Faculty" description="Connect with India's top CA educators." />
           <section className="container py-8">
             <div className="mb-8 flex justify-center">
               <div className="relative w-full max-w-md">
@@ -121,23 +115,48 @@ const Faculty = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.06 }}
-                    className="rounded-xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-card-hover hover:border-accent/30"
+                    className="flex h-full flex-col rounded-2xl border border-border bg-card p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-accent/30 hover:shadow-card-hover sm:p-5"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-primary-foreground" style={{ backgroundImage: `url(${f.profile_picture})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                      {f.profile_picture ? (
-                        <img src={f.profile_picture} alt={f.name} className="h-full w-full object-cover" />
-                      ) : (
-                        f.name.split(" ").slice(-1)[0][0]
-                      )}
+                    <div className="flex items-start gap-4">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                        {f.profile_picture ? (
+                          <img
+                            src={f.profile_picture}
+                            alt={f.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-primary text-lg font-semibold text-primary-foreground">
+                            {f.name.split(" ").slice(-1)[0][0]}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-base font-semibold text-card-foreground">
+                          {f.name}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-accent line-clamp-1">
+                          {f.subject}
+                        </p>
+
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {f.level}
+                        </p>
+
+
+                      </div>
                     </div>
-                    <h3 className="mt-3 text-sm font-semibold text-card-foreground">{f.name}</h3>
-                    <p className="text-xs text-accent">{f.subject} · {f.level}</p>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                      {/* <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-accent text-accent" />{f.rating}</span>
-                      <span>{f.students} students</span> */}
-                    </div>
-                    <Button size="sm" variant="outline" className="mt-4 w-full text-[11px]" onClick={() => setSelectedFaculty(f)}>
-                      <User className="mr-1 h-3 w-3" />Profile
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-5 w-full"
+                      onClick={() => setSelectedFaculty(f)}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      View Profile
                     </Button>
                   </motion.div>
                 ))}
