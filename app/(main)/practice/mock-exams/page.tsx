@@ -377,25 +377,27 @@ export default function MockExamsPage() {
                             {isAttempted ? "Retake Exam" : "Start Exam"}
                             <ChevronRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
                           </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleOfflineTest(test);
-                            }}
-                            disabled={downloadingIds.includes(test.id)}
-                            variant="outline"
-                            size="icon"
-                            className="h-12 w-12 rounded-xl"
-                            title={offlineTestIds.includes(test.id) ? "Remove from offline storage" : "Save Offline"}
-                          >
-                            {downloadingIds.includes(test.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            ) : offlineTestIds.includes(test.id) ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" />
-                            ) : (
-                              <Download className="h-4 w-4" />
-                            )}
-                          </Button>
+                          {process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleOfflineTest(test);
+                              }}
+                              disabled={downloadingIds.includes(test.id)}
+                              variant="outline"
+                              size="icon"
+                              className="h-12 w-12 rounded-xl"
+                              title={offlineTestIds.includes(test.id) ? "Remove from offline storage" : "Save Offline"}
+                            >
+                              {downloadingIds.includes(test.id) ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                              ) : offlineTestIds.includes(test.id) ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </motion.div>
                     );

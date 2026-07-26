@@ -422,20 +422,22 @@ const StudyPlannerView = ({ onBack }: Props) => {
                     >
                       <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                     </button>
-                    <button
-                      onClick={() => handleToggleOffline(planner)}
-                      disabled={downloadingIds.includes(planner.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-secondary shrink-0"
-                      title={offlinePlannerIds.includes(planner.id) ? "Remove from offline storage" : "Save Offline"}
-                    >
-                      {downloadingIds.includes(planner.id) ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                      ) : offlinePlannerIds.includes(planner.id) ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 fill-green-500/10" />
-                      ) : (
-                        <ArrowDownCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                    </button>
+                    {process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
+                      <button
+                        onClick={() => handleToggleOffline(planner)}
+                        disabled={downloadingIds.includes(planner.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-secondary shrink-0"
+                        title={offlinePlannerIds.includes(planner.id) ? "Remove from offline storage" : "Save Offline"}
+                      >
+                        {downloadingIds.includes(planner.id) ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                        ) : offlinePlannerIds.includes(planner.id) ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 fill-green-500/10" />
+                        ) : (
+                          <ArrowDownCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() => toggleBookmark(planner.id)}
                       className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-secondary shrink-0"

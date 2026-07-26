@@ -348,9 +348,11 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
                   <StickyNote className="h-3.5 w-3.5" /> Notes
                 </TabsTrigger>
               </TabsList>
-              <Button onClick={() => router.push("/downloads")} variant="outline" size="sm" className="gap-1.5 text-accent border-accent/20 hover:bg-accent/5">
-                <Download className="h-3.5 w-3.5" /> View Offline Downloads
-              </Button>
+              {process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
+                <Button onClick={() => router.push("/downloads")} variant="outline" size="sm" className="gap-1.5 text-accent border-accent/20 hover:bg-accent/5">
+                  <Download className="h-3.5 w-3.5" /> View Offline Downloads
+                </Button>
+              )}
             </div>
 
             <TabsContent value="bookmarks">

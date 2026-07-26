@@ -75,7 +75,7 @@ export default function SetCard({
           </Badge>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{cardCount} cards</span>
-            {onToggleOffline && (
+            {onToggleOffline && process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

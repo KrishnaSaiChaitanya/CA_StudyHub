@@ -59,21 +59,28 @@ export function PWARegister() {
     };
 
     const handleOffline = () => {
+      const enableOffline = process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true";
       toast({
         title: "You are Offline",
         description: (
           <div className="flex flex-col gap-2 mt-1">
-            <span>Some features may be limited. You can access your offline downloads to continue studying.</span>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-background text-foreground self-start text-xs h-7"
-              onClick={() => {
-                window.location.href = "/downloads";
-              }}
-            >
-              Go to Downloads
-            </Button>
+            <span>
+              {enableOffline
+                ? "Some features may be limited. You can access your offline downloads to continue studying."
+                : "Some features may be limited. Please check your internet connection."}
+            </span>
+            {enableOffline && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-background text-foreground self-start text-xs h-7"
+                onClick={() => {
+                  window.location.href = "/downloads";
+                }}
+              >
+                Go to Downloads
+              </Button>
+            )}
           </div>
         ),
         variant: "destructive",

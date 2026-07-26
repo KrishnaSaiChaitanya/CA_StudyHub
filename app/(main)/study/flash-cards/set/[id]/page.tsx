@@ -246,23 +246,25 @@ export default function StudyPage({ params }: StudyPageProps) {
           <Badge variant="secondary" className="text-[10px] font-bold py-0.5 bg-secondary/80 text-muted-foreground select-none">
             {formatSubjectName(set.subject)}
           </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleOffline}
-            disabled={savingOffline}
-            className="h-8 px-2 flex items-center gap-1 text-xs"
-            title={isOfflineCached ? "Remove from offline storage" : "Save Offline"}
-          >
-            {savingOffline ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : isOfflineCached ? (
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            <span className="hidden sm:inline">{isOfflineCached ? "Saved Offline" : "Save Offline"}</span>
-          </Button>
+          {process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleOffline}
+              disabled={savingOffline}
+              className="h-8 px-2 flex items-center gap-1 text-xs"
+              title={isOfflineCached ? "Remove from offline storage" : "Save Offline"}
+            >
+              {savingOffline ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : isOfflineCached ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              <span className="hidden sm:inline">{isOfflineCached ? "Saved Offline" : "Save Offline"}</span>
+            </Button>
+          )}
           <SaveToFolderPopover setId={setId} />
         </div>
       </div>
