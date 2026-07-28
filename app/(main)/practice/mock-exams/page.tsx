@@ -160,6 +160,8 @@ export default function MockExamsPage() {
         <PageHeader
           title="Mock Exams"
           gradientTitle="(MCQ)"
+          showBack={true}
+          backText="Back to Practice"
           description="Comprehensive PYQ bank organized by subject and difficulty"
           size="lg"
         />

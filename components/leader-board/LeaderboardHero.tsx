@@ -18,14 +18,14 @@ export default function LeaderboardHero() {
         </motion.div>
         <Link
           href="/community"
-          className="md:left-8 flex items-center gap-1.5 text-xs text-primary-foreground/50 my-2 hover:text-primary-foreground transition-colors"
+          className="md:left-8 flex items-center gap-1.5 text-xs text-white/50 my-2 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Community
         </Link>
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-extrabold tracking-tight"
+          className="text-3xl md:text-4xl font-extrabold tracking-tight text-white"
         >
           Study <span className="text-gradient-blue">Leaderboard</span>
         </motion.h1>
@@ -34,11 +34,12 @@ export default function LeaderboardHero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="mt-3 max-w-md text-sm text-primary-foreground/75"
+          className="mt-3 max-w-md text-sm text-white "
         >
-          Compete, stay consistent, and excel. Review where you stand amongst peers in CA preparation.
+          Compete, stay consistent, and excel.Review where you stand amongst peers in CA preparation
         </motion.p>
       </div>
     </section>
   );
 }
+// . Review where you stand amongst peers in CA preparation

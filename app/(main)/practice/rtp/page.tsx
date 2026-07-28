@@ -12,6 +12,8 @@ const RTP = () => (
     <PageHeader
       title="Revision Test Papers"
       gradientTitle="(RTP)"
+      showBack={true}
+      backText="Back to Practice"
       description="Official revision test papers with detailed solutions"
       size="lg"
     />

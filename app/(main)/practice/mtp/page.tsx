@@ -10,6 +10,8 @@ const MTP = () => {
       <PageHeader
         title="Mock Test Papers"
         gradientTitle="(MTP)"
+        showBack={true}
+        backText="Back to Practice"
         description="Browse, bookmark, and download ICAI mock test papers."
         size="lg"
       />

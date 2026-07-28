@@ -253,11 +253,13 @@ export const StudyTimerCard = ({
                         className="h-2 w-2 rounded-full shrink-0"
                         style={{ backgroundColor: getSubjectColor(session.category) }}
                       />
-                      <span className="text-xs font-medium shrink-0">{getSubjectAbbreviation(session.category)}</span>
+                      <span className="text-xs font-medium truncate max-w-[70px] sm:max-w-none" title={getSubjectAbbreviation(session.category)}>
+                        {getSubjectAbbreviation(session.category)}
+                      </span>
                       {session.tag && (
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full uppercase tracking-tight truncate">
-                          <Tag className="h-2 w-2" />
-                          <span className="truncate max-w-[100px]">{session.tag}</span>
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full uppercase tracking-tight truncate min-w-0 max-w-[90px] sm:max-w-[150px]">
+                          <Tag className="h-2 w-2 shrink-0" />
+                          <span className="truncate" title={session.tag}>{session.tag}</span>
                         </div>
                       )}
                     </div>

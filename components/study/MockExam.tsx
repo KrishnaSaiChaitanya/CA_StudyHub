@@ -40,7 +40,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
   const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [submitted, setSubmitted] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  
+
   const [test, setTest] = useState<Test | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
 
         setTest(testData);
         setQuestions(qData || []);
-        
+
         // Use test duration from DB (in minutes) or fallback to questions count * 1.5
         const durationInMinutes = testData.duration || (qData ? qData.length * 1.5 : 30);
         setTimeLeft(Math.floor(durationInMinutes * 60));
@@ -116,7 +116,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
             .select('question_id')
             .eq('user_id', uid)
             .not('question_id', 'is', null);
-          
+
           if (bData) {
             setBookmarkedQs(new Set(bData.map(b => b.question_id as string)));
           }
@@ -135,10 +135,10 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
     if (submitted || loading || questions.length === 0) return;
     const interval = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) { 
-          clearInterval(interval); 
+        if (t <= 1) {
+          clearInterval(interval);
           handleSubmit(true); // force submit on timeout
-          return 0; 
+          return 0;
         }
         return t - 1;
       });
@@ -166,7 +166,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
     }
 
     const isBookmarked = bookmarkedQs.has(qId);
-    
+
     if (isBookmarked) {
       setQToRemove(qId);
       setIsConfirmModalOpen(true);
@@ -193,7 +193,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
         toast.success("Question bookmarked");
       }
     } catch (error) {
-       setBookmarkedQs(prev => {
+      setBookmarkedQs(prev => {
         const next = new Set(prev);
         if (isRemove) next.add(qId);
         else next.delete(qId);
@@ -274,7 +274,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
         })
         .select()
         .single();
-      
+
       if (attemptErr) throw attemptErr;
 
       const answerRows = questions.map((q, i) => {
@@ -302,7 +302,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
         const currentScore = calculateScore();
         const totalTimeSeconds = (test?.duration || questions.length * 1.5) * 60;
         const timeUsed = totalTimeSeconds - timeLeft;
-        
+
         const { saveOfflineMcqAttempt } = await import("@/utils/offline-db");
         await saveOfflineMcqAttempt({
           id: Math.random().toString(36).substr(2, 9),
@@ -362,7 +362,7 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
               <p className="text-2xl font-bold text-card-foreground">{answered}/{questions.length}</p>
               <p className="text-xs text-muted-foreground">Attempted</p>
             </div>
-             <div className="rounded-lg bg-secondary p-4">
+            <div className="rounded-lg bg-secondary p-4">
               <p className="text-2xl font-bold text-accent">{score}/{questions.length}</p>
               <p className="text-xs text-muted-foreground">Score</p>
             </div>
@@ -385,9 +385,9 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
                   <p className="text-xs font-medium text-card-foreground">{i + 1}. {sq.question_text}</p>
                   <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                     {opts.map((o, idx) => (o && o.trim() !== "") && (
-                       <div key={idx} className={`text-xs p-1.5 rounded ${sq.correct_answer === letterMap[idx] ? "bg-accent/10 border border-accent/20 text-accent font-medium" : "text-muted-foreground"}`}>
-                         {letterMap[idx]}. {o}
-                       </div>
+                      <div key={idx} className={`text-xs p-1.5 rounded ${sq.correct_answer === letterMap[idx] ? "bg-accent/10 border border-accent/20 text-accent font-medium" : "text-muted-foreground"}`}>
+                        {letterMap[idx]}. {o}
+                      </div>
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground border-t border-border/40 pt-2">
@@ -438,12 +438,12 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-accent"
+                className="h-8 w-8 text-muted-foreground group"
                 onClick={() => toggleBookmark(q.id)}
                 title={bookmarkedQs.has(q.id) ? "Remove Bookmark" : "Bookmark Question"}
               >
                 {bookmarkedQs.has(q.id) ? (
-                  <BookmarkCheck className="h-4 w-4 text-accent" />
+                  <BookmarkCheck className="h-4 w-4 text-accent group-hover:text-accent-foreground" />
                 ) : (
                   <Bookmark className="h-4 w-4" />
                 )}
@@ -460,9 +460,8 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
                 return (
                   <label
                     key={`opt-${i}`}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${
-                      answers[currentQ] === i ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"
-                    }`}
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${answers[currentQ] === i ? "border-accent bg-accent/5" : "border-border hover:border-muted-foreground/30"
+                      }`}
                   >
                     <RadioGroupItem value={i.toString()} />
                     <span className="text-sm text-card-foreground">{opt}</span>
@@ -497,9 +496,8 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
           <button
             key={`nav-${i}`}
             onClick={() => setCurrentQ(i)}
-            className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-all ${
-              i === currentQ ? "bg-accent text-accent-foreground" : answers[i] !== undefined ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground"
-            }`}
+            className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-all ${i === currentQ ? "bg-accent text-accent-foreground" : answers[i] !== undefined ? "bg-accent/20 text-accent" : "bg-secondary text-muted-foreground"
+              }`}
           >
             {i + 1}
           </button>

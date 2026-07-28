@@ -134,7 +134,7 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
           .select('question_id')
           .eq('user_id', user.id)
           .not('question_id', 'is', null);
-        
+
         if (bData) {
           setBookmarkedQs(new Set(bData.map(b => b.question_id as string)));
         }
@@ -160,7 +160,7 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
     }
 
     const isBookmarked = bookmarkedQs.has(qId);
-    
+
     if (isBookmarked) {
       setQToRemove(qId);
       setIsConfirmModalOpen(true);
@@ -187,7 +187,7 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
         toast.success("Question bookmarked");
       }
     } catch (error) {
-       setBookmarkedQs(prev => {
+      setBookmarkedQs(prev => {
         const next = new Set(prev);
         if (isRemove) next.add(qId);
         else next.delete(qId);
@@ -312,7 +312,7 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                   >
-                    <Card 
+                    <Card
                       className="border-border bg-card p-4 cursor-pointer hover:bg-secondary/20 transition-colors group"
                       onClick={() => fetchAttemptDetails(test)}
                     >
@@ -353,14 +353,14 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
 
             <AnimatePresence>
               {selectedAttempt && (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
                   onClick={() => setSelectedAttempt(null)}
                 >
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
@@ -373,13 +373,13 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
                         <p className="text-xs text-muted-foreground">Attempted on {new Date(selectedAttempt.completed_at).toLocaleString()}</p>
                       </div>
                       <div className="text-right">
-                        <div className={`text-2xl font-black ${getScoreColor(Math.round((selectedAttempt.score/selectedAttempt.total_questions)*100))}`}>
+                        <div className={`text-2xl font-black ${getScoreColor(Math.round((selectedAttempt.score / selectedAttempt.total_questions) * 100))}`}>
                           {selectedAttempt.score}/{selectedAttempt.total_questions}
                         </div>
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Total Score</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
                       {loadingDetails ? (
                         <div className="flex flex-col items-center justify-center py-20">
@@ -395,7 +395,7 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
                             { key: 'C', text: q.option_c },
                             { key: 'D', text: q.option_d },
                           ];
-                          
+
                           return (
                             <div key={ans.id} className="space-y-3">
                               <div className="flex items-start gap-3">
@@ -408,36 +408,35 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-accent"
+                                  className="h-8 w-8 text-muted-foreground group"
                                   onClick={() => toggleBookmark(q.id)}
                                   title={bookmarkedQs.has(q.id) ? "Remove Bookmark" : "Bookmark Question"}
                                 >
                                   {bookmarkedQs.has(q.id) ? (
-                                    <BookmarkCheck className="h-4 w-4 text-accent" />
+                                    <BookmarkCheck className="h-4 w-4 text-accent group-hover:text-accent-foreground" />
                                   ) : (
                                     <Bookmark className="h-4 w-4" />
                                   )}
                                 </Button>
                               </div>
-                              
+
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 ml-9">
                                 {options.map((opt) => opt.text && (
-                                  <div 
+                                  <div
                                     key={opt.key}
-                                    className={`text-xs p-3 rounded-lg border flex items-center gap-2 ${
-                                      opt.key === q.correct_answer 
-                                        ? "bg-accent/10 border-accent/30 text-accent font-semibold" 
-                                        : opt.key === ans.selected_option
-                                          ? "bg-destructive/10 border-destructive/30 text-destructive font-semibold"
-                                          : "bg-secondary/50 border-border text-muted-foreground"
-                                    }`}
+                                    className={`text-xs p-3 rounded-lg border flex items-center gap-2 ${opt.key === q.correct_answer
+                                      ? "bg-accent/10 border-accent/30 text-accent font-semibold"
+                                      : opt.key === ans.selected_option
+                                        ? "bg-destructive/10 border-destructive/30 text-destructive font-semibold"
+                                        : "bg-secondary/50 border-border text-muted-foreground"
+                                      }`}
                                   >
                                     <span className="w-5 h-5 flex items-center justify-center rounded bg-background/50 border border-current/20">{opt.key}</span>
                                     {opt.text}
                                   </div>
                                 ))}
                               </div>
-                              
+
                               <div className="ml-9 p-3 rounded-lg bg-secondary/30 border border-border/50 text-[11px]">
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-muted-foreground font-semibold uppercase tracking-tighter">Your Answer: <span className={ans.is_correct ? "text-accent" : "text-destructive"}>{ans.selected_option || 'Skipped'}</span></span>
@@ -454,8 +453,8 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
                         })
                       )}
                     </div>
-                    
-                    <div className="p-4 border-t border-border flex justify-end">
+
+                    <div className="p-4 mr-10 md:mr-0 border-t border-border flex justify-end">
                       <Button variant="outline" onClick={() => setSelectedAttempt(null)}>Close</Button>
                     </div>
                   </motion.div>

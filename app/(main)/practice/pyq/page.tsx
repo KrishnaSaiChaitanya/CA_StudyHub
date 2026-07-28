@@ -10,7 +10,7 @@ import PageHeader from "@/components/shared/PageHeader";
 const PYQ = () => (
   <div className="min-h-screen">
     {/* <Navbar /> */}
-    <PageHeader title="Previous Year Questions" gradientTitle="PYQ" description="Comprehensive PYQ bank organized by subject and difficulty"
+    <PageHeader title="Previous Year Questions" gradientTitle="PYQ" showBack={true} backText="Back to Practice" description="Comprehensive PYQ bank organized by subject and difficulty"
     />
     <PaperBrowser
       title="Previous Year Questions"

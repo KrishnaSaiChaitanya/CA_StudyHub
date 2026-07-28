@@ -312,8 +312,8 @@ const StudyPlannerView = ({ onBack }: Props) => {
                       key={sub}
                       onClick={() => setSelectedSubject(sub)}
                       className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${selectedSubject === sub
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                         }`}
                     >
                       {sub === "All" ? sub : formatSubjectName(sub as any)}
@@ -327,8 +327,8 @@ const StudyPlannerView = ({ onBack }: Props) => {
                       key={opt}
                       onClick={() => setSourceFilter(opt)}
                       className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${sourceFilter === opt
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                         }`}
                     >
                       {opt}
@@ -440,7 +440,7 @@ const StudyPlannerView = ({ onBack }: Props) => {
                     )}
                     <button
                       onClick={() => toggleBookmark(planner.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:bg-secondary shrink-0"
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors shrink-0"
                       title={bookmarks.includes(planner.id) ? "Remove Bookmark" : "Add Bookmark"}
                     >
                       <Bookmark className={`h-3.5 w-3.5 ${bookmarks.includes(planner.id) ? "fill-accent text-accent" : "text-muted-foreground"}`} />

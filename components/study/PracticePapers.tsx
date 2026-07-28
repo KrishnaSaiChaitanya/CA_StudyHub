@@ -315,12 +315,12 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-muted-foreground group"
                     onClick={() => toggleBookmark(paper.id, paper.title)}
                     title={bookmarked.has(paper.id) ? "Remove bookmark" : "Bookmark"}
                   >
                     {bookmarked.has(paper.id) ? (
-                      <BookmarkCheck className="h-4 w-4 text-accent" />
+                      <BookmarkCheck className="h-4 w-4 text-accent group-hover:text-accent-foreground" />
                     ) : (
                       <Bookmark className="h-4 w-4" />
                     )}

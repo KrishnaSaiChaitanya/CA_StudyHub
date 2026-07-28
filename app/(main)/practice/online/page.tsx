@@ -13,6 +13,8 @@ const PYQ = () => (
     <PageHeader
       title="Online Mock Tests"
       gradientTitle="(MCQ)"
+      showBack={true}
+      backText="Back to Practice"
       description="Browse and download ICAI mock test papers."
       size="lg"
     />

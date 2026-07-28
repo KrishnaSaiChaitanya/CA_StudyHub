@@ -40,6 +40,7 @@ import {
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { getTargetDateForMonth } from "@/utils/exam-attempts";
 
@@ -127,6 +128,7 @@ const timeAgo = (dateString: string) => {
 const Home = () => {
   const supabase = createClient();
   const { studentLevel, examAttemptMonth, examAttemptYear, subjects, loading: studentLoading } = useStudent();
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>([]);
@@ -436,11 +438,13 @@ const Home = () => {
             </span>
           ))
         ).flat();
+        const speedFactor = isMobile ? 0.2 : 1;
+        const minDuration = isMobile ? 5 : 10;
         return (
           <div className="overflow-hidden bg-black py-1.5 border-y border-black/10 text-xs font-medium text-white">
             <div
               className="flex items-center gap-8 whitespace-nowrap animate-marquee"
-              style={{ animationDuration: `${Math.max(10, repeatCount * announcementsList.length * 1)}s` }}
+              style={{ animationDuration: `${Math.max(minDuration, repeatCount * announcementsList.length * speedFactor)}s` }}
             >
               {singleSet}
               {singleSet}
@@ -486,23 +490,49 @@ const Home = () => {
         </motion.div>
 
         {/* Stats Row */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }} className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            { icon: Flame, label: "Day Streak", value: `${stats.streak} days` },
-            { icon: Clock, label: "Today's Study", value: stats.studyTime },
-            { icon: CheckCircle2, label: "Tasks Done", value: stats.tasksDone },
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }} className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-4 col-span-1 sm:contents">
+            {[
+              { icon: Flame, label: "Day Streak", value: `${stats.streak} days` }, { icon: CheckCircle2, label: "Tasks Done", value: stats.tasksDone }
+              ,
+            ].map((stat, i) => (
+              <Card key={i} className="border-border h-full">
+                <CardContent className="flex items-center gap-3 p-4 h-full">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
+                    <stat.icon className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    {isLoading ? (
+                      <div className="h-6 w-16 mt-1 rounded bg-muted animate-pulse" />
+                    ) : (
+                      <p className="text-lg font-semibold text-foreground">{stat.value}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {[{ icon: Clock, label: "Today's Study", value: stats.studyTime }
+            ,
           ].map((stat, i) => (
-            <Card key={i} className="border-border">
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
-                  <stat.icon className="h-5 w-5 text-accent" />
+            <Card key={i} className="border-border h-full col-span-1">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-5 text-center md:flex-row md:items-center md:justify-start md:gap-3 md:p-4 md:text-left h-full">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 md:h-11 md:w-11 md:rounded-xl">
+                  <stat.icon className="h-6 w-6 text-accent md:h-5 md:w-5" />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+
+                <div className="flex flex-col items-center md:items-start">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {stat.label}
+                  </p>
+
                   {isLoading ? (
-                    <div className="h-6 w-16 mt-1 rounded bg-muted animate-pulse" />
+                    <div className="mt-2 h-7 w-20 rounded bg-muted animate-pulse" />
                   ) : (
-                    <p className="text-lg font-semibold text-foreground">{stat.value}</p>
+                    <p className="text-2xl font-bold text-foreground md:text-lg md:font-semibold">
+                      {stat.value}
+                    </p>
                   )}
                 </div>
               </CardContent>

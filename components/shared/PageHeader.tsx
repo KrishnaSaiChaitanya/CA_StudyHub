@@ -9,6 +9,7 @@ interface PageHeaderProps {
   gradientTitle?: string;
   description?: ReactNode;
   onBack?: () => void;
+  showBack?: boolean;
   backText?: string;
   size?: "md" | "lg";
 }
@@ -18,6 +19,7 @@ export default function PageHeader({
   gradientTitle,
   description,
   onBack,
+  showBack,
   backText = "Back to Study Tools",
   size = "md",
 }: PageHeaderProps) {
@@ -41,9 +43,17 @@ export default function PageHeader({
               : "mx-auto flex flex-col items-center text-center"
           }
         >
-          {onBack && (
+          {(onBack || showBack) && (
             <button
-              onClick={onBack}
+              onClick={() => {
+                if (onBack) {
+                  onBack();
+                } else if (showBack) {
+                  if (typeof window !== "undefined") {
+                    window.history.back();
+                  }
+                }
+              }}
               className="mb-3 md:mb-4 flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> {backText}

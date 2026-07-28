@@ -69,11 +69,14 @@ export const DailySummaryCard = ({
   getSubjectColor,
   getSubjectLabel,
 }: DailySummaryCardProps) => {
+  const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+  const effectiveIsSubscribed = !requirePayment || isSubscribed;
+
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
       <div className="p-5 pb-0 flex items-center justify-between">
         <h2 className="text-sm font-semibold">Daily Summary</h2>
-        {!isSubscribed && <Lock className="h-3 w-3 text-muted-foreground/50" />}
+        {!effectiveIsSubscribed && <Lock className="h-3 w-3 text-muted-foreground/50" />}
       </div>
       <ProFeatureLock label="Unlock daily summary with a Pro Subscription">
         <div className="p-5 pt-4">
