@@ -60,7 +60,7 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          
+
           // 3. Fetch user's existing bookmarks for SPOM materials
           const { data: bookmarksData } = await supabase
             .from("user_bookmarks")
@@ -109,7 +109,7 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
           .from("user_bookmarks")
           .delete()
           .match({ user_id: userId, spom_material_id: id });
-          
+
         if (error) throw error;
         toast({ title: "Bookmark removed", description: materialTitle });
       } else {
@@ -117,7 +117,7 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
         const { error } = await supabase
           .from("user_bookmarks")
           .insert({ user_id: userId, spom_material_id: id });
-          
+
         if (error) throw error;
         toast({ title: "Bookmarked!", description: materialTitle });
       }
@@ -210,9 +210,8 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
             <button
               key={t.id}
               onClick={() => setTab(t.id as Tab)}
-              className={`relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors ${
-                active ? "text-card-foreground" : "text-muted-foreground hover:text-card-foreground"
-              }`}
+              className={`relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors ${active ? "text-card-foreground" : "text-muted-foreground hover:text-card-foreground"
+                }`}
             >
               <Icon className="h-3.5 w-3.5" />
               {t.label}
@@ -322,9 +321,8 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
                 <Badge
                   key={f}
                   variant={paperFilter === f ? "default" : "secondary"}
-                  className={`cursor-pointer text-xs ${
-                    paperFilter === f ? "bg-accent text-accent-foreground" : ""
-                  }`}
+                  className={`cursor-pointer text-xs ${paperFilter === f ? "bg-accent text-accent-foreground" : ""
+                    }`}
                   onClick={() => setPaperFilter(f)}
                 >
                   {f}
@@ -356,7 +354,7 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
                       </div>
                       <button
                         onClick={() => toggleBookmark(m.id, m.title)}
-                        className="text-muted-foreground hover:text-accent transition-colors"
+                        className="text-muted-foreground transition-colors"
                       >
                         <Bookmark
                           className={`h-4 w-4 ${isBookmarked ? "fill-accent text-accent" : ""}`}

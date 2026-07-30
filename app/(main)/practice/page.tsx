@@ -2,18 +2,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Footer from "@/components/Footer";
-import MockExam from "@/components/MockExam";
-import PerformanceHistory from "@/components/PerformanceHistory";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, ClipboardCheck, Clock, Award, Lock, Crown, X, Check, Sparkles } from "lucide-react";
+import { FileText, ClipboardCheck, Clock, Award, Lock, Crown, X, Check, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { ProFeatureLock } from "@/components/ProFeatureLock";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
+import MockExam from "@/components/study/MockExam";
+import PerformanceHistory from "@/components/dashboard/PerformanceHistory";
+import PageHeader from "@/components/shared/PageHeader";
 
 
 const Practice = () => {
@@ -90,15 +90,29 @@ const Practice = () => {
   return (
     <div className="bg-background w-full">
       <main className="pb-12">
-        <section className="bg-primary py-20">
-          <div className="container">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl text-center">
-              <h1 className="text-4xl font-bold text-primary-foreground">Practice & <span className="text-gradient-blue">Excel</span></h1>
-              <p className="mt-4 text-sm text-primary-foreground/50">Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills.</p>
-            </motion.div>
+        <PageHeader title="Practice &" gradientTitle="Excel" description="Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills." />
+        <section className="container py-10">
+          <div className="block md:hidden mb-6">
+            <ProFeatureLock label="Unlock Mock Exams with a Pro Subscription">
+              <Button
+                onClick={() => router.push('/practice/mock-exams')}
+                className="w-full flex items-center justify-between p-4 h-auto bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 rounded-xl hover:bg-accent/15 transition-all text-left shadow-sm group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm text-white">Take a MCQ Mock Exam</h3>
+                    <p className="text-[11px] text-muted-foreground truncate">Simulate real exam pressure with online tests</p>
+                  </div>
+                </div>
+                <div className="h-7 w-7 rounded-full bg-accent/10 flex items-center justify-center text-accent group-hover:translate-x-0.5 transition-transform shrink-0">
+                  <ChevronRight className="h-4 w-4" />
+                </div>
+              </Button>
+            </ProFeatureLock>
           </div>
-        </section>
-        <section className="container py-16">
           <div className="grid gap-4 md:grid-cols-2 mb-12">
             {resources.map((res, i) => (
               <div key={res.title} className={res.isDisabled ? "opacity-80" : ""}>
@@ -120,9 +134,9 @@ const Practice = () => {
                           <Skeleton className="h-3 w-16" />
                         ) : (
                           <>
-                          {!res.isDisabled && <span className="text-xs font-medium text-accent">
-                            {counts[res.type] || 0} {res.unit}
-                          </span>}
+                            {!res.isDisabled && <span className="text-xs font-medium text-accent">
+                              {counts[res.type] || 0} {res.unit}
+                            </span>}
                           </>
                         )}
                         {res.isDisabled && <Badge variant="secondary" className="text-[10px] py-0 h-4 uppercase bg-muted text-muted-foreground border-none">Coming Soon</Badge>}
@@ -130,19 +144,19 @@ const Practice = () => {
                     </div>
                   </div>
                   <p className="mt-3 flex-1 text-xs text-muted-foreground">{res.description}</p>
-                  
+
                   {res.type === "rtp" ? (
                     <Button variant="outline" size="sm" className="mt-4 w-full text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
                       {res.isDisabled ? "Coming soon" : <Link href={res.link}>Browse Papers</Link>}
                     </Button>
                   ) : (
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                       <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
-                          {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=questions`}>Questions</Link>}
-                       </Button>
-                       <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
-                          {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=solutions`}>Solutions</Link>}
-                       </Button>
+                      <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
+                        {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=questions`}>Questions</Link>}
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-xs" disabled={res.isDisabled} asChild={!res.isDisabled}>
+                        {res.isDisabled ? "Coming soon" : <Link href={`${res.link}?category=solutions`}>Solutions</Link>}
+                      </Button>
                     </div>
                   )}
                 </motion.div>
@@ -150,25 +164,27 @@ const Practice = () => {
             ))}
           </div>
 
-          <ProFeatureLock>
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative overflow-hidden rounded-xl bg-primary p-8 text-center"
-            >
-              <Award className="mx-auto h-8 w-8 text-accent" />
-              <h3 className="mt-4 text-xl font-bold text-primary-foreground">Take a MCQ Mock Exam</h3>
-              <p className="mt-2 text-xs text-primary-foreground/50"> Revise concepts, strengthen recall, and excel confidently.</p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
-                <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent hover:bg-accent/10">View My Performance</Button>
-              </div>
-            </motion.div>
-          </ProFeatureLock>
+          <div className="hidden md:block">
+            <ProFeatureLock>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="relative overflow-hidden rounded-xl bg-zinc-950 dark:bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
+              >
+                <Award className="mx-auto h-8 w-8 text-accent" />
+                <h3 className="mt-4 text-xl font-bold text-white">Take a MCQ Mock Exam</h3>
+                <p className="mt-2 text-xs text-primary-foreground/50"> Revise concepts, strengthen recall, and excel confidently.</p>
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
+                  <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent">View My Performance</Button>
+                </div>
+              </motion.div>
+            </ProFeatureLock>
+          </div>
         </section>
       </main>
-      
+
     </div>
   );
 };

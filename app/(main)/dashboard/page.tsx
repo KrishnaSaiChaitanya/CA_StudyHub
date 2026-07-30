@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 import NotificationsBell from "@/components/notifications/Notification";
 import {
   BarChart3,
@@ -40,7 +39,8 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { useStudent } from "@/components/StudentTypeProvider";
+import { useStudent } from "@/components/providers/StudentTypeProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { getTargetDateForMonth } from "@/utils/exam-attempts";
 
@@ -91,7 +91,7 @@ const quickAccessOptions: QuickAccessOption[] = [
   { icon: CalendarDays, title: "Calendar", path: "/study/events" },
   { icon: MessageCircle, title: "Community Library", path: "/community/upload" },
   { icon: BookOpen, title: "Study Resources", path: "/study/planner" },
-  { icon: Lightbulb, title: "Notes & Bookmarks", path: "/study/bookmarks" },
+  { icon: Lightbulb, title: "Notes & Bookmarks", path: "/bookmarks" },
   { icon: Layers, title: "Flashcards", path: "/study/flash-cards" },
   { icon: Megaphone, title: "Announcements", path: "/study/announcements" },
   { icon: Trophy, title: "Leaderboard", path: "/community/leaderboard" },
@@ -128,6 +128,7 @@ const timeAgo = (dateString: string) => {
 const Home = () => {
   const supabase = createClient();
   const { studentLevel, examAttemptMonth, examAttemptYear, subjects, loading: studentLoading } = useStudent();
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<string[]>([]);
@@ -374,11 +375,60 @@ const Home = () => {
   const announcementsList = tickerMessages;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen bg-background/95 overflow-hidden flex flex-col">
+      {/* Premium ambient gradient backgrounds and grid pattern */}
+      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden select-none">
+        {/* Soft radial glows that slowly pulse/move */}
+        <motion.div
+          animate={{
+            scale: [1, 1.15, 1],
+            x: [0, 20, 0],
+            y: [0, -30, 0],
+            opacity: [0.15, 0.25, 0.15],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.12)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,hsl(var(--accent)/0.25)_0%,transparent_70%)]"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            x: [0, -30, 0],
+            y: [0, 20, 0],
+            opacity: [0.12, 0.22, 0.12],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute top-1/2 -right-40 w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.08)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,hsl(var(--accent)/0.18)_0%,transparent_70%)]"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.08, 0.15, 0.08],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+          className="absolute bottom-[-100px] left-1/3 w-[450px] h-[450px] rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.06)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,hsl(var(--accent)/0.12)_0%,transparent_70%)]"
+        />
+
+        {/* Clean tech grid lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))/0.25_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))/0.25_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      </div>
+
       {/* <Navbar /> */}
 
 
-    {announcementsList?.length > 0 && (() => {
+      {announcementsList?.length > 0 && (() => {
         const repeatCount = Math.max(10, Math.ceil(20 / announcementsList.length));
         const singleSet = Array.from({ length: repeatCount }, (_, setIdx) =>
           announcementsList.map((ann: string, idx: number) => (
@@ -388,11 +438,13 @@ const Home = () => {
             </span>
           ))
         ).flat();
+        const speedFactor = isMobile ? 0.2 : 1;
+        const minDuration = isMobile ? 5 : 10;
         return (
           <div className="overflow-hidden bg-black py-1.5 border-y border-black/10 text-xs font-medium text-white">
             <div
               className="flex items-center gap-8 whitespace-nowrap animate-marquee"
-              style={{ animationDuration: `${Math.max(10, repeatCount * announcementsList.length * 1)}s` }}
+              style={{ animationDuration: `${Math.max(minDuration, repeatCount * announcementsList.length * speedFactor)}s` }}
             >
               {singleSet}
               {singleSet}
@@ -438,23 +490,49 @@ const Home = () => {
         </motion.div>
 
         {/* Stats Row */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }} className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            { icon: Flame, label: "Day Streak", value: `${stats.streak} days` },
-            { icon: Clock, label: "Today's Study", value: stats.studyTime },
-            { icon: CheckCircle2, label: "Tasks Done", value: stats.tasksDone },
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }} className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-4 col-span-1 sm:contents">
+            {[
+              { icon: Flame, label: "Day Streak", value: `${stats.streak} days` }, { icon: CheckCircle2, label: "Tasks Done", value: stats.tasksDone }
+              ,
+            ].map((stat, i) => (
+              <Card key={i} className="border-border h-full">
+                <CardContent className="flex items-center gap-3 p-4 h-full">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
+                    <stat.icon className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    {isLoading ? (
+                      <div className="h-6 w-16 mt-1 rounded bg-muted animate-pulse" />
+                    ) : (
+                      <p className="text-lg font-semibold text-foreground">{stat.value}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {[{ icon: Clock, label: "Today's Study", value: stats.studyTime }
+            ,
           ].map((stat, i) => (
-            <Card key={i} className="border-border">
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
-                  <stat.icon className="h-5 w-5 text-accent" />
+            <Card key={i} className="border-border h-full col-span-1">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-5 text-center md:flex-row md:items-center md:justify-start md:gap-3 md:p-4 md:text-left h-full">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 md:h-11 md:w-11 md:rounded-xl">
+                  <stat.icon className="h-6 w-6 text-accent md:h-5 md:w-5" />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+
+                <div className="flex flex-col items-center md:items-start">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {stat.label}
+                  </p>
+
                   {isLoading ? (
-                    <div className="h-6 w-16 mt-1 rounded bg-muted animate-pulse" />
+                    <div className="mt-2 h-7 w-20 rounded bg-muted animate-pulse" />
                   ) : (
-                    <p className="text-lg font-semibold text-foreground">{stat.value}</p>
+                    <p className="text-2xl font-bold text-foreground md:text-lg md:font-semibold">
+                      {stat.value}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -480,73 +558,73 @@ const Home = () => {
                       </DialogDescription>
                     </DialogHeader>
 
-                  <div className="mt-6 space-y-3">
-  <div className="flex items-center justify-between">
-    <p className="text-sm font-medium text-muted-foreground">Quick Access</p>
-    <span className="text-xs font-medium px-2 py-1 bg-secondary rounded-full">
-      {selectedQuickAccess.length}/4 selected
-    </span>
-  </div>
+                    <div className="mt-6 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-muted-foreground">Quick Access</p>
+                        <span className="text-xs font-medium px-2 py-1 bg-secondary rounded-full">
+                          {selectedQuickAccess.length}/4 selected
+                        </span>
+                      </div>
 
-  {/* 1. Mobile: Single column with horizontal scroll or vertical list 
+                      {/* 1. Mobile: Single column with horizontal scroll or vertical list 
       2. sm: Grid with 2 columns
       3. Added 'max-h' and custom scrollbar for better mobile containment
   */}
-  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1 pb-2 scrollbar-thin">
-    {quickAccessOptions.map((option) => {
-      const isSelected = selectedQuickAccess.includes(option.path);
-      const isDisabled = !isSelected && selectedQuickAccess.length >= 4;
-      
-      return (
-        <button
-          key={option.path}
-          type="button"
-          onClick={() => handleToggleQuickAccess(option.path)}
-          // 4. Enhanced active state for touch (active:scale-[0.98])
-          className={`
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1 pb-2 scrollbar-thin">
+                        {quickAccessOptions.map((option) => {
+                          const isSelected = selectedQuickAccess.includes(option.path);
+                          const isDisabled = !isSelected && selectedQuickAccess.length >= 4;
+
+                          return (
+                            <button
+                              key={option.path}
+                              type="button"
+                              onClick={() => handleToggleQuickAccess(option.path)}
+                              // 4. Enhanced active state for touch (active:scale-[0.98])
+                              className={`
             flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all 
             active:scale-[0.98] touch-manipulation
-            ${isSelected 
-              ? 'border-accent bg-accent/10 shadow-sm ring-1 ring-accent/30' 
-              : 'border-border bg-background'
-            } 
+            ${isSelected
+                                  ? 'border-accent bg-accent/10 shadow-sm ring-1 ring-accent/30'
+                                  : 'border-border bg-background'
+                                } 
             ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-accent/50'}
           `}
-          disabled={isDisabled}
-        >
-          {/* 5. Icon Container: Slightly larger on mobile for better visibility */}
-          <div className={`
+                              disabled={isDisabled}
+                            >
+                              {/* 5. Icon Container: Slightly larger on mobile for better visibility */}
+                              <div className={`
             flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-colors
             ${isSelected ? 'bg-accent text-white' : 'bg-secondary text-accent'}
           `}>
-            <option.icon className="h-6 w-6" />
-          </div>
+                                <option.icon className="h-6 w-6" />
+                              </div>
 
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent' : 'text-foreground'}`}>
-              {option.title}
-            </p>
-            <p className="text-[11px] text-muted-foreground truncate opacity-80">
-              {option.path}
-            </p>
-          </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-accent' : 'text-foreground'}`}>
+                                  {option.title}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground truncate opacity-80">
+                                  {option.path}
+                                </p>
+                              </div>
 
-          {/* 6. Selection Indicator: Visual feedback is crucial on small screens */}
-          <div className={`
+                              {/* 6. Selection Indicator: Visual feedback is crucial on small screens */}
+                              <div className={`
             h-5 w-5 rounded-full border flex items-center justify-center transition-all
             ${isSelected ? 'bg-accent border-accent' : 'border-border'}
           `}>
-            {isSelected && (
-              <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </div>
-        </button>
-      );
-    })}
-  </div>
-</div>
+                                {isSelected && (
+                                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                    <path d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     <DialogFooter className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <DialogClose asChild>
@@ -629,7 +707,7 @@ const Home = () => {
               View all
             </Link> */}
           </div>
-          
+
           <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x">
             {isLoading ? (
               // Loading Skeletons
@@ -649,35 +727,35 @@ const Home = () => {
             ) : (
               recentPapers.map((paper) => (
                 <Link href={paper.pdf_url} prefetch={false} target="_blank">
-                <Card key={paper.id} className="group flex-shrink-0 w-52 snap-start cursor-pointer border-border transition-all hover:shadow-md hover:border-accent/30">
-                  <CardContent className="p-0">
-                    <div className="relative flex aspect-video w-full items-center justify-center bg-secondary rounded-t-lg border-b">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background shadow-sm">
-                          <FileText className="h-5 w-5 text-accent" />
+                  <Card key={paper.id} className="group flex-shrink-0 w-52 snap-start cursor-pointer border-border transition-all hover:shadow-md hover:border-accent/30">
+                    <CardContent className="p-0">
+                      <div className="relative flex aspect-video w-full items-center justify-center bg-secondary rounded-t-lg border-b">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background shadow-sm">
+                            <FileText className="h-5 w-5 text-accent" />
+                          </div>
+                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wider line-clamp-1">
+                            {paper.type ?? "Study Planner"}
+                          </span>
                         </div>
-                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent uppercase tracking-wider line-clamp-1">
-                          {paper.type ?? "Study Planner"}
-                        </span>
                       </div>
-                    </div>
-                    <div className="p-3.5">
-                      <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2" title={paper.title}>
-                        {paper.title}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        <Badge variant="outline" className="text-[9px] px-1.5 font-medium border-border line-clamp-1">
-                          {formatSubjectName(paper.subject)}
-                        </Badge>
+                      <div className="p-3.5">
+                        <p className="text-sm font-medium text-foreground leading-snug line-clamp-2 mb-2" title={paper.title}>
+                          {paper.title}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <Badge variant="outline" className="text-[9px] px-1.5 font-medium border-border line-clamp-1">
+                            {formatSubjectName(paper.subject)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <span className="capitalize">{paper.level}</span>
+                          <span>·</span>
+                          <span>{timeAgo(paper.created_at)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <span className="capitalize">{paper.level}</span>
-                        <span>·</span>
-                        <span>{timeAgo(paper.created_at)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))
             )}

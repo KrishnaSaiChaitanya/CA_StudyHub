@@ -1,26 +1,26 @@
-import js from "@eslint/js";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import tseslint from "typescript-eslint";
+const nextVitalsConfig = require("eslint-config-next/core-web-vitals");
+const nextTypeScriptConfig = require("eslint-config-next/typescript");
 
-export default tseslint.config(
-  { ignores: ["dist"] },
+/** @type {import('eslint').Linter.Config[]} */
+const eslintConfig = [
+  ...nextVitalsConfig,
+  ...nextTypeScriptConfig,
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-    },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-unused-vars": "off",
+      // Warn on unused vars; ignore underscore-prefixed names
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      // Warn on accidental `any` usage
+      "@typescript-eslint/no-explicit-any": "warn",
+      // Allow empty object types (common in Shadcn/Radix patterns)
+      "@typescript-eslint/no-empty-object-type": "off",
+      // Keep exhaustive-deps as a warning for now
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
-);
+];
+
+module.exports = eslintConfig;
+

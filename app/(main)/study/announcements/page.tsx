@@ -1,7 +1,6 @@
 "use client"
 
-import AnnouncementsView from "@/components/Announcements";
-import Footer from "@/components/Footer";
+import AnnouncementsView from "@/components/study/Announcements";
 import { useRouter } from "next/navigation";
 
 export default function AnnouncementsPage() {

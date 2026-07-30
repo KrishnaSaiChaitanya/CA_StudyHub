@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { syncContactRequestAction } from "@/app/public-api-actions";
 
 const ContactUs = () => {
   const supabase = createClient();
@@ -66,6 +67,14 @@ const ContactUs = () => {
         variant: "destructive"
       });
     } else {
+      // Supabase save succeeded — mirror to the external tracker (fire-and-forget)
+      syncContactRequestAction({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      }).catch(() => { /* silently ignored — never surfaces to the user */ });
+
       toast({
         title: "Message sent!",
         description: "We've received your query and will get back to you soon."

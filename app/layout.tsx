@@ -1,5 +1,4 @@
 import { Poppins } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@vercel/analytics/next";
@@ -11,10 +10,23 @@ const defaultUrl = process.env.VERCEL_URL
 
 const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
 
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "CA StudyHub",
   description: "Comprehensive learning and resource-sharing platform for CA aspirants.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon-pwa-192.png",
+  },
   ...(enablePWA ? {
     manifest: "/manifest.json",
     appleWebApp: {
@@ -35,9 +47,9 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-import { ConditionalLayout } from "@/components/ConditionalLayout";
-import WelcomeModal from "@/components/welcomeModel";
-import { PWARegister } from "@/components/PWARegister";
+import { ConditionalLayout } from "@/components/shared/ConditionalLayout";
+import WelcomeModal from "@/components/shared/WelcomeModal";
+import { PWARegister } from "@/components/shared/PwaRegister";
 
 export default function RootLayout({
   children,
@@ -46,7 +58,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${poppins.variable} font-sans`} suppressHydrationWarning>
-      <body className="font-sans">
+      <body className="font-sans" suppressHydrationWarning>
           <main className="flex flex-col items-center">
               <Providers>
                 <ConditionalLayout>

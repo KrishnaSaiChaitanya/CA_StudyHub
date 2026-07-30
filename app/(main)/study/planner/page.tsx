@@ -1,7 +1,6 @@
 "use client"
 
-import StudyPlannerView from "@/components/StudyPlannerView";
-import Footer from "@/components/Footer";
+import StudyPlannerView from "@/components/study/StudyPlannerView";
 import { useRouter } from "next/navigation";
 
 export default function PlannerPage() {

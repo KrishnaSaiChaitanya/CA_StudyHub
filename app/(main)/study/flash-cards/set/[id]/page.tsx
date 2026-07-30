@@ -16,9 +16,11 @@ import {
   XCircle,
   Loader2,
   Trophy,
+  Download,
 } from "lucide-react";
 import { formatSubjectName } from "@/utils/subjects";
 import SaveToFolderPopover from "@/components/flash-cards/SaveToFolderPopover";
+import { saveOfflineItem, deleteOfflineItem, getOfflineItem } from "@/utils/offline-db";
 
 // Global cache variables for SWR caching
 const cacheSetDetails: Record<string, any> = {};
@@ -44,6 +46,52 @@ export default function StudyPage({ params }: StudyPageProps) {
   const [knownIds, setKnownIds] = useState<string[]>([]);
   const [sessionComplete, setSessionComplete] = useState(false);
 
+  const [isOfflineCached, setIsOfflineCached] = useState(false);
+  const [savingOffline, setSavingOffline] = useState(false);
+
+  const checkOfflineStatus = async () => {
+    try {
+      const item = await getOfflineItem(setId);
+      setIsOfflineCached(!!item);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    checkOfflineStatus();
+  }, [setId]);
+
+  const handleToggleOffline = async () => {
+    setSavingOffline(true);
+    try {
+      if (isOfflineCached) {
+        await deleteOfflineItem(setId);
+        setIsOfflineCached(false);
+        toast({ title: "Removed offline copy", description: "This set has been removed from offline storage." });
+      } else {
+        if (!set) return;
+        await saveOfflineItem({
+          id: setId,
+          type: "flashcard",
+          title: set.title,
+          subject: set.subject,
+          metadata: {
+            is_admin: set.is_admin || false,
+            cardCount: cards.length
+          },
+          data: cards
+        });
+        setIsOfflineCached(true);
+        toast({ title: "Saved Offline", description: "This set is now available for offline study." });
+      }
+    } catch (e: any) {
+      toast({ title: "Offline Save Failed", description: e.message || "Could not save set offline", variant: "destructive" });
+    } finally {
+      setSavingOffline(false);
+    }
+  };
+
   const fetchSetDetails = async (forceRefresh = false) => {
     if (!forceRefresh && cacheSetDetails[setId] && cacheSetCards[setId]) {
       setSet(cacheSetDetails[setId]);
@@ -52,6 +100,27 @@ export default function StudyPage({ params }: StudyPageProps) {
       // Background revalidation
     } else {
       setLoading(true);
+    }
+
+    try {
+      const offlineItem = await getOfflineItem(setId);
+      if (offlineItem) {
+        setSet({
+          id: offlineItem.id,
+          title: offlineItem.title,
+          subject: offlineItem.subject,
+          is_admin: offlineItem.metadata?.is_admin,
+          cardCount: offlineItem.metadata?.cardCount
+        });
+        setCards(offlineItem.data || []);
+        setIsOfflineCached(true);
+        setLoading(false);
+        if (typeof window !== "undefined" && !navigator.onLine) {
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("IndexedDB error loading details:", err);
     }
 
     try {
@@ -170,13 +239,32 @@ export default function StudyPage({ params }: StudyPageProps) {
         <div>
           <h1 className="text-xl font-bold text-foreground tracking-tight line-clamp-1">{set.title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-            {sessionComplete ? cards.length : cardIdx + 1} of {cards.length} cards 
+            {sessionComplete ? cards.length : cardIdx + 1} of {cards.length} cards
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-[10px] font-bold py-0.5 bg-secondary/80 text-muted-foreground select-none">
             {formatSubjectName(set.subject)}
           </Badge>
+          {process.env.NEXT_PUBLIC_ENABLE_OFFLINE === "true" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleOffline}
+              disabled={savingOffline}
+              className="h-8 px-2 flex items-center gap-1 text-xs"
+              title={isOfflineCached ? "Remove from offline storage" : "Save Offline"}
+            >
+              {savingOffline ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : isOfflineCached ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              <span className="hidden sm:inline">{isOfflineCached ? "Saved Offline" : "Save Offline"}</span>
+            </Button>
+          )}
           <SaveToFolderPopover setId={setId} />
         </div>
       </div>
@@ -228,47 +316,49 @@ export default function StudyPage({ params }: StudyPageProps) {
             {/* 3D Flip Card Container */}
             <div
               onClick={() => setFlipped(!flipped)}
-              className="relative cursor-pointer h-[320px] w-full"
+              className="relative w-full cursor-pointer"
               style={{ perspective: 1200 }}
             >
               <motion.div
-                className="absolute inset-0 w-full h-full"
+                className="relative grid"
                 style={{ transformStyle: "preserve-3d" }}
                 animate={{ rotateY: flipped ? 180 : 0 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
               >
-                {/* Front Side */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-2xl border border-border bg-card p-8 flex flex-col justify-between items-center text-center shadow-sm select-none"
+                  className="col-start-1 row-start-1 rounded-2xl border border-border bg-card p-8 flex flex-col items-center text-center shadow-sm select-none"
                   style={{ backfaceVisibility: "hidden" }}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground self-start">
+                  <span className="self-start text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     Question
                   </span>
-                  <p className="text-base font-medium text-foreground leading-relaxed max-w-md my-auto px-4">
+
+                  <p className="my-auto text-base font-medium leading-relaxed text-foreground">
                     {currentCard.front}
                   </p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground self-center">
+
+                  <div className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
                     <RotateCw className="h-3 w-3" />
                     Tap to Flip
                   </div>
                 </div>
 
-                {/* Back Side */}
                 <div
-                  className="absolute inset-0 w-full h-full rounded-2xl border border-accent/20 bg-accent/5 p-8 flex flex-col justify-between items-center text-center shadow-md select-none"
+                  className="col-start-1 row-start-1 rounded-2xl border border-accent/20 bg-accent/5 p-8 flex flex-col items-center text-center shadow-md select-none"
                   style={{
                     backfaceVisibility: "hidden",
                     transform: "rotateY(180deg)",
                   }}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent self-start">
+                  <span className="self-start text-[10px] font-bold uppercase tracking-wider text-accent">
                     Answer
                   </span>
-                  <p className="text-base font-semibold text-foreground leading-relaxed max-w-md my-auto px-4">
+
+                  <p className="my-8 text-base font-semibold leading-relaxed text-foreground">
                     {currentCard.back}
                   </p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-accent self-center">
+
+                  <div className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-accent">
                     <RotateCw className="h-3 w-3" />
                     Tap to Flip
                   </div>
@@ -287,7 +377,7 @@ export default function StudyPage({ params }: StudyPageProps) {
                 <ChevronLeft className="h-4 w-4" /> Prev
               </Button>
 
-           
+
               <Button
                 variant="outline"
                 onClick={handleNext}

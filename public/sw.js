@@ -4,10 +4,12 @@ const OFFLINE_URL = '/offline';
 const ASSETS_TO_CACHE = [
   '/',
   '/offline',
+  '/downloads',
   '/manifest.json',
   '/Logo.png',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/icon.svg',
+  '/icon-pwa-192.png',
+  '/icon-pwa-512.png',
   '/favicon.ico',
 ];
 
@@ -127,6 +129,14 @@ async function networkFirst(request) {
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
       return cachedResponse;
+    }
+
+    // If it is a Next.js RSC payload request and not in cache, return a network error (Response.error())
+    // to force Next.js client-side router to fall back to hard navigation.
+    const url = new URL(request.url);
+    const isRsc = url.searchParams.has('_rsc') || request.headers.get('RSC') === '1';
+    if (isRsc) {
+      return Response.error();
     }
     
     // If not in cache and it is a document navigation request, return offline fallback page

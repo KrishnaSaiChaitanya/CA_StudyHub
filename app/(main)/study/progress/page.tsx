@@ -1,7 +1,7 @@
 "use client"
 
-import ProgressDashboardView from "@/components/ProgressDashboardView";
-import Footer from "@/components/Footer";
+
+import ProgressDashboardView from "@/components/dashboard/ProgressDashboardView";
 import { useRouter } from "next/navigation";
 
 export default function ProgressPage() {

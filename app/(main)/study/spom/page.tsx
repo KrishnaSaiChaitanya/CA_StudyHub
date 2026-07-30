@@ -1,8 +1,9 @@
 "use client"
 
+import SPOMView from "@/components/sopm/SPOMView";
 import { useRouter } from "next/navigation";
-import SPOMView from "@/components/SOPM";
-import Footer from "@/components/Footer";
+
+
 
 const SpomPage = () => {
   const router = useRouter();
@@ -12,7 +13,7 @@ const SpomPage = () => {
       <div className="flex-1 w-full">
         <SPOMView onBack={() => router.push("/study")} />
       </div>
-      
+
     </div>
   );
 };

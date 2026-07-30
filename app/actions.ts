@@ -52,7 +52,7 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  // 2. Send email using nodemailer
+  // 2. Send email using Resend
   if (linkData?.properties?.hashed_token) {
     const confirmLink = `${origin}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=signup&next=/dashboard`;
     
@@ -63,7 +63,7 @@ export const signUpAction = async (formData: FormData) => {
     });
 
     if (!emailResult.success) {
-      console.error("Nodemailer error:", emailResult.error);
+      console.error("Resend error:", emailResult.error);
     }
   }
 
@@ -160,7 +160,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     );
   }
 
-  // 2. Send email using nodemailer
+  // 2. Send email using Resend
   if (linkData?.properties?.hashed_token) {
     const resetLink = `${origin}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=recovery&next=/reset-password`;
 
@@ -171,7 +171,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     });
 
     if (!emailResult.success) {
-      console.error("Nodemailer error:", emailResult.error);
+      console.error("Resend error:", emailResult.error);
     }
   }
 
@@ -250,7 +250,7 @@ export const joinWaitlistAction = async (email: string) => {
   });
 
   if (!emailResult.success) {
-    console.error("Nodemailer error joining waitlist:", emailResult.error);
+    console.error("Resend error joining waitlist:", emailResult.error);
     return { success: false, error: "Failed to send notification" };
   }
 
