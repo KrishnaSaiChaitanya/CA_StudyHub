@@ -52,7 +52,11 @@ const CommunityRooms = () => {
   }
 
   const displaySubjects: SubjectWithLink[] = subjects.map((subject) => ({
-    title: formatSubjectName(subject),
+    title:
+      subject === "principles_and_practice_of_accounting" ||
+      subject === "advanced_accounting"
+        ? "PV Test Series"
+        : formatSubjectName(subject),
     category: subject,
     meetUrl: meetLinks[subject] || "https://meet.google.com/new",
   }));
