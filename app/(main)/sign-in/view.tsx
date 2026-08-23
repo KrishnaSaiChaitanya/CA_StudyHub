@@ -11,7 +11,13 @@ import { FormMessage, Message } from "@/components/shared/FormMessage";
 import React from "react";
 import { LogoElement } from "@/assets/logo";
 
-export default function SignInView({ searchParams }: { searchParams: Message | undefined }) {
+export default function SignInView({ 
+  searchParams,
+  redirectTo = "/dashboard"
+}: { 
+  searchParams: Message | undefined;
+  redirectTo?: string;
+}) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12 sm:px-6 lg:px-8 w-full">
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
@@ -58,6 +64,7 @@ export default function SignInView({ searchParams }: { searchParams: Message | u
           </CardHeader>
           <CardContent className="space-y-6 px-8 pb-8">
             <form action={signInWithGoogle}>
+              <input type="hidden" name="redirect_to" value={redirectTo} />
               <Button
                 type="submit"
                 variant="outline"
@@ -95,6 +102,7 @@ export default function SignInView({ searchParams }: { searchParams: Message | u
             </div>
 
             <form className="space-y-4">
+              <input type="hidden" name="redirect_to" value={redirectTo} />
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

@@ -22,6 +22,7 @@ const navGroups = [
     group: "Content Management",
     items: [
       { href: "/admin/planners", exact: false, icon: BookOpen, label: "Study Planners" },
+      { href: "/admin/practice-planner", exact: false, icon: Layers, label: "Study Planning Master" },
       { href: "/admin/tests", exact: false, icon: FileText, label: "Tests & MCQs" },
       { href: "/admin/practice-papers", exact: false, icon: GraduationCap, label: "Practice Papers" },
       { href: "/admin/site-content", exact: false, icon: FileText, label: "Site Content" },

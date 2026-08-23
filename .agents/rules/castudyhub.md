@@ -303,6 +303,7 @@ Always:
 * Avoid unnecessary client-side rendering.
 * Prefer composition over deeply nested components.
 * Preserve existing functionality when refactoring.
+* Don't run build for test plan once you make changes
 
 ---
 
