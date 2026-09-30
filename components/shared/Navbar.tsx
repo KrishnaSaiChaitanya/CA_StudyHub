@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Menu, X, User as UserIcon, LogOut, Crown, Calendar, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { useSubscription } from "@/components/providers/SubscriptionProvider";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { getUpcomingAttempts } from "@/utils/exam-attempts";
 import { StudentLevel } from "@/utils/supabase/types";
+import { toast } from "sonner";
 
 const navItems = [
   { label: "Home", path: "/" },
@@ -138,6 +140,7 @@ const Navbar = () => {
 
   const supabase = createClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
     try {
@@ -169,19 +172,34 @@ const Navbar = () => {
         }
       }
 
+      let attemptMonth: number | null = null;
+      let attemptYear: number | null = null;
+      if (editExamAttempt && editExamAttempt.includes('-')) {
+        const parts = editExamAttempt.split('-');
+        const m = parseInt(parts[0], 10);
+        const y = parseInt(parts[1], 10);
+        if (!isNaN(m) && !isNaN(y)) {
+          attemptMonth = m;
+          attemptYear = y;
+        }
+      }
+
       await supabase
         .from("profiles")
         .update({
           student_type: editStudentType,
           full_name: editName,
-          exam_attempt_month: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[0], 10) : null,
-          exam_attempt_year: editExamAttempt && editExamAttempt !== "none" ? parseInt(editExamAttempt.split('-')[1], 10) : null,
+          exam_attempt_month: attemptMonth,
+          exam_attempt_year: attemptYear,
         })
         .eq("id", user.id);
 
       await refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      toast.success("Profile updated successfully");
     } catch (err) {
       console.error("Error saving profile:", err);
+      toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -247,6 +265,12 @@ const Navbar = () => {
     prevPathname.current = pathname;
   }, [pathname, supabase]);
 
+  const attemptOptions = useMemo(() => {
+    return editStudentType
+      ? getUpcomingAttempts(editStudentType as StudentLevel, 4)
+      : [];
+  }, [editStudentType]);
+
   useEffect(() => {
     if (studentLevel) {
       setEditStudentType(studentLevel);
@@ -254,16 +278,22 @@ const Navbar = () => {
   }, [studentLevel]);
 
   useEffect(() => {
-    if (examAttemptMonth && examAttemptYear) {
-      setEditExamAttempt(`${examAttemptMonth}-${examAttemptYear}`);
+    if (editStudentType && attemptOptions.length > 0) {
+      const savedAttemptKey = examAttemptMonth && examAttemptYear ? `${examAttemptMonth}-${examAttemptYear}` : null;
+      const isValidSaved = savedAttemptKey && attemptOptions.some(
+        (opt) => `${opt.month}-${opt.targetDate.getFullYear()}` === savedAttemptKey
+      );
+
+      if (isValidSaved) {
+        setEditExamAttempt(savedAttemptKey);
+      } else {
+        const first = attemptOptions[0];
+        setEditExamAttempt(`${first.month}-${first.targetDate.getFullYear()}`);
+      }
     } else {
       setEditExamAttempt("");
     }
-  }, [examAttemptMonth, examAttemptYear]);
-
-  const attemptOptions = editStudentType
-    ? getUpcomingAttempts(editStudentType as StudentLevel, 4)
-    : [];
+  }, [examAttemptMonth, examAttemptYear, editStudentType, attemptOptions]);
 
   const renderProfileForm = (idSuffix: string) => {
     return (
@@ -294,9 +324,15 @@ const Navbar = () => {
             <div className="col-span-2">
               <Select value={editStudentType} onValueChange={(val) => {
                 setEditStudentType(val);
-                setEditExamAttempt("");
+                const newUpcoming = getUpcomingAttempts(val as StudentLevel, 4);
+                const isCurrentValid = newUpcoming.some(
+                  (opt) => `${opt.month}-${opt.targetDate.getFullYear()}` === editExamAttempt
+                );
+                if (!isCurrentValid && newUpcoming.length > 0) {
+                  setEditExamAttempt(`${newUpcoming[0].month}-${newUpcoming[0].targetDate.getFullYear()}`);
+                }
               }}>
-                <SelectTrigger className="h-8 text-sm">
+                <SelectTrigger id={`level-${idSuffix}`} className="h-8 text-sm">
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,19 +350,21 @@ const Navbar = () => {
               <Label htmlFor={`attempt-${idSuffix}`} className="font-medium text-foreground">Attempt</Label>
               <div className="col-span-2">
                 <Select value={editExamAttempt} onValueChange={setEditExamAttempt}>
-                  <SelectTrigger className="h-8 text-sm flex items-center gap-2">
+                  <SelectTrigger id={`attempt-${idSuffix}`} className="h-8 text-sm flex items-center gap-2">
                     <div className="flex items-center gap-2 truncate">
                       <Calendar className="h-3.5 w-3.5 opacity-70" />
-                      <SelectValue placeholder={attemptOptions[0].label} />
+                      <SelectValue placeholder="Select attempt" />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">{attemptOptions[0].label}</SelectItem>
-                    {attemptOptions.slice(1, 5).map((opt) => (
-                      <SelectItem key={`${opt.month}-${opt.targetDate.getFullYear()}`} value={`${opt.month}-${opt.targetDate.getFullYear()}`}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
+                    {attemptOptions.map((opt) => {
+                      const val = `${opt.month}-${opt.targetDate.getFullYear()}`;
+                      return (
+                        <SelectItem key={val} value={val}>
+                          {opt.label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

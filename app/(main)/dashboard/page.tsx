@@ -42,7 +42,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
-import { getTargetDateForMonth } from "@/utils/exam-attempts";
+import { getTargetDateForMonth, getUpcomingAttempts, calculateDaysLeft } from "@/utils/exam-attempts";
+import { StudentLevel } from "@/utils/supabase/types";
 
 type DbPaper = {
   id: string;
@@ -175,7 +176,7 @@ const Home = () => {
         tickerRes,
         announcementsRes
       ] = await Promise.all([
-        supabase.from('profiles').select('current_streak, quick_access_preference, exam_attempt_month, exam_attempt_year').eq('id', user.id).single(),
+        supabase.from('profiles').select('student_type, current_streak, quick_access_preference, exam_attempt_month, exam_attempt_year').eq('id', user.id).single(),
         supabase.from('study_sessions').select('duration_seconds').eq('user_id', user.id).eq('session_date', todayStr),
         supabase.from('todos').select('*').eq('user_id', user.id),
         supabase.from('calendar_events').select('*').in('subject', ['general', ...subjects]),
@@ -203,25 +204,48 @@ const Home = () => {
       const total = todosRes.data?.filter((t: any) => allowedSubjects.includes(t.subject)).length || 0;
 
       // Process Exam Date
-      const userLevel = studentLevel || 'foundation';
+      const userLevel = (studentLevel || profileRes.data?.student_type || 'foundation') as StudentLevel;
       const profileExamMonth = profileRes.data?.exam_attempt_month as number | null;
       const profileExamYear = profileRes.data?.exam_attempt_year as number | null;
-      let targetDate: Date;
-      if (profileExamMonth) {
-        // User selected a specific attempt month — target is 1st of that month/year
-        if (profileExamYear) {
-          targetDate = new Date(profileExamYear, profileExamMonth - 1, 1);
-        } else {
-          targetDate = getTargetDateForMonth(profileExamMonth);
-        }
-      } else {
-        // Fallback to exam_dates table
-        const examDateData = examDatesRes.data?.find((d: any) => d.level === userLevel);
-        targetDate = examDateData ? new Date(examDateData.exam_date) : new Date("2026-05-15");
-      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const daysLeft = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      let targetDate: Date | null = null;
+      if (profileExamMonth && profileExamYear) {
+        const candidate = new Date(profileExamYear, profileExamMonth - 1, 1);
+        candidate.setHours(0, 0, 0, 0);
+        // Only use saved attempt if it hasn't passed
+        if (candidate.getTime() > today.getTime()) {
+          targetDate = candidate;
+        }
+      } else if (profileExamMonth) {
+        const candidate = getTargetDateForMonth(profileExamMonth);
+        candidate.setHours(0, 0, 0, 0);
+        if (candidate.getTime() > today.getTime()) {
+          targetDate = candidate;
+        }
+      }
+
+      if (!targetDate) {
+        // Fallback to exam_dates table if it is in the future
+        const examDateData = examDatesRes.data?.find((d: any) => d.level === userLevel);
+        if (examDateData?.exam_date) {
+          const candidate = new Date(examDateData.exam_date);
+          candidate.setHours(0, 0, 0, 0);
+          if (candidate.getTime() > today.getTime()) {
+            targetDate = candidate;
+          }
+        }
+      }
+
+      // If no future attempt found yet, automatically use the first upcoming attempt for this level
+      if (!targetDate) {
+        const upcoming = getUpcomingAttempts(userLevel, 1);
+        targetDate = upcoming.length > 0 ? upcoming[0].targetDate : getTargetDateForMonth(1, today.getFullYear() + 1);
+      }
+
+      const daysLeft = calculateDaysLeft(targetDate, today);
 
       // Process Events
       let upcoming: DbEvent[] = [];

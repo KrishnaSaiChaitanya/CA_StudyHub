@@ -6,6 +6,7 @@ import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
 import { syncUserActivity } from "@/utils/supabase/profile";
 import { getCachedStudentLevel, cacheStudentLevel } from "@/utils/auth";
 import { SUBJECT_MAPPING } from "@/utils/subjects";
+import { getUpcomingAttempts } from "@/utils/exam-attempts";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Briefcase, Award, Loader2 } from "lucide-react";
 
@@ -82,13 +83,24 @@ export const StudentTypeProvider = ({ children }: { children: React.ReactNode })
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const upcoming = getUpcomingAttempts(level, 1);
+      const defaultAttempt = upcoming.length > 0 ? upcoming[0] : null;
+      const attemptMonth = defaultAttempt ? defaultAttempt.month : null;
+      const attemptYear = defaultAttempt ? defaultAttempt.targetDate.getFullYear() : null;
+
       const { error } = await supabase
         .from("profiles")
-        .update({ student_type: level })
+        .update({ 
+          student_type: level,
+          exam_attempt_month: attemptMonth,
+          exam_attempt_year: attemptYear,
+        })
         .eq("id", user.id);
       
       if (!error) {
         setStudentLevel(level);
+        setExamAttemptMonth(attemptMonth);
+        setExamAttemptYear(attemptYear);
         cacheStudentLevel(level);
         setShowPopup(false);
       }
