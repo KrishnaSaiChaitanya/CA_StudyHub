@@ -146,34 +146,28 @@ const StudyPlanningPage = () => {
         preventClose={!hasSetupPreps}
       />
 
-      <div className="container py-8 px-8 md:px-4 max-w-7xl mx-auto space-y-6">
+      <div className="container py-6 sm:py-8 px-4 sm:px-8 md:px-4 max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-6">
+        <div className="flex items-center justify-between gap-3 border-b pb-4 sm:pb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-accent" /> Study Planning
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-accent" /> Study Planning
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="hidden md:block text-sm text-muted-foreground mt-1">
               Configure target attempts, define subject standings, and dynamically adjust study schedules.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowStatusModal(true)}
-              className="gap-2 border-accent/20 hover:border-accent text-accent"
+              className="gap-2 border-accent/20 hover:border-accent text-accent h-9 px-2.5 sm:px-3"
+              title="Tailor Allocations"
             >
-              <Settings2 className="h-4 w-4" /> Tailor Allocations
+              <Settings2 className="h-4 w-4" />
+              <span className="hidden sm:inline font-semibold">Tailor Allocations</span>
             </Button>
-            {/* <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/study")}
-              className="gap-2"
-            >
-              <BookOpen className="h-4 w-4" /> Study Materials
-            </Button> */}
           </div>
         </div>
 
@@ -181,12 +175,12 @@ const StudyPlanningPage = () => {
           <>
             {/* Countdown banner */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="bg-gradient-to-br from-muted/50 via-muted/30 to-background border border-border/80 p-5 sm:p-6 overflow-hidden relative">
+              <Card className="bg-gradient-to-br from-muted/50 via-muted/30 to-background border border-border/80 p-4 sm:p-6 overflow-hidden relative">
                 <div className="absolute -right-10 -top-10 w-32 h-32 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
                 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 relative z-10">
-                  <div className="p-3 bg-accent/10 rounded-xl text-accent self-start sm:self-auto shadow-sm border border-accent/20">
-                    <CalendarDays className="h-7 w-7 sm:h-8 sm:w-8" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 relative z-10">
+                  <div className="p-2.5 sm:p-3 bg-accent/10 rounded-xl text-accent self-start sm:self-auto shadow-sm border border-accent/20">
+                    <CalendarDays className="h-6 w-6 sm:h-8 sm:w-8" />
                   </div>
                   <div className="space-y-1">
                     <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
@@ -207,51 +201,53 @@ const StudyPlanningPage = () => {
             </motion.div>
 
             {/* Dashboard Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
               <Card
-                className={`p-5 flex flex-col justify-between ${recentTask ? "cursor-pointer hover:border-accent/50 transition-colors" : ""}`}
+                className={`col-span-2 md:col-span-1 p-4 sm:p-5 flex flex-col justify-between ${recentTask ? "cursor-pointer hover:border-accent/50 transition-colors" : ""}`}
                 onClick={() => recentTask && router.push(`/study/study-planning/${recentTask.slug}`)}
               >
-                <div className="flex items-center gap-3 text-muted-foreground text-xs uppercase tracking-wide font-bold">
-                  <History className="h-4 w-4" /> Recent Task
+                <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground text-xs uppercase tracking-wide font-bold">
+                  <History className="h-4 w-4 text-accent/80" /> Recent Task
                 </div>
                 {recentTask ? (
                   <div className="mt-2">
-                    <div className="text-lg font-bold leading-tight line-clamp-1 text-foreground">{recentTask.subjectName}</div>
-                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    <div className="text-base sm:text-lg font-bold leading-tight line-clamp-1 text-foreground">{recentTask.subjectName}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                       {recentTask.phaseLabel}{recentTask.chapterName ? ` · ${recentTask.chapterName}` : ""}
                     </div>
-                    <div className="mt-2 flex items-center gap-1 text-xs text-accent font-medium">
+                    <div className="mt-1.5 sm:mt-2 flex items-center gap-1 text-xs text-accent font-medium">
                       Continue <ArrowRight className="h-3.5 w-3.5" />
                     </div>
                   </div>
                 ) : (
                   <div className="mt-2">
-                    <div className="text-lg font-bold text-foreground">No activity yet</div>
-                    <div className="text-xs text-muted-foreground mt-1">Open a subject to start tracking</div>
+                    <div className="text-base sm:text-lg font-bold text-foreground">No activity yet</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 sm:mt-1">Open a subject to start tracking</div>
                   </div>
                 )}
               </Card>
 
-              <Card className="p-5 flex flex-col justify-between">
-                <div className="flex items-center justify-between text-muted-foreground text-xs uppercase tracking-wider font-bold">
-                  <span className="flex items-center gap-2.5">
-                    <TrendingUp className="h-4 w-4" /> Overall Completion
+              <Card className="col-span-1 p-4 sm:p-5 flex flex-col justify-between">
+                <div className="flex items-center justify-between text-muted-foreground text-[11px] sm:text-xs uppercase tracking-wider font-bold">
+                  <span className="flex items-center gap-1.5 sm:gap-2.5">
+                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" /> 
+                    <span className="truncate">Completion</span>
                   </span>
                 </div>
-                <div className="mt-4 space-y-2">
-                  <div className="text-3xl font-extrabold text-foreground">{overallPct}%</div>
-                  <Progress value={overallPct} className="h-2" />
+                <div className="mt-2 sm:mt-4 space-y-1.5 sm:space-y-2">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-foreground">{overallPct}%</div>
+                  <Progress value={overallPct} className="h-1.5 sm:h-2" />
                 </div>
               </Card>
 
-              <Card className="p-5 flex flex-col justify-between">
-                <div className="flex items-center gap-2.5 text-muted-foreground text-xs uppercase tracking-wider font-bold">
-                  <Gauge className="h-4 w-4" /> Difficulty
+              <Card className="col-span-1 p-4 sm:p-5 flex flex-col justify-between">
+                <div className="flex items-center gap-1.5 sm:gap-2.5 text-muted-foreground text-[11px] sm:text-xs uppercase tracking-wider font-bold">
+                  <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" /> 
+                  <span>Difficulty</span>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <span className={`h-3.5 w-3.5 rounded-full ${difficulty.color}`} />
-                  <span className="text-2xl font-extrabold text-foreground">{difficulty.label}</span>
+                <div className="mt-2 sm:mt-4 flex items-center gap-2">
+                  <span className={`h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full ${difficulty.color}`} />
+                  <span className="text-xl sm:text-2xl font-extrabold text-foreground">{difficulty.label}</span>
                 </div>
               </Card>
             </div>
@@ -468,11 +464,14 @@ const StudyPlanningPage = () => {
 
       {/* Floating Save Changes Banner */}
       {hasChanges && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto max-w-lg bg-card/95 backdrop-blur border border-border rounded-2xl sm:rounded-full shadow-2xl px-4 py-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 animate-in slide-in-from-bottom-5 duration-300">
-          <span className="text-xs font-semibold text-foreground text-center sm:text-left">
-            You have unsaved day adjustments.
-          </span>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-auto max-w-lg bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl sm:rounded-full px-4 py-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row items-center justify-between sm:justify-center gap-3 sm:gap-4 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
+            <span className="text-xs font-semibold text-foreground">
+              You have unsaved day adjustments.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <Button
               size="sm"
               variant="ghost"

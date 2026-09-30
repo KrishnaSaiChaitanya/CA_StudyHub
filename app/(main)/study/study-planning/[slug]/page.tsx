@@ -247,12 +247,11 @@ const SubjectTrackerPage = ({ params }: Props) => {
               )}
 
               <Card className="divide-y overflow-hidden border border-border/80 shadow-sm">
-                {chapters.map((ch, idx) => {
-                  const cur = tracker[p.key]?.[idx];
+                {chapters.map((ch, idx) => {                  const cur = tracker[p.key]?.[idx];
                   const status = cur?.status ?? "pending";
                   const subtopics = ch.subtopics || [];
-                  const subDone = subtopics.filter((_, si) => cur?.subtopics?.[si]?.status === "completed").length;
-                  const open = !!expanded[`${p.key}-${idx}`];
+                  const subDone = subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === "completed").length;
+                  const open = !expanded[`${p.key}-${idx}`];
 
                   const draftKey = `${p.key}-${idx}`;
                   const remarksVal = remarksDraft[draftKey] !== undefined ? remarksDraft[draftKey] : (cur?.remarks ?? "");
@@ -279,24 +278,54 @@ const SubjectTrackerPage = ({ params }: Props) => {
                         </div>
 
                         {/* Status Selectors */}
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex gap-1.5 flex-wrap items-center">
                           {STATUS_OPTS.map((opt) => {
                             const Icon = opt.icon;
-                            const active = status === opt.value;
+                            const hasSubtopics = subtopics.length > 0;
+                            const subCount = hasSubtopics
+                              ? subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === opt.value).length
+                              : 0;
+                            const pct = hasSubtopics ? Math.round((subCount / subtopics.length) * 100) : 0;
+                            const is100Percent = hasSubtopics && subCount === subtopics.length;
+                            const isPartial = hasSubtopics && subCount > 0 && !is100Percent;
+                            const active = hasSubtopics ? is100Percent : status === opt.value;
+
                             const isFRDefaultPending = opt.value === "pending" && active;
                             const cls = isFRDefaultPending
                               ? "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30 dark:bg-sky-500/10"
                               : opt.cls;
+
+                            const buttonCls = active
+                              ? cls
+                              : isPartial
+                              ? opt.value === "completed"
+                                ? "text-green-600 border-green-500/40 bg-green-500/10 font-semibold"
+                                : opt.value === "skipped"
+                                ? "text-amber-600 border-amber-500/40 bg-amber-500/10 font-semibold"
+                                : "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 font-semibold"
+                              : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground";
+
                             return (
                               <button
                                 key={opt.value}
                                 type="button"
                                 onClick={() => updateChapter(sub.slug, p.key, idx, { status: opt.value })}
-                                className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-semibold transition-all ${active ? cls : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground"
-                                  }`}
+                                title={hasSubtopics ? `Mark all ${subtopics.length} sub-topics as ${opt.label}` : `Set status to ${opt.label}`}
+                                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${buttonCls}`}
                               >
-                                <Icon className="h-3.5 w-3.5" />
-                                {opt.label}
+                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                <span>{opt.label}</span>
+                                {hasSubtopics && subCount > 0 && (
+                                  <span
+                                    className={`ml-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                                      active || isPartial
+                                        ? "bg-current/15 text-current"
+                                        : "bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {pct}%
+                                  </span>
+                                )}
                               </button>
                             );
                           })}
@@ -325,7 +354,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                                     <span className="text-muted-foreground font-mono mr-2">{idx + 1}.{si + 1}</span>
                                     {st.name}
                                   </div>
-                                  <div className="flex gap-1 flex-wrap">
+                                  <div className="flex gap-1 flex-nowrap items-center">
                                     {STATUS_OPTS.map((opt) => {
                                       const Icon = opt.icon;
                                       const active = sSt === opt.value;
@@ -338,7 +367,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                                           key={opt.value}
                                           type="button"
                                           onClick={() => updateSubtopic(sub.slug, p.key, idx, si, { status: opt.value })}
-                                          className={`flex items-center gap-1 rounded-full border px-3 py-0.5 text-[10px] font-bold transition-all ${active ? cls : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground"
+                                          className={`flex items-center gap-1 rounded-full border px-2.5 sm:px-3 py-0.5 text-[10px] font-bold transition-all ${active ? cls : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground"
                                             }`}
                                         >
                                           <Icon className="h-3 w-3" />
@@ -364,16 +393,19 @@ const SubjectTrackerPage = ({ params }: Props) => {
 
       {/* Floating Save Changes Banner for Remarks */}
       {hasUnsavedRemarks && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-card border border-border rounded-full shadow-2xl px-6 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-300">
-          <span className="text-xs font-semibold text-foreground animate-pulse">
-            You have unsaved remarks changes.
-          </span>
-          <div className="flex items-center gap-1.5">
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] sm:w-auto max-w-lg bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl sm:rounded-full px-4 py-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row items-center justify-between sm:justify-center gap-3 sm:gap-4 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex items-center gap-2 text-center sm:text-left">
+            <span className="h-2 w-2 rounded-full bg-accent animate-pulse shrink-0" />
+            <span className="text-xs font-semibold text-foreground">
+              You have unsaved remarks changes.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setRemarksDraft({})}
-              className="text-xs rounded-full h-8"
+              className="text-xs rounded-full h-8 flex-1 sm:flex-initial"
             >
               Reset
             </Button>
@@ -381,7 +413,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
               size="sm"
               onClick={handleSaveRemarks}
               disabled={savingRemarks}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-xs rounded-full h-8 px-4 flex items-center gap-1.5"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-xs rounded-full h-8 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
             >
               {savingRemarks ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save Remarks

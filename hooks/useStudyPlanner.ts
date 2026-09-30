@@ -137,6 +137,7 @@ export const useStudyPlanner = () => {
             const chProg = userChapterProgress?.find(
               (p) => p.chapter_id === ch.id && p.phase === phase
             );
+            const parentStatus = (chProg?.status as ChapterStatus) || "pending";
 
             // Fetch subtopics for this chapter
             const chSubtopics = subtopicsByChapter.get(ch.id) || [];
@@ -146,13 +147,14 @@ export const useStudyPlanner = () => {
               const stProg = userSubtopicProgress?.find(
                 (p) => p.subtopic_id === st.id && p.phase === phase
               );
+              // If individual subtopic progress exists use it; otherwise fallback to parent status
               subtopicsState[stIdx] = {
-                status: (stProg?.status as ChapterStatus) || "pending",
+                status: (stProg?.status as ChapterStatus) || (chProg ? parentStatus : "pending"),
               };
             });
 
             tracker[phase][chIdx] = {
-              status: (chProg?.status as ChapterStatus) || "pending",
+              status: parentStatus,
               remarks: chProg?.remarks || "",
               subtopics: subtopicsState,
             };
@@ -198,17 +200,20 @@ export const useStudyPlanner = () => {
         const phaseTracker = { ...nextTracker[phase] };
         const chTracker = { ...phaseTracker[chapterIdx] };
 
-        if (patch.status !== undefined) chTracker.status = patch.status;
-        if (patch.remarks !== undefined) chTracker.remarks = patch.remarks;
+        if (patch.status !== undefined) {
+          chTracker.status = patch.status;
 
-        // If chapter status is marked completed, mark all subtopics as completed too
-        if (patch.status === "completed" && subtopicsList.length > 0) {
-          const nextSubtopics = { ...chTracker.subtopics };
-          subtopicsList.forEach((_, si) => {
-            nextSubtopics[si] = { status: "completed" };
-          });
-          chTracker.subtopics = nextSubtopics;
+          // When chapter status is changed, cascade to all subtopics
+          if (subtopicsList.length > 0) {
+            const nextSubtopics: Record<number, { status: ChapterStatus }> = {};
+            subtopicsList.forEach((_, si) => {
+              nextSubtopics[si] = { status: patch.status! };
+            });
+            chTracker.subtopics = nextSubtopics;
+          }
         }
+
+        if (patch.remarks !== undefined) chTracker.remarks = patch.remarks;
 
         phaseTracker[chapterIdx] = chTracker;
         nextTracker[phase] = phaseTracker;
@@ -217,7 +222,7 @@ export const useStudyPlanner = () => {
       return { subjects: nextSubjects };
     });
 
-    // DB Mutation
+    // DB Mutation for chapter
     await saveUserChapterProgress({
       chapterId,
       phase,
@@ -225,12 +230,12 @@ export const useStudyPlanner = () => {
       remarks: patch.remarks,
     });
 
-    // Cascade to subtopics in DB
-    if (patch.status === "completed" && subtopicsList.length > 0) {
+    // Cascade to all subtopics in DB
+    if (patch.status !== undefined && subtopicsList.length > 0) {
       const subtopicUpdates = subtopicsList.map((st) => ({
         subtopicId: st.id,
         phase,
-        status: "completed" as const,
+        status: patch.status!,
       }));
       await saveBatchSubtopicProgress(subtopicUpdates);
     }
@@ -252,7 +257,8 @@ export const useStudyPlanner = () => {
 
     if (!subtopicId || !chapterId) return;
 
-    let shouldCompleteChapter = false;
+    let newChapterStatus: ChapterStatus | null = null;
+    let shouldUpdateChapter = false;
 
     // Optimistic Update
     setState((prev) => {
@@ -267,14 +273,33 @@ export const useStudyPlanner = () => {
         nextSubtopics[subtopicIdx] = { status: patch.status };
         chTracker.subtopics = nextSubtopics;
 
-        // Check if all subtopics are completed
-        const allCompleted = subtopicsList.length > 0 && subtopicsList.every((_, si) => {
-          return nextSubtopics[si]?.status === "completed";
-        });
+        // Check if all subtopics share a specific status
+        if (subtopicsList.length > 0) {
+          const allCompleted = subtopicsList.every((_, si) => {
+            return (nextSubtopics[si]?.status ?? "pending") === "completed";
+          });
+          const allSkipped = subtopicsList.every((_, si) => {
+            return (nextSubtopics[si]?.status ?? "pending") === "skipped";
+          });
+          const allPending = subtopicsList.every((_, si) => {
+            return (nextSubtopics[si]?.status ?? "pending") === "pending";
+          });
 
-        if (allCompleted && chTracker.status !== "completed") {
-          chTracker.status = "completed";
-          shouldCompleteChapter = true;
+          if (allCompleted) {
+            newChapterStatus = "completed";
+          } else if (allSkipped) {
+            newChapterStatus = "skipped";
+          } else if (allPending) {
+            newChapterStatus = "pending";
+          } else {
+            // Mixed subtopic statuses
+            newChapterStatus = "pending";
+          }
+
+          if (chTracker.status !== newChapterStatus) {
+            chTracker.status = newChapterStatus;
+            shouldUpdateChapter = true;
+          }
         }
 
         phaseTracker[chapterIdx] = chTracker;
@@ -284,18 +309,19 @@ export const useStudyPlanner = () => {
       return { subjects: nextSubjects };
     });
 
-    // DB Mutation
+    // DB Mutation for subtopic
     await saveUserSubtopicProgress({
       subtopicId,
       phase,
       status: patch.status,
     });
 
-    if (shouldCompleteChapter) {
+    // DB Mutation for chapter if status changed
+    if (shouldUpdateChapter && newChapterStatus) {
       await saveUserChapterProgress({
         chapterId,
         phase,
-        status: "completed",
+        status: newChapterStatus,
       });
     }
   };
