@@ -247,7 +247,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                   });
                   setExpanded(newExpanded);
                 }}
-                className="text-xs h-8 px-3 font-semibold text-muted-foreground hover:text-foreground border-border/80 self-end sm:self-auto"
+                className="hidden sm:inline-flex text-xs h-8 px-3 font-semibold text-muted-foreground hover:text-foreground border-border/80"
               >
                 {chapters.some((c, idx) => (c.subtopics || []).length > 0 && (expanded[`${activePhase}-${idx}`] ?? false)) ? "Collapse All Subtopics" : "Expand All Subtopics"}
               </Button>
