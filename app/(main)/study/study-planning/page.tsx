@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStudyPlannerState } from "@/hooks/useStudyPlannerState";
-import { CalendarDays, ArrowRight, TrendingUp, Gauge, Settings2, Sparkles, BookOpen, Minus, Plus, Save, History } from "lucide-react";
+import { CalendarDays, ArrowRight, TrendingUp, Gauge, Settings2, BookOpen, Minus, Plus, Save, History } from "lucide-react";
+import PageHeader from "@/components/shared/PageHeader";
 import { saveManualAllocations } from "./actions";
 import { toast } from "sonner";
 
@@ -146,31 +147,15 @@ const StudyPlanningPage = () => {
         preventClose={!hasSetupPreps}
       />
 
-      <div className="container py-6 sm:py-8 px-4 sm:px-8 md:px-4 max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between gap-3 border-b pb-4 sm:pb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-accent" /> Study Planning
-            </h1>
-            <p className="hidden md:block text-sm text-muted-foreground mt-1">
-              Configure target attempts, define subject standings, and dynamically adjust study schedules.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowStatusModal(true)}
-              className="gap-2 border-accent/20 hover:border-accent text-accent h-9 px-2.5 sm:px-3"
-              title="Tailor Allocations"
-            >
-              <Settings2 className="h-4 w-4" />
-              <span className="hidden sm:inline font-semibold">Tailor Allocations</span>
-            </Button>
-          </div>
-        </div>
+      <PageHeader
+        title="Study"
+        gradientTitle="Planning"
+        description="Configure target attempts, define subject standings, and dynamically adjust study schedules."
+        onBack={() => router.push("/study")}
+        size="md"
+      />
 
+      <div className="container py-6 sm:py-8 px-4 sm:px-8 md:px-4 max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {state.examLabel && (
           <>
             {/* Countdown banner */}
@@ -262,8 +247,8 @@ const StudyPlanningPage = () => {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className={`text-xs px-2.5 py-1 rounded-md border ${balanced ? "bg-green-500/10 text-green-700 border-green-500/30" : "bg-amber-500/10 text-amber-700 border-amber-500/30"}`}>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium ${balanced ? "bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400" : "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400"}`}>
                     Allocated <span className="font-semibold">{draftTotal}</span> / {daysLeft} days
                     {!balanced && (
                       <span className="ml-1">
@@ -271,6 +256,16 @@ const StudyPlanningPage = () => {
                       </span>
                     )}
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowStatusModal(true)}
+                    className="gap-1.5 border-accent/30 hover:border-accent text-accent hover:bg-accent/10 font-semibold h-8 px-3"
+                    title="Tailor Allocations"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    <span>Tailor Allocations</span>
+                  </Button>
                 </div>
               </div>
 

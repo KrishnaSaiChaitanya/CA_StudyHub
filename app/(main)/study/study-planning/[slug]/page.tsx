@@ -224,11 +224,31 @@ const SubjectTrackerPage = ({ params }: Props) => {
         </motion.div>
 
         <Tabs value={activePhase} onValueChange={(v) => setActivePhase(v as TrackerPhase)}>
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            {PHASES.map((p) => (
-              <TabsTrigger key={p.key} value={p.key} className="font-semibold">{p.label}</TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              {PHASES.map((p) => (
+                <TabsTrigger key={p.key} value={p.key} className="font-semibold">{p.label}</TabsTrigger>
+              ))}
+            </TabsList>
+
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => {
+                const anyOpen = chapters.some((_, idx) => expanded[`${activePhase}-${idx}`] ?? false);
+                const nextState = !anyOpen;
+                const newExpanded: Record<string, boolean> = { ...expanded };
+                chapters.forEach((_, idx) => {
+                  newExpanded[`${activePhase}-${idx}`] = nextState;
+                });
+                setExpanded(newExpanded);
+              }}
+              className="text-xs h-8 px-3 font-semibold text-muted-foreground hover:text-foreground border-border/80 self-end sm:self-auto"
+            >
+              {chapters.some((_, idx) => expanded[`${activePhase}-${idx}`] ?? false) ? "Collapse All Subtopics" : "Expand All Subtopics"}
+            </Button>
+          </div>
 
           {PHASES.map((p) => (
             <TabsContent key={p.key} value={p.key} className="mt-6 space-y-4">
@@ -247,11 +267,12 @@ const SubjectTrackerPage = ({ params }: Props) => {
               )}
 
               <Card className="divide-y overflow-hidden border border-border/80 shadow-sm">
-                {chapters.map((ch, idx) => {                  const cur = tracker[p.key]?.[idx];
+                {chapters.map((ch, idx) => {
+                  const cur = tracker[p.key]?.[idx];
                   const status = cur?.status ?? "pending";
                   const subtopics = ch.subtopics || [];
                   const subDone = subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === "completed").length;
-                  const open = !expanded[`${p.key}-${idx}`];
+                  const isChapterOpen = expanded[`${p.key}-${idx}`] ?? false;
 
                   const draftKey = `${p.key}-${idx}`;
                   const remarksVal = remarksDraft[draftKey] !== undefined ? remarksDraft[draftKey] : (cur?.remarks ?? "");
@@ -263,18 +284,20 @@ const SubjectTrackerPage = ({ params }: Props) => {
                         <div>
                           <button
                             type="button"
-                            onClick={() => setExpanded((e) => ({ ...e, [`${p.key}-${idx}`]: !open }))}
-                            className="flex items-start gap-2 text-left group"
+                            onClick={() => setExpanded((e) => ({ ...e, [`${p.key}-${idx}`]: !isChapterOpen }))}
+                            className="flex items-start gap-2 text-left group cursor-pointer select-none"
                           >
-                            <ChevronDown className={`h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"} group-hover:text-foreground`} />
-                            <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
-                              <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
-                              {ch.topic}
-                            </span>
+                            <ChevronDown className={`h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isChapterOpen ? "rotate-0" : "-rotate-90"} group-hover:text-foreground`} />
+                            <div>
+                              <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
+                                <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
+                                {ch.topic}
+                              </span>
+                              <div className="text-[11px] text-muted-foreground mt-1 font-medium">
+                                {ch.hours}h est. · {subDone} / {subtopics.length} sub-topics done
+                              </div>
+                            </div>
                           </button>
-                          <div className="text-[11px] text-muted-foreground mt-1 ml-7 font-medium">
-                            {ch.hours}h est. · {subDone} / {subtopics.length} sub-topics done
-                          </div>
                         </div>
 
                         {/* Status Selectors */}
@@ -341,8 +364,14 @@ const SubjectTrackerPage = ({ params }: Props) => {
                       </div>
 
                       {/* Expandable Sub-topics checklists */}
-                      {open && (
-                        <div className="mt-4 ml-6 border-l-2 border-dashed pl-5 space-y-3.5 py-1">
+                      {isChapterOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="mt-4 ml-6 border-l-2 border-dashed pl-5 space-y-3.5 py-1"
+                        >
                           {subtopics.length === 0 ? (
                             <div className="text-xs text-muted-foreground italic">No subtopics defined for this chapter.</div>
                           ) : (
@@ -380,7 +409,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                               );
                             })
                           )}
-                        </div>
+                        </motion.div>
                       )}
                     </div>
                   );

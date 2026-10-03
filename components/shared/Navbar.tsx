@@ -430,7 +430,7 @@ const Navbar = () => {
 
       {/* Main Navigation Bar */}
       <nav className="border-b border-border backdrop-blur-xl bg-background/80 w-full">
-        <div className="container flex h-16 items-center justify-between px-8 md:px-4">
+        <div className="container relative flex h-16 items-center justify-between px-8 md:px-4">
           {/* Left Side: Mobile Hamburger Drawer Button & Logo */}
           <div className="flex items-center gap-2">
             {/* Hamburger Menu (Mobile Only) */}
@@ -480,7 +480,7 @@ const Navbar = () => {
           </div>
 
           {/* Center: Desktop Navigation Items */}
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center gap-1 md:flex absolute left-1/2 -translate-x-1/2">
             {navItems.filter((i) => i.path === "/pricing" ? (requirePayment && !isPro) : true).map((item) => {
               const isActive = item.path === "/" ? pathname === "/" || pathname === "/dashboard" : pathname.includes(item.path);
               return (
