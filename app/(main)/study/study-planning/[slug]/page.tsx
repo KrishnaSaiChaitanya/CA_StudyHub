@@ -231,23 +231,27 @@ const SubjectTrackerPage = ({ params }: Props) => {
               ))}
             </TabsList>
 
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => {
-                const anyOpen = chapters.some((_, idx) => expanded[`${activePhase}-${idx}`] ?? false);
-                const nextState = !anyOpen;
-                const newExpanded: Record<string, boolean> = { ...expanded };
-                chapters.forEach((_, idx) => {
-                  newExpanded[`${activePhase}-${idx}`] = nextState;
-                });
-                setExpanded(newExpanded);
-              }}
-              className="text-xs h-8 px-3 font-semibold text-muted-foreground hover:text-foreground border-border/80 self-end sm:self-auto"
-            >
-              {chapters.some((_, idx) => expanded[`${activePhase}-${idx}`] ?? false) ? "Collapse All Subtopics" : "Expand All Subtopics"}
-            </Button>
+            {chapters.some((c) => (c.subtopics || []).length > 0) && (
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => {
+                  const anyOpen = chapters.some((c, idx) => (c.subtopics || []).length > 0 && (expanded[`${activePhase}-${idx}`] ?? false));
+                  const nextState = !anyOpen;
+                  const newExpanded: Record<string, boolean> = { ...expanded };
+                  chapters.forEach((c, idx) => {
+                    if ((c.subtopics || []).length > 0) {
+                      newExpanded[`${activePhase}-${idx}`] = nextState;
+                    }
+                  });
+                  setExpanded(newExpanded);
+                }}
+                className="text-xs h-8 px-3 font-semibold text-muted-foreground hover:text-foreground border-border/80 self-end sm:self-auto"
+              >
+                {chapters.some((c, idx) => (c.subtopics || []).length > 0 && (expanded[`${activePhase}-${idx}`] ?? false)) ? "Collapse All Subtopics" : "Expand All Subtopics"}
+              </Button>
+            )}
           </div>
 
           {PHASES.map((p) => (
@@ -271,8 +275,9 @@ const SubjectTrackerPage = ({ params }: Props) => {
                   const cur = tracker[p.key]?.[idx];
                   const status = cur?.status ?? "pending";
                   const subtopics = ch.subtopics || [];
-                  const subDone = subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === "completed").length;
-                  const isChapterOpen = expanded[`${p.key}-${idx}`] ?? false;
+                  const hasSubtopics = subtopics.length > 0;
+                  const subDone = hasSubtopics ? subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === "completed").length : 0;
+                  const isChapterOpen = hasSubtopics && (expanded[`${p.key}-${idx}`] ?? false);
 
                   const draftKey = `${p.key}-${idx}`;
                   const remarksVal = remarksDraft[draftKey] !== undefined ? remarksDraft[draftKey] : (cur?.remarks ?? "");
@@ -280,31 +285,44 @@ const SubjectTrackerPage = ({ params }: Props) => {
                   return (
                     <div key={ch.id} className="p-5 bg-card hover:bg-muted/5 transition-colors">
                       <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1fr)] md:items-start">
-                        {/* Caret, Chapter Name, metadata */}
+                        {/* Chapter Name & metadata */}
                         <div>
-                          <button
-                            type="button"
-                            onClick={() => setExpanded((e) => ({ ...e, [`${p.key}-${idx}`]: !isChapterOpen }))}
-                            className="flex items-start gap-2 text-left group cursor-pointer select-none"
-                          >
-                            <ChevronDown className={`h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isChapterOpen ? "rotate-0" : "-rotate-90"} group-hover:text-foreground`} />
-                            <div>
-                              <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
-                                <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
-                                {ch.topic}
-                              </span>
-                              <div className="text-[11px] text-muted-foreground mt-1 font-medium">
-                                {ch.hours}h est. · {subDone} / {subtopics.length} sub-topics done
+                          {hasSubtopics ? (
+                            <button
+                              type="button"
+                              onClick={() => setExpanded((e) => ({ ...e, [`${p.key}-${idx}`]: !isChapterOpen }))}
+                              className="flex items-start gap-2 text-left group cursor-pointer select-none"
+                            >
+                              <ChevronDown className={`h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isChapterOpen ? "rotate-0" : "-rotate-90"} group-hover:text-foreground`} />
+                              <div>
+                                <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
+                                  <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
+                                  {ch.topic}
+                                </span>
+                                <div className="text-[11px] text-muted-foreground mt-1 font-medium">
+                                  {ch.hours}h est. · {subDone} / {subtopics.length} sub-topics done
+                                </div>
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="flex items-start gap-2 text-left">
+                              <div>
+                                <span className="text-sm font-semibold text-foreground">
+                                  <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
+                                  {ch.topic}
+                                </span>
+                                <div className="text-[11px] text-muted-foreground mt-1 font-medium">
+                                  {ch.hours}h est.
+                                </div>
                               </div>
                             </div>
-                          </button>
+                          )}
                         </div>
 
                         {/* Status Selectors */}
                         <div className="flex gap-1.5 flex-wrap items-center">
                           {STATUS_OPTS.map((opt) => {
                             const Icon = opt.icon;
-                            const hasSubtopics = subtopics.length > 0;
                             const subCount = hasSubtopics
                               ? subtopics.filter((_, si) => (cur?.subtopics?.[si]?.status ?? "pending") === opt.value).length
                               : 0;
@@ -338,13 +356,9 @@ const SubjectTrackerPage = ({ params }: Props) => {
                               >
                                 <Icon className="h-3.5 w-3.5 shrink-0" />
                                 <span>{opt.label}</span>
-                                {hasSubtopics && subCount > 0 && (
+                                {hasSubtopics && isPartial && (
                                   <span
-                                    className={`ml-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                                      active || isPartial
-                                        ? "bg-current/15 text-current"
-                                        : "bg-muted text-muted-foreground"
-                                    }`}
+                                    className="ml-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-current/15 text-current"
                                   >
                                     {pct}%
                                   </span>
@@ -364,7 +378,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                       </div>
 
                       {/* Expandable Sub-topics checklists */}
-                      {isChapterOpen && (
+                      {hasSubtopics && isChapterOpen && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
@@ -372,43 +386,39 @@ const SubjectTrackerPage = ({ params }: Props) => {
                           transition={{ duration: 0.15 }}
                           className="mt-4 ml-6 border-l-2 border-dashed pl-5 space-y-3.5 py-1"
                         >
-                          {subtopics.length === 0 ? (
-                            <div className="text-xs text-muted-foreground italic">No subtopics defined for this chapter.</div>
-                          ) : (
-                            subtopics.map((st, si) => {
-                              const sSt = cur?.subtopics?.[si]?.status ?? "pending";
-                              return (
-                                <div key={st.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-2 rounded-lg border border-border/40">
-                                  <div className="text-xs font-medium text-foreground">
-                                    <span className="text-muted-foreground font-mono mr-2">{idx + 1}.{si + 1}</span>
-                                    {st.name}
-                                  </div>
-                                  <div className="flex gap-1 flex-nowrap items-center">
-                                    {STATUS_OPTS.map((opt) => {
-                                      const Icon = opt.icon;
-                                      const active = sSt === opt.value;
-                                      const isFRDefaultPending = opt.value === "pending" && active;
-                                      const cls = isFRDefaultPending
-                                        ? "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30 dark:bg-sky-500/10"
-                                        : opt.cls;
-                                      return (
-                                        <button
-                                          key={opt.value}
-                                          type="button"
-                                          onClick={() => updateSubtopic(sub.slug, p.key, idx, si, { status: opt.value })}
-                                          className={`flex items-center gap-1 rounded-full border px-2.5 sm:px-3 py-0.5 text-[10px] font-bold transition-all ${active ? cls : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground"
-                                            }`}
-                                        >
-                                          <Icon className="h-3 w-3" />
-                                          {opt.label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
+                          {subtopics.map((st, si) => {
+                            const sSt = cur?.subtopics?.[si]?.status ?? "pending";
+                            return (
+                              <div key={st.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/10 p-2 rounded-lg border border-border/40">
+                                <div className="text-xs font-medium text-foreground">
+                                  <span className="text-muted-foreground font-mono mr-2">{idx + 1}.{si + 1}</span>
+                                  {st.name}
                                 </div>
-                              );
-                            })
-                          )}
+                                <div className="flex gap-1 flex-nowrap items-center">
+                                  {STATUS_OPTS.map((opt) => {
+                                    const Icon = opt.icon;
+                                    const active = sSt === opt.value;
+                                    const isFRDefaultPending = opt.value === "pending" && active;
+                                    const cls = isFRDefaultPending
+                                      ? "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/30 dark:bg-sky-500/10"
+                                      : opt.cls;
+                                    return (
+                                      <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => updateSubtopic(sub.slug, p.key, idx, si, { status: opt.value })}
+                                        className={`flex items-center gap-1 rounded-full border px-2.5 sm:px-3 py-0.5 text-[10px] font-bold transition-all ${active ? cls : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground"
+                                          }`}
+                                      >
+                                        <Icon className="h-3 w-3" />
+                                        {opt.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </motion.div>
                       )}
                     </div>
