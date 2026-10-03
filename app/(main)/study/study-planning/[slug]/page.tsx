@@ -306,9 +306,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                             </button>
                           ) : (
                             <div className="flex items-start gap-2.5 text-left">
-                              <span className="inline-flex items-center justify-center h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground/40" aria-hidden="true">
-                                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                              </span>
+                              <BookOpen className="h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground/50" />
                               <div>
                                 <span className="text-sm font-semibold text-foreground">
                                   <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
