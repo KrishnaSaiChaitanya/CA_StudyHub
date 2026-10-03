@@ -291,7 +291,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                             <button
                               type="button"
                               onClick={() => setExpanded((e) => ({ ...e, [`${p.key}-${idx}`]: !isChapterOpen }))}
-                              className="flex items-start gap-2 text-left group cursor-pointer select-none"
+                              className="flex items-start gap-2.5 text-left group cursor-pointer select-none"
                             >
                               <ChevronDown className={`h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isChapterOpen ? "rotate-0" : "-rotate-90"} group-hover:text-foreground`} />
                               <div>
@@ -305,7 +305,10 @@ const SubjectTrackerPage = ({ params }: Props) => {
                               </div>
                             </button>
                           ) : (
-                            <div className="flex items-start gap-2 text-left">
+                            <div className="flex items-start gap-2.5 text-left">
+                              <span className="inline-flex items-center justify-center h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground/40" aria-hidden="true">
+                                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                              </span>
                               <div>
                                 <span className="text-sm font-semibold text-foreground">
                                   <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
