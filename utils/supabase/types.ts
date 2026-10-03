@@ -346,6 +346,18 @@ export interface UserSubtopicProgress {
   updated_at: string;
 }
 
+export interface FeatureAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  badge: string | null;
+  button_text: string | null;
+  button_url: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ==========================================
 // 3. SUPABASE DATABASE INTERFACE
 // ==========================================
@@ -384,6 +396,7 @@ export interface Database {
       user_subject_states: { Row: UserSubjectState; Insert: Partial<UserSubjectState>; Update: Partial<UserSubjectState> };
       user_chapter_progress: { Row: UserChapterProgress; Insert: Partial<UserChapterProgress>; Update: Partial<UserChapterProgress> };
       user_subtopic_progress: { Row: UserSubtopicProgress; Insert: Partial<UserSubtopicProgress>; Update: Partial<UserSubtopicProgress> };
+      feature_announcements: { Row: FeatureAnnouncement; Insert: Partial<FeatureAnnouncement>; Update: Partial<FeatureAnnouncement> };
     };
     Views: {
       user_leaderboard: { Row: LeaderboardEntry };

@@ -147,6 +147,19 @@ CREATE TABLE public.announcements (
   updated_at timestamptz DEFAULT now()
 );
 
+-- Feature / Product Announcements (Popups / What's New)
+CREATE TABLE public.feature_announcements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL,
+  badge text DEFAULT 'New Feature',
+  button_text text,
+  button_url text,
+  is_active boolean DEFAULT true NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  updated_at timestamptz DEFAULT now() NOT NULL
+);
+
 -- Test Attempts
 CREATE TABLE public.test_attempts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -576,6 +589,7 @@ CREATE OR REPLACE TRIGGER tr_update_notes BEFORE UPDATE ON public.notes FOR EACH
 CREATE OR REPLACE TRIGGER tr_update_todos BEFORE UPDATE ON public.todos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_subscriptions BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_announcements BEFORE UPDATE ON public.announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER tr_update_feature_announcements BEFORE UPDATE ON public.feature_announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcard_folders BEFORE UPDATE ON public.flashcard_folders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcard_sets BEFORE UPDATE ON public.flashcard_sets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcards BEFORE UPDATE ON public.flashcards FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -597,6 +611,7 @@ ALTER TABLE public.practice_papers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.study_planners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.community_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feature_announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_attempt_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
@@ -637,6 +652,8 @@ CREATE POLICY "Auth Read Access" ON public.calendar_events FOR SELECT TO authent
 CREATE POLICY "Auth Read Access" ON public.exam_dates FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Auth Read Access" ON public.announcements FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Admin All Access" ON public.announcements FOR ALL TO authenticated USING (true);
+CREATE POLICY "Auth Read Active Feature Announcements" ON public.feature_announcements FOR SELECT TO authenticated USING (is_active = true);
+CREATE POLICY "Admin All Access Feature Announcements" ON public.feature_announcements FOR ALL TO authenticated USING (true);
 
 -- Manage Own Policies
 CREATE POLICY "Manage Own Profile" ON public.profiles FOR ALL TO authenticated USING (auth.uid() = id);
