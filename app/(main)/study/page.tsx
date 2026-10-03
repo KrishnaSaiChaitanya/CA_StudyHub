@@ -8,6 +8,7 @@ import PageHeader from "@/components/shared/PageHeader";
 
 const tools = [
   { icon: BookOpen, title: "Study Resources", description: "Study planners, key questions, and mnemonics from faculty & community", path: "/study/planner" },
+  { icon: Target, title: "Study Planning", description: "Configure target attempts, define subject standings, and dynamically adjust study schedules.", path: "/study/study-planning" },
   { icon: BarChart3, title: "Progress dashboard", description: "Track study time, maintain streaks, manage tasks, and view detailed analytics.", path: "/study/progress" },
   { icon: CalendarDays, title: "Calendar", description: "ICAI exam dates, registration deadlines, and reminders.", path: "/study/events" },
   { icon: ClipboardList, title: "Notes & Bookmarks", description: "Save notes, bookmark resources, and organize materials.", path: "/bookmarks" },

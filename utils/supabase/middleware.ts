@@ -68,7 +68,7 @@ export const updateSession = async (request: NextRequest) => {
     const isUserAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
     // Protected routes
-    const protectedPaths = ["/protected", "/study", "/practice", "/faculty", "/community", "/dashboard", "/admin"]
+    const protectedPaths = ["/protected", "/study", "/practice", "/faculty", "/community", "/dashboard", "/admin", "/rooms"]
     const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
     // Premium paths that require a paid subscription
@@ -82,7 +82,9 @@ export const updateSession = async (request: NextRequest) => {
 
     // 1. If hitting a protected path and NOT logged in, redirect to sign-in
     if (isProtectedPath && !user) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
+      const loginUrl = new URL("/sign-in", request.url);
+      loginUrl.searchParams.set("redirect_to", request.nextUrl.pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
 
     // 2. Premium content check: Only run this query for premium paths to avoid delaying other pages

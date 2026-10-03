@@ -192,6 +192,19 @@ export interface SubjectMeetLink {
   updated_at: string;
 }
 
+export interface StudyRoom {
+  id: string;
+  title: string;
+  subject: string | null;
+  meet_link: string | null;
+  description: string | null;
+  is_creator_room: boolean;
+  session_status: "idle" | "live" | "ended";
+  created_at: string;
+  updated_at: string;
+}
+
+
 export interface FlashcardFolder {
   id: string;
   user_id: string;
@@ -269,6 +282,70 @@ export interface ContactSubmission {
   created_at: string;
 }
 
+export interface PlannerSubject {
+  id: string;
+  slug: SubjectCategory;
+  name: string;
+  short_name: string;
+  level: StudentLevel;
+  base_weight: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlannerChapter {
+  id: string;
+  subject_slug: SubjectCategory;
+  topic: string;
+  hours: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlannerSubtopic {
+  id: string;
+  chapter_id: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSubjectState {
+  id: string;
+  user_id: string;
+  subject_slug: SubjectCategory;
+  classes_done: boolean;
+  rev1_done: boolean;
+  rev2_done: boolean;
+  expertise: string;
+  allocated_days: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserChapterProgress {
+  id: string;
+  user_id: string;
+  chapter_id: string;
+  phase: 'study1' | 'rev1' | 'rev2';
+  status: 'pending' | 'completed' | 'skipped';
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSubtopicProgress {
+  id: string;
+  user_id: string;
+  subtopic_id: string;
+  phase: 'study1' | 'rev1' | 'rev2';
+  status: 'pending' | 'completed' | 'skipped';
+  created_at: string;
+  updated_at: string;
+}
+
 // ==========================================
 // 3. SUPABASE DATABASE INTERFACE
 // ==========================================
@@ -292,6 +369,7 @@ export interface Database {
       test_attempts: { Row: TestAttempt; Insert: Partial<TestAttempt>; Update: Partial<TestAttempt> };
       test_attempt_answers: { Row: TestAttemptAnswer; Insert: Partial<TestAttemptAnswer>; Update: Partial<TestAttemptAnswer> };
       subject_meet_links: { Row: SubjectMeetLink; Insert: Partial<SubjectMeetLink>; Update: Partial<SubjectMeetLink> };
+      study_rooms: { Row: StudyRoom; Insert: Partial<StudyRoom>; Update: Partial<StudyRoom> };
       flashcard_folders: { Row: FlashcardFolder; Insert: Partial<FlashcardFolder>; Update: Partial<FlashcardFolder> };
       flashcard_sets: { Row: FlashcardSet; Insert: Partial<FlashcardSet>; Update: Partial<FlashcardSet> };
       flashcards: { Row: Flashcard; Insert: Partial<Flashcard>; Update: Partial<Flashcard> };
@@ -300,6 +378,12 @@ export interface Database {
       leaderboard_config: { Row: LeaderboardConfig; Insert: Partial<LeaderboardConfig>; Update: Partial<LeaderboardConfig> };
       contact_submissions: { Row: ContactSubmission; Insert: Partial<ContactSubmission>; Update: Partial<ContactSubmission> };
       user_leaderboard: { Row: LeaderboardEntry; Insert: never; Update: never };
+      planner_subjects: { Row: PlannerSubject; Insert: Partial<PlannerSubject>; Update: Partial<PlannerSubject> };
+      planner_chapters: { Row: PlannerChapter; Insert: Partial<PlannerChapter>; Update: Partial<PlannerChapter> };
+      planner_subtopics: { Row: PlannerSubtopic; Insert: Partial<PlannerSubtopic>; Update: Partial<PlannerSubtopic> };
+      user_subject_states: { Row: UserSubjectState; Insert: Partial<UserSubjectState>; Update: Partial<UserSubjectState> };
+      user_chapter_progress: { Row: UserChapterProgress; Insert: Partial<UserChapterProgress>; Update: Partial<UserChapterProgress> };
+      user_subtopic_progress: { Row: UserSubtopicProgress; Insert: Partial<UserSubtopicProgress>; Update: Partial<UserSubtopicProgress> };
     };
     Views: {
       user_leaderboard: { Row: LeaderboardEntry };

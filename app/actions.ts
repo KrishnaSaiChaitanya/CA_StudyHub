@@ -77,6 +77,7 @@ export const signUpAction = async (formData: FormData) => {
 export const signInAction = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const redirectTo = formData.get("redirect_to") as string || "/dashboard";
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -86,7 +87,7 @@ export const signInAction = async (formData: FormData) => {
 
   if (error) {
     return encodedRedirect(
-      "/sign-in",
+      `/sign-in?redirect_to=${encodeURIComponent(redirectTo)}`,
       "error",
       error.message);
   }
@@ -95,9 +96,10 @@ export const signInAction = async (formData: FormData) => {
     await syncUserActivity(supabase);
   }
 
-  return redirect("/dashboard");
+  return redirect(redirectTo);
 };
 export const signInWithGoogle = async (formData: FormData) => {
+  const redirectTo = formData.get("redirect_to") as string || "/dashboard";
   const supabase = await createClient();
   const headersList = await headers();
   const host = headersList.get("host") || "";
@@ -107,7 +109,7 @@ export const signInWithGoogle = async (formData: FormData) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback?redirect_to=/dashboard`,
+      redirectTo: `${origin}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`,
     },
   })
 
@@ -117,12 +119,12 @@ export const signInWithGoogle = async (formData: FormData) => {
 
   if (error) {
     return encodedRedirect(
-      "/sign-in",
+      `/sign-in?redirect_to=${encodeURIComponent(redirectTo)}`,
       "error",
       error.message);
   }
 
-  return redirect("/dashboard");
+  return redirect(redirectTo);
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {

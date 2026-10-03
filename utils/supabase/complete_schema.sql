@@ -943,3 +943,44 @@ BEGIN
     (v_set3_id, 'Section 149 deals with?', 'Composition of Board of Directors — minimum/maximum directors, woman director, independent directors.', 0)
   ON CONFLICT DO NOTHING;
 END $$;
+
+-- ============================================================================
+-- 9. STUDY ROOMS SCHEMA
+-- ============================================================================
+
+CREATE TABLE public.study_rooms (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  subject text,
+  meet_link text,
+  description text,
+  is_creator_room boolean NOT NULL DEFAULT false,
+  session_status text NOT NULL DEFAULT 'idle' CHECK (session_status IN ('idle', 'live', 'ended')),
+  created_at timestamptz DEFAULT now() NOT NULL,
+  updated_at timestamptz DEFAULT now() NOT NULL
+);
+
+ALTER TABLE public.study_rooms ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated read" ON public.study_rooms 
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow admin manage" ON public.study_rooms 
+  FOR ALL TO authenticated USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.feedback->>'role' = 'admin'
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.feedback->>'role' = 'admin'
+    )
+  );
+
+CREATE TRIGGER tr_update_study_rooms 
+  BEFORE UPDATE ON public.study_rooms 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
