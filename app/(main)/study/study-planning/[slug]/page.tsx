@@ -306,7 +306,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
                             </button>
                           ) : (
                             <div className="flex items-start gap-2.5 text-left">
-                              <BookOpen className="h-4.5 w-4.5 mt-0.5 shrink-0 text-muted-foreground/50" />
+                              <BookOpen className="h-3.5 w-3.5 mt-2 shrink-0 ml-1.5 text-muted-foreground/50" />
                               <div>
                                 <span className="text-sm font-semibold text-foreground">
                                   <span className="text-muted-foreground mr-2 font-mono text-xs">{idx + 1}.</span>
@@ -340,12 +340,12 @@ const SubjectTrackerPage = ({ params }: Props) => {
                             const buttonCls = active
                               ? cls
                               : isPartial
-                              ? opt.value === "completed"
-                                ? "text-green-600 border-green-500/40 bg-green-500/10 font-semibold"
-                                : opt.value === "skipped"
-                                ? "text-amber-600 border-amber-500/40 bg-amber-500/10 font-semibold"
-                                : "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 font-semibold"
-                              : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground";
+                                ? opt.value === "completed"
+                                  ? "text-green-600 border-green-500/40 bg-green-500/10 font-semibold"
+                                  : opt.value === "skipped"
+                                    ? "text-amber-600 border-amber-500/40 bg-amber-500/10 font-semibold"
+                                    : "text-sky-600 border-sky-500/40 bg-sky-500/10 dark:text-sky-400 font-semibold"
+                                : "text-muted-foreground border-border hover:border-accent/40 bg-card hover:text-foreground";
 
                             return (
                               <button
