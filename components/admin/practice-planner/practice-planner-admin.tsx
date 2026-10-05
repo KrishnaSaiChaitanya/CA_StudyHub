@@ -9,6 +9,8 @@ import {
   RefreshCw,
   Pencil,
   FileSpreadsheet,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,7 @@ import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
 import {
   upsertPlannerSubject,
   deletePlannerSubject,
+  movePlannerSubject,
   upsertPlannerChapter,
   deletePlannerChapter,
   upsertPlannerSubtopic,
@@ -46,6 +49,8 @@ export function PracticePlannerAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<"all" | StudentLevel>("all");
+  const [movingSubjectId, setMovingSubjectId] = useState<string | null>(null);
 
   // Master Data States
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -72,6 +77,7 @@ export function PracticePlannerAdmin() {
   const [subShort, setSubShort] = useState("");
   const [subLevel, setSubLevel] = useState<StudentLevel>("intermediate");
   const [subWeight, setSubWeight] = useState("1.0");
+  const [subOrder, setSubOrder] = useState("1");
 
   const [chTopic, setChTopic] = useState("");
   const [chHours, setChHours] = useState("5.0");
@@ -87,6 +93,7 @@ export function PracticePlannerAdmin() {
       .from("planner_subjects")
       .select("*")
       .order("level", { ascending: true })
+      .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
 
     if (!error && data) {
@@ -154,8 +161,11 @@ export function PracticePlannerAdmin() {
     setSubSlug("");
     setSubName("");
     setSubShort("");
-    setSubLevel("intermediate");
+    const targetLevel = selectedLevelFilter === "all" ? "intermediate" : selectedLevelFilter;
+    setSubLevel(targetLevel);
     setSubWeight("1.0");
+    const countInLevel = subjects.filter((s) => s.level === targetLevel).length;
+    setSubOrder((countInLevel + 1).toString());
     setSubjectModalOpen(true);
   };
 
@@ -166,6 +176,7 @@ export function PracticePlannerAdmin() {
     setSubShort(sub.short_name);
     setSubLevel(sub.level);
     setSubWeight(sub.base_weight.toString());
+    setSubOrder((sub.sort_order ?? 1).toString());
     setSubjectModalOpen(true);
   };
 
@@ -179,6 +190,7 @@ export function PracticePlannerAdmin() {
       short_name: subShort,
       level: subLevel,
       base_weight: parseFloat(subWeight) || 1.0,
+      sort_order: parseInt(subOrder) || 1,
     });
     setSaving(false);
     if (res.success) {
@@ -188,6 +200,18 @@ export function PracticePlannerAdmin() {
     } else {
       toast.error(res.error || "Failed to save subject");
     }
+  };
+
+  const handleMoveSubject = async (subjectId: string, direction: "up" | "down", e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMovingSubjectId(subjectId);
+    const res = await movePlannerSubject(subjectId, direction);
+    if (res.success) {
+      await fetchSubjects();
+    } else {
+      toast.error(res.error || "Failed to reorder subject");
+    }
+    setMovingSubjectId(null);
   };
 
   const handleDeleteSubject = async (id: string) => {
@@ -355,19 +379,44 @@ export function PracticePlannerAdmin() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {/* 1. Subjects Panel */}
         <Card className="shadow-sm border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b bg-muted/10">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-sm font-bold">1. Subjects</CardTitle>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono">
-                  {subjects.length}
-                </Badge>
+          <CardHeader className="space-y-3 pb-3 border-b bg-muted/10">
+            <div className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm font-bold">1. Subjects</CardTitle>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-mono">
+                    {subjects.length}
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs">Reorder or select to drill down</CardDescription>
               </div>
-              <CardDescription className="text-xs">Select a subject to drill down</CardDescription>
+              <Button size="sm" onClick={openAddSubject} className="h-7 px-2 text-xs">
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              </Button>
             </div>
-            <Button size="sm" onClick={openAddSubject} className="h-7 px-2 text-xs">
-              <Plus className="h-3.5 w-3.5 mr-1" /> Add
-            </Button>
+
+            {/* Level Filter Tabs */}
+            <div className="flex items-center gap-1 p-0.5 bg-muted/40 rounded-lg border text-[11px]">
+              {(["all", "foundation", "intermediate", "final"] as const).map((lvl) => {
+                const count = lvl === "all" ? subjects.length : subjects.filter((s) => s.level === lvl).length;
+                const isSelected = selectedLevelFilter === lvl;
+                return (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setSelectedLevelFilter(lvl)}
+                    className={`flex-1 py-1 px-1.5 rounded-md font-medium text-center capitalize transition-all ${
+                      isSelected
+                        ? "bg-background text-foreground shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {lvl === "all" ? "All" : lvl === "foundation" ? "Found." : lvl === "intermediate" ? "Inter" : "Final"}
+                    <span className="ml-1 text-[10px] opacity-70 font-mono">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
           </CardHeader>
           <CardContent className="p-2 space-y-1 max-h-[600px] overflow-y-auto">
             {subjects.length === 0 ? (
@@ -384,63 +433,118 @@ export function PracticePlannerAdmin() {
                 </Button>
               </div>
             ) : (
-              subjects.map((sub) => {
-                const isActive = selectedSubjectSlug === sub.slug;
-                return (
-                  <div
-                    key={sub.id}
-                    onClick={() => handleSelectSubject(sub.slug)}
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all border text-xs ${
-                      isActive
-                        ? "bg-accent/15 border-accent text-foreground font-bold shadow-xs"
-                        : "border-transparent hover:bg-muted/40 text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <div className="truncate pr-2">
-                      <div className="font-semibold truncate text-foreground">{sub.name}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant="outline"
-                          className={`text-[9px] uppercase px-1.5 py-0 h-4 font-bold ${
-                            sub.level === "foundation"
-                              ? "border-blue-500/30 text-blue-500"
-                              : sub.level === "intermediate"
-                                ? "border-purple-500/30 text-purple-500"
-                                : "border-amber-500/30 text-amber-500"
+              (() => {
+                const filtered =
+                  selectedLevelFilter === "all"
+                    ? subjects
+                    : subjects.filter((s) => s.level === selectedLevelFilter);
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-xs text-muted-foreground italic">
+                      No subjects found for {selectedLevelFilter} level.
+                    </div>
+                  );
+                }
+
+                return filtered.map((sub) => {
+                  const isActive = selectedSubjectSlug === sub.slug;
+                  const sameLevelSubjects = subjects.filter((s) => s.level === sub.level);
+                  const levelIdx = sameLevelSubjects.findIndex((s) => s.id === sub.id);
+                  const isFirst = levelIdx === 0;
+                  const isLast = levelIdx === sameLevelSubjects.length - 1;
+                  const isMoving = movingSubjectId === sub.id;
+
+                  return (
+                    <div
+                      key={sub.id}
+                      onClick={() => handleSelectSubject(sub.slug)}
+                      className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all border text-xs gap-2 ${
+                        isActive
+                          ? "bg-accent/15 border-accent text-foreground font-bold shadow-xs"
+                          : "border-transparent hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {/* Reorder Up / Down Buttons */}
+                      <div className="flex flex-col items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          disabled={isFirst || movingSubjectId !== null}
+                          onClick={(e) => handleMoveSubject(sub.id, "up", e)}
+                          title={isFirst ? "First in level" : "Move Up"}
+                          className={`p-0.5 rounded hover:bg-muted transition-colors ${
+                            isFirst ? "opacity-25 cursor-not-allowed" : "hover:text-foreground text-muted-foreground"
                           }`}
                         >
-                          {sub.level}
-                        </Badge>
-                        <span className="text-[9px] text-accent font-bold">
-                          Weight: {sub.base_weight}
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="text-[10px] font-mono font-bold text-muted-foreground leading-none">
+                          {isMoving ? (
+                            <Loader2 className="h-2.5 w-2.5 animate-spin text-accent" />
+                          ) : (
+                            `#${sub.sort_order ?? levelIdx + 1}`
+                          )}
                         </span>
+                        <button
+                          type="button"
+                          disabled={isLast || movingSubjectId !== null}
+                          onClick={(e) => handleMoveSubject(sub.id, "down", e)}
+                          title={isLast ? "Last in level" : "Move Down"}
+                          className={`p-0.5 rounded hover:bg-muted transition-colors ${
+                            isLast ? "opacity-25 cursor-not-allowed" : "hover:text-foreground text-muted-foreground"
+                          }`}
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="truncate flex-1 min-w-0">
+                        <div className="font-semibold truncate text-foreground">{sub.name}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] uppercase px-1.5 py-0 h-4 font-bold ${
+                              sub.level === "foundation"
+                                ? "border-blue-500/30 text-blue-500"
+                                : sub.level === "intermediate"
+                                  ? "border-purple-500/30 text-purple-500"
+                                  : "border-amber-500/30 text-amber-500"
+                            }`}
+                          >
+                            {sub.level}
+                          </Badge>
+                          <span className="text-[9px] text-accent font-bold">
+                            Weight: {sub.base_weight}d
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditSubject(sub);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded-full text-muted-foreground hover:text-foreground"
+                          title="Edit Subject"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSubject(sub.id);
+                          }}
+                          className="p-1.5 hover:bg-red-500/10 rounded-full text-muted-foreground hover:text-red-500"
+                          title="Delete Subject"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditSubject(sub);
-                        }}
-                        className="p-1.5 hover:bg-muted rounded-full text-muted-foreground hover:text-foreground"
-                        title="Edit Subject"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSubject(sub.id);
-                        }}
-                        className="p-1.5 hover:bg-red-500/10 rounded-full text-muted-foreground hover:text-red-500"
-                        title="Delete Subject"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
+                  );
+                });
+              })()
             )}
           </CardContent>
         </Card>
@@ -647,7 +751,7 @@ export function PracticePlannerAdmin() {
                 className="text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Student Level</label>
                 <Select
@@ -676,6 +780,20 @@ export function PracticePlannerAdmin() {
                   value={subWeight}
                   onChange={(e) => setSubWeight(e.target.value)}
                   placeholder="6.0"
+                  className="text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Order Index
+                </label>
+                <Input
+                  required
+                  type="number"
+                  min="1"
+                  value={subOrder}
+                  onChange={(e) => setSubOrder(e.target.value)}
+                  placeholder="1"
                   className="text-xs"
                 />
               </div>

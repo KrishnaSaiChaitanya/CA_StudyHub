@@ -22,6 +22,7 @@ export interface ParsedSubject {
   level: StudentLevel;
   paper_code?: string;
   base_weight: number;
+  sort_order?: number;
   chapters: ParsedChapter[];
 }
 
@@ -517,6 +518,16 @@ export function parseSyllabusWorkbook(workbook: XLSX.WorkBook): ParseResult {
       return levelOrder[a.level] - levelOrder[b.level];
     }
     return a.name.localeCompare(b.name);
+  });
+
+  // Assign sequential sort_order per student level
+  const orderPerLevel: Record<StudentLevel, number> = {
+    foundation: 1,
+    intermediate: 1,
+    final: 1,
+  };
+  subjects.forEach((sub) => {
+    sub.sort_order = orderPerLevel[sub.level]++;
   });
 
   return {

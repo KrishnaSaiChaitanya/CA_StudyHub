@@ -54,7 +54,9 @@ export const useStudyPlanner = () => {
       const { data: subjectsData } = await supabase
         .from("planner_subjects")
         .select("*")
-        .eq("level", studentLevel);
+        .eq("level", studentLevel)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
 
       if (!subjectsData) {
         setLoading(false);

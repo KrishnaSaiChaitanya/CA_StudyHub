@@ -289,6 +289,7 @@ export interface PlannerSubject {
   short_name: string;
   level: StudentLevel;
   base_weight: number;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }

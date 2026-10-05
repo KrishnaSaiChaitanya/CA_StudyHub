@@ -132,7 +132,12 @@ export const useStudyPlannerState = () => {
         subtopicProgressRes,
         recentTaskInfo
       ] = await Promise.all([
-        supabase.from("planner_subjects").select("*").eq("level", studentLevel),
+        supabase
+          .from("planner_subjects")
+          .select("*")
+          .eq("level", studentLevel)
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true }),
         supabase.from("user_subject_states").select("*").eq("user_id", user.id),
         supabase.from("planner_chapters").select("id, subject_slug"),
         supabase.from("planner_subtopics").select("id, chapter_id"),

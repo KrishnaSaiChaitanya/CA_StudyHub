@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.planner_subjects (
   short_name text NOT NULL,
   level public.student_level NOT NULL,
   base_weight numeric NOT NULL DEFAULT 1.0,
+  sort_order integer DEFAULT 0 NOT NULL,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );

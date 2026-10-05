@@ -542,6 +542,11 @@ export function ImportSyllabusDialog({
                                     >
                                       {sub.level}
                                     </Badge>
+                                    {sub.sort_order && (
+                                      <span className="font-mono text-[10px] text-muted-foreground font-bold">
+                                        #{sub.sort_order}
+                                      </span>
+                                    )}
                                     <span className="font-semibold text-xs text-foreground truncate">
                                       {sub.name}
                                     </span>

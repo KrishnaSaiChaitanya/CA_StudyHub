@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, X, Clock, ExternalLink, Check, Trash2, Pencil, AlertTriangle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/shared/PageHeader";
 
 
@@ -71,9 +72,6 @@ const ExamCalendarView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Mobile selected day (for inline event list below calendar)
-  const [mobileSheetDay, setMobileSheetDay] = useState<number | null>(null);
-
   // Todo management state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
@@ -81,9 +79,6 @@ const ExamCalendarView = () => {
   const [editingTodo, setEditingTodo] = useState<DbCalendarEvent | null>(null);
   const [editText, setEditText] = useState("");
   const [editDate, setEditDate] = useState("");
-
-  // Use a ref to handle closing the popup when clicking outside
-  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -371,7 +366,7 @@ const ExamCalendarView = () => {
 
         <div className="grid gap-6 lg:grid-cols-[3fr_1fr]">
           {/* ============ MOBILE CALENDAR (< sm) ============ */}
-          <div className="sm:hidden w-full min-w-0" ref={calendarRef}>
+          <div className="sm:hidden w-full min-w-0">
             {/* Month nav */}
             <div className="flex items-center justify-between mb-3">
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={prevMonth}>
@@ -397,19 +392,19 @@ const ExamCalendarView = () => {
 
                 const dayEvents = getEventsForDay(day);
                 const isToday = day === new Date().getDate() && month === new Date().getMonth() + 1 && year === new Date().getFullYear();
-                const isTapped = mobileSheetDay === day;
+                const isSelected = selectedDate === day;
 
                 return (
                   <button
                     key={day}
-                    onClick={() => setMobileSheetDay(mobileSheetDay === day ? null : day)}
+                    onClick={() => setSelectedDate(day)}
                     className="flex flex-col items-center justify-center h-11 relative"
                   >
                     <span
                       className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-medium transition-colors
-                      ${isTapped ? "bg-accent text-accent-foreground" : ""}
-                      ${isToday && !isTapped ? "bg-accent/20 text-accent font-bold ring-1 ring-accent/40" : ""}
-                      ${!isToday && !isTapped ? "text-foreground" : ""}
+                      ${isSelected ? "bg-accent text-accent-foreground shadow-xs font-bold" : ""}
+                      ${isToday && !isSelected ? "bg-accent/20 text-accent font-bold ring-1 ring-accent/40" : ""}
+                      ${!isToday && !isSelected ? "text-foreground" : ""}
                     `}
                     >
                       {day}
@@ -428,7 +423,7 @@ const ExamCalendarView = () => {
             </div>
 
             {/* Category legend */}
-            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 mb-4 px-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 mb-2 px-1">
               {EVENT_CATEGORIES.map((cat) => (
                 <div key={cat} className="flex items-center gap-1">
                   <span className={`h-2 w-2 rounded-full ${DOT_COLORS[cat]}`} />
@@ -436,79 +431,6 @@ const ExamCalendarView = () => {
                 </div>
               ))}
             </div>
-
-            {/* Selected day events list (inline, below calendar) */}
-            <AnimatePresence mode="wait">
-              {mobileSheetDay !== null && (
-                <motion.div
-                  key={mobileSheetDay}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.2 }}
-                  className="mb-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5 text-accent" />
-                      {MONTHS[month - 1]} {mobileSheetDay}, {year}
-                    </h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMobileSheetDay(null)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  {(() => {
-                    const dayEvs = getEventsForDay(mobileSheetDay);
-                    if (dayEvs.length === 0) return (
-                      <div className="rounded-lg border bg-muted/30 py-6 flex flex-col items-center text-muted-foreground">
-                        <CalendarDays className="h-6 w-6 mb-1.5 opacity-40" />
-                        <p className="text-xs">No events on this day</p>
-                      </div>
-                    );
-                    return (
-                      <div className="space-y-2">
-                        {dayEvs.map((ev) => (
-                          <div key={ev.id} className={`rounded-lg border p-3 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className={`h-2 w-2 rounded-full ${DOT_COLORS[ev.category]}`} />
-                              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{ev.category}</span>
-                            </div>
-                            <p className="text-sm font-medium leading-snug">{ev.title}</p>
-                            {ev.event_time && (
-                              <div className="mt-1 flex items-center gap-1 opacity-80">
-                                <Clock className="h-3 w-3" />
-                                <span className="text-xs">{ev.event_time}</span>
-                              </div>
-                            )}
-                            {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
-                            {ev.url && (
-                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
-                                View <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                            {ev.type === "todo" && (
-                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                {!ev.done && (
-                                  <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30" onClick={() => handleMarkComplete(ev.id)}>
-                                    <Check className="h-3 w-3" /> Done
-                                  </Button>
-                                )}
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1" onClick={() => openEditDialog(ev)}>
-                                  <Pencil className="h-3 w-3" /> Edit
-                                </Button>
-                                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30" onClick={() => { setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* ============ DESKTOP CALENDAR (>= sm) ============ */}
@@ -542,15 +464,16 @@ const ExamCalendarView = () => {
                   return (
                     <div key={day} className="relative aspect-square">
                       <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedDate(isSelected ? null : day)}
-                        className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-colors
-                        ${isSelected ? "bg-accent text-accent-foreground ring-2 ring-accent" : "hover:bg-secondary"}
-                        ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}
-                      `}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setSelectedDate(day)}
+                        className={`h-full w-full flex flex-col items-center justify-start rounded-lg p-1 text-sm transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-accent/15 text-foreground ring-2 ring-accent font-semibold shadow-xs"
+                            : "hover:bg-secondary/80"
+                        } ${isToday && !isSelected ? "ring-1 ring-accent/50" : ""}`}
                       >
-                        <span className={`text-xs font-medium ${isToday ? "font-bold" : ""}`}>{day}</span>
+                        <span className={`text-xs font-medium ${isToday ? "font-bold text-accent" : ""}`}>{day}</span>
                         {dayEvents.length > 0 && (
                           <div className="mt-1 flex w-full flex-col gap-1 px-1">
                             <div className="flex flex-col gap-1 w-full">
@@ -575,89 +498,6 @@ const ExamCalendarView = () => {
                           </div>
                         )}
                       </motion.button>
-
-                      {/* Desktop popover */}
-                      <AnimatePresence>
-                        {isSelected && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                            className="absolute left-1/2 top-full z-50 mt-2 w-64 -translate-x-1/2 rounded-xl border bg-background p-4 shadow-xl"
-                          >
-                            <div className="mb-3 flex items-center justify-between">
-                              <h4 className="text-sm font-semibold text-foreground">
-                                {MONTHS[month - 1]} {day}, {year}
-                              </h4>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedDate(null)}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            <div className="max-h-[200px] space-y-3 overflow-y-auto pr-1">
-                              {dayEvents.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">No events scheduled.</p>
-                              ) : (
-                                dayEvents.map((ev) => (
-                                  <div key={ev.id} className={`rounded-lg border p-2.5 ${CATEGORY_COLORS[ev.category] || "bg-secondary text-secondary-foreground"}`}>
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
-                                      {ev.category}
-                                    </span>
-                                    <p className="mt-0.5 text-sm font-medium leading-tight">{ev.title}</p>
-                                    {ev.event_time && (
-                                      <div className="mt-1.5 flex items-center gap-1 opacity-80">
-                                        <Clock className="h-3 w-3" />
-                                        <span className="text-[10px]">{ev.event_time}</span>
-                                      </div>
-                                    )}
-                                    {ev.description && <p className="mt-1 text-xs opacity-70">{ev.description}</p>}
-                                    {ev.url && (
-                                      <a
-                                        href={ev.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline"
-                                      >
-                                        View Announcement <ExternalLink className="h-2.5 w-2.5" />
-                                      </a>
-                                    )}
-                                    {ev.type === "todo" && (
-                                      <div className="mt-2 flex items-center gap-1.5">
-                                        {!ev.done && (
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-6 px-2 text-[10px] gap-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
-                                            onClick={(e) => { e.stopPropagation(); handleMarkComplete(ev.id); }}
-                                          >
-                                            <Check className="h-3 w-3" /> Done
-                                          </Button>
-                                        )}
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-6 px-2 text-[10px] gap-1"
-                                          onClick={(e) => { e.stopPropagation(); openEditDialog(ev); }}
-                                        >
-                                          <Pencil className="h-3 w-3" /> Edit
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30"
-                                          onClick={(e) => { e.stopPropagation(); setTodoToDelete(ev.id); setDeleteConfirmOpen(true); }}
-                                        >
-                                          <Trash2 className="h-3 w-3" /> Delete
-                                        </Button>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </div>
                   );
                 })}
@@ -749,7 +589,157 @@ const ExamCalendarView = () => {
         </div>
       </motion.div>
 
+      {/* Date Details Modal Dialog */}
+      <Dialog open={selectedDate !== null} onOpenChange={(open) => { if (!open) setSelectedDate(null); }}>
+        <DialogContent className="max-w-lg w-full max-h-[88vh] flex flex-col p-0 overflow-hidden sm:rounded-2xl">
+          {selectedDate !== null && (() => {
+            const dayEvents = getEventsForDay(selectedDate);
+            const dateObj = new Date(year, month - 1, selectedDate);
+            const dayOfWeek = DAYS[dateObj.getDay()];
+            const fullDateString = `${dayOfWeek}, ${MONTHS[month - 1]} ${selectedDate}, ${year}`;
 
+            return (
+              <>
+                <DialogHeader className="p-5 pb-3 border-b bg-muted/20">
+                  <div className="flex items-center justify-between pr-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-accent/15 text-accent shrink-0">
+                        <CalendarDays className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <DialogTitle className="text-base font-bold text-foreground">
+                          {fullDateString}
+                        </DialogTitle>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {dayEvents.length} {dayEvents.length === 1 ? "event / task" : "events / tasks"} scheduled
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-3 max-h-[60vh]">
+                  {dayEvents.length === 0 ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-center space-y-2.5">
+                      <div className="p-4 rounded-full bg-muted/50 text-muted-foreground">
+                        <CalendarDays className="h-8 w-8 opacity-40" />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">No events scheduled</p>
+                      <p className="text-xs text-muted-foreground max-w-xs">
+                        There are no ICAI exams, mock tests, deadlines, or personal tasks for this date.
+                      </p>
+                    </div>
+                  ) : (
+                    dayEvents.map((ev) => (
+                      <div
+                        key={ev.id}
+                        className={`rounded-xl border p-4 transition-all shadow-xs space-y-2.5 ${
+                          CATEGORY_COLORS[ev.category] || "bg-card text-foreground"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`h-2.5 w-2.5 rounded-full ${DOT_COLORS[ev.category]}`} />
+                            <span className="text-[11px] font-bold uppercase tracking-wider opacity-90">
+                              {ev.category}
+                            </span>
+                          </div>
+
+                          {ev.type === "todo" && (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] uppercase font-bold ${
+                                ev.done
+                                  ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
+                                  : "border-purple-500/30 text-purple-600 bg-purple-500/10"
+                              }`}
+                            >
+                              {ev.done ? "Completed" : "Pending"}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <h4 className="text-sm font-semibold text-foreground leading-snug break-words">
+                          {ev.title}
+                        </h4>
+
+                        {ev.event_time && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                            <Clock className="h-3.5 w-3.5 shrink-0 text-accent" />
+                            <span>{ev.event_time}</span>
+                          </div>
+                        )}
+
+                        {ev.description && (
+                          <div className="text-xs text-foreground/85 leading-relaxed whitespace-pre-line break-words bg-background/60 p-3 rounded-lg border border-border/50">
+                            {ev.description}
+                          </div>
+                        )}
+
+                        {ev.url && (
+                          <div className="pt-1">
+                            <a
+                              href={ev.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline bg-accent/10 px-3 py-1.5 rounded-md transition-colors hover:bg-accent/20"
+                            >
+                              View Official Announcement <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </div>
+                        )}
+
+                        {ev.type === "todo" && (
+                          <div className="pt-2 border-t border-border/40 flex flex-wrap items-center gap-2">
+                            {!ev.done && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2.5 text-xs gap-1.5 bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/25 font-semibold"
+                                onClick={() => handleMarkComplete(ev.id)}
+                              >
+                                <Check className="h-3.5 w-3.5" /> Done
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2.5 text-xs gap-1.5 font-medium"
+                              onClick={() => {
+                                setSelectedDate(null);
+                                openEditDialog(ev);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2.5 text-xs gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 font-medium"
+                              onClick={() => {
+                                setTodoToDelete(ev.id);
+                                setDeleteConfirmOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <DialogFooter className="p-3.5 border-t bg-muted/10 sm:justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedDate(null)}>
+                    Close
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation modal */}
       <ConfirmModal
