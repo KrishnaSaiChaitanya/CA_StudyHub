@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   BookOpen, Users, FileText, LayoutDashboard, Mail, Trophy, 
-  CalendarDays, Video, Menu, X, ArrowLeft, Settings, GraduationCap, Megaphone, MessageSquare, Layers, Send
+  CalendarDays, Video, Menu, X, ArrowLeft, Settings, GraduationCap, Megaphone, MessageSquare, Layers, Send, Sparkles
 } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ const navGroups = [
   {
     group: "Content Management",
     items: [
+      { href: "/admin/feature-updates", exact: false, icon: Sparkles, label: "Feature Popups" },
       { href: "/admin/planners", exact: false, icon: BookOpen, label: "Study Planners" },
       { href: "/admin/practice-planner", exact: false, icon: Layers, label: "Study Planning Master" },
       { href: "/admin/tests", exact: false, icon: FileText, label: "Tests & MCQs" },

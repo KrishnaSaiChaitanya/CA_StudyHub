@@ -147,6 +147,19 @@ CREATE TABLE public.announcements (
   updated_at timestamptz DEFAULT now()
 );
 
+-- Feature / Product Announcements (Popups / What's New)
+CREATE TABLE public.feature_announcements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL,
+  badge text DEFAULT 'New Feature',
+  button_text text,
+  button_url text,
+  is_active boolean DEFAULT true NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  updated_at timestamptz DEFAULT now() NOT NULL
+);
+
 -- Test Attempts
 CREATE TABLE public.test_attempts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -576,6 +589,7 @@ CREATE OR REPLACE TRIGGER tr_update_notes BEFORE UPDATE ON public.notes FOR EACH
 CREATE OR REPLACE TRIGGER tr_update_todos BEFORE UPDATE ON public.todos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_subscriptions BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_announcements BEFORE UPDATE ON public.announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER tr_update_feature_announcements BEFORE UPDATE ON public.feature_announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcard_folders BEFORE UPDATE ON public.flashcard_folders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcard_sets BEFORE UPDATE ON public.flashcard_sets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER tr_update_flashcards BEFORE UPDATE ON public.flashcards FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -597,6 +611,7 @@ ALTER TABLE public.practice_papers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.study_planners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.community_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feature_announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_attempts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_attempt_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
@@ -637,6 +652,8 @@ CREATE POLICY "Auth Read Access" ON public.calendar_events FOR SELECT TO authent
 CREATE POLICY "Auth Read Access" ON public.exam_dates FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Auth Read Access" ON public.announcements FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Admin All Access" ON public.announcements FOR ALL TO authenticated USING (true);
+CREATE POLICY "Auth Read Active Feature Announcements" ON public.feature_announcements FOR SELECT TO authenticated USING (is_active = true);
+CREATE POLICY "Admin All Access Feature Announcements" ON public.feature_announcements FOR ALL TO authenticated USING (true);
 
 -- Manage Own Policies
 CREATE POLICY "Manage Own Profile" ON public.profiles FOR ALL TO authenticated USING (auth.uid() = id);
@@ -983,4 +1000,139 @@ CREATE POLICY "Allow admin manage" ON public.study_rooms
 CREATE TRIGGER tr_update_study_rooms 
   BEFORE UPDATE ON public.study_rooms 
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 10. PRACTICE PLANNER & STUDY PLANNING SCHEMA
+-- ============================================================================
+
+-- Custom Enum Types for Practice Planner
+DO $$ BEGIN
+    CREATE TYPE public.tracker_phase AS ENUM ('study1', 'rev1', 'rev2');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.chapter_status AS ENUM ('pending', 'completed', 'skipped');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Master Tables
+CREATE TABLE IF NOT EXISTS public.planner_subjects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text UNIQUE NOT NULL,
+  name text NOT NULL,
+  short_name text NOT NULL,
+  level public.student_level NOT NULL,
+  base_weight numeric NOT NULL DEFAULT 1.0,
+  sort_order integer DEFAULT 0 NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.planner_chapters (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_slug text REFERENCES public.planner_subjects(slug) ON DELETE CASCADE,
+  topic text NOT NULL,
+  hours numeric NOT NULL DEFAULT 0.0,
+  sort_order integer DEFAULT 0 NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.planner_subtopics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  chapter_id uuid REFERENCES public.planner_chapters(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  sort_order integer DEFAULT 0 NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- User Progress Tracking Tables
+CREATE TABLE IF NOT EXISTS public.user_subject_states (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  subject_slug text REFERENCES public.planner_subjects(slug) ON DELETE CASCADE NOT NULL,
+  classes_done boolean DEFAULT false NOT NULL,
+  rev1_done boolean DEFAULT false NOT NULL,
+  rev2_done boolean DEFAULT false NOT NULL,
+  expertise text DEFAULT 'Moderate' NOT NULL,
+  allocated_days integer DEFAULT 0 NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, subject_slug)
+);
+
+CREATE TABLE IF NOT EXISTS public.user_chapter_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  chapter_id uuid REFERENCES public.planner_chapters(id) ON DELETE CASCADE NOT NULL,
+  phase public.tracker_phase NOT NULL,
+  status public.chapter_status DEFAULT 'pending' NOT NULL,
+  remarks text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, chapter_id, phase)
+);
+
+CREATE TABLE IF NOT EXISTS public.user_subtopic_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  subtopic_id uuid REFERENCES public.planner_subtopics(id) ON DELETE CASCADE NOT NULL,
+  phase public.tracker_phase NOT NULL,
+  status public.chapter_status DEFAULT 'pending' NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, subtopic_id, phase)
+);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.planner_subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.planner_chapters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.planner_subtopics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_subject_states ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_chapter_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_subtopic_progress ENABLE ROW LEVEL SECURITY;
+
+-- Master tables read policy
+CREATE POLICY "Allow authenticated read access to planner_subjects" ON public.planner_subjects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated read access to planner_chapters" ON public.planner_chapters FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authenticated read access to planner_subtopics" ON public.planner_subtopics FOR SELECT TO authenticated USING (true);
+
+-- Master tables admin write policies
+CREATE POLICY "Allow admin write access to planner_subjects" ON public.planner_subjects 
+  FOR ALL TO authenticated USING (
+    (auth.jwt() ->> 'email') = ANY(ARRAY['ksc.tata215@gmail.com', 'kaushikn0812@gmail.com', 'sai.tata9949746270@gmail.com'])
+  );
+
+CREATE POLICY "Allow admin write access to planner_chapters" ON public.planner_chapters 
+  FOR ALL TO authenticated USING (
+    (auth.jwt() ->> 'email') = ANY(ARRAY['ksc.tata215@gmail.com', 'kaushikn0812@gmail.com', 'sai.tata9949746270@gmail.com'])
+  );
+
+CREATE POLICY "Allow admin write access to planner_subtopics" ON public.planner_subtopics 
+  FOR ALL TO authenticated USING (
+    (auth.jwt() ->> 'email') = ANY(ARRAY['ksc.tata215@gmail.com', 'kaushikn0812@gmail.com', 'sai.tata9949746270@gmail.com'])
+  );
+
+-- User progress read/write policies
+CREATE POLICY "Allow users to read their own subject states" ON public.user_subject_states FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Allow users to modify their own subject states" ON public.user_subject_states FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to read their own chapter progress" ON public.user_chapter_progress FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Allow users to modify their own chapter progress" ON public.user_chapter_progress FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to read their own subtopic progress" ON public.user_subtopic_progress FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Allow users to modify their own subtopic progress" ON public.user_subtopic_progress FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Indices for query performance
+CREATE INDEX IF NOT EXISTS idx_planner_subjects_level_sort ON public.planner_subjects(level, sort_order);
+CREATE INDEX IF NOT EXISTS idx_planner_chapters_subject_sort ON public.planner_chapters(subject_slug, sort_order);
+CREATE INDEX IF NOT EXISTS idx_planner_subtopics_chapter_sort ON public.planner_subtopics(chapter_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_user_subject_states_user ON public.user_subject_states(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_chapter_progress_user ON public.user_chapter_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_subtopic_progress_user ON public.user_subtopic_progress(user_id);
+
 

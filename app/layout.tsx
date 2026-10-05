@@ -49,6 +49,7 @@ const poppins = Poppins({
 
 import { ConditionalLayout } from "@/components/shared/ConditionalLayout";
 import WelcomeModal from "@/components/shared/WelcomeModal";
+import { FeatureAnnouncementsModal } from "@/components/announcements/FeatureAnnouncementsModal";
 import { PWARegister } from "@/components/shared/PwaRegister";
 
 export default function RootLayout({
@@ -64,6 +65,7 @@ export default function RootLayout({
                 <ConditionalLayout>
                   {children}
                   <WelcomeModal />
+                  <FeatureAnnouncementsModal />
                 </ConditionalLayout>
                 <PWARegister />
               </Providers>

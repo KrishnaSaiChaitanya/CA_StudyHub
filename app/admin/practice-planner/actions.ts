@@ -159,7 +159,8 @@ export async function importAndReplaceSyllabus(subjects: ParsedSubject[]) {
     let totalSubtopicsCount = 0;
 
     // 2. Insert Subjects and their nested Chapters + Subtopics
-    for (const sub of subjects) {
+    for (let sIdx = 0; sIdx < subjects.length; sIdx++) {
+      const sub = subjects[sIdx];
       const { error: subError } = await supabase
         .from("planner_subjects")
         .upsert(
@@ -169,6 +170,7 @@ export async function importAndReplaceSyllabus(subjects: ParsedSubject[]) {
             short_name: sub.short_name,
             level: sub.level,
             base_weight: sub.base_weight || 5.0,
+            sort_order: sub.sort_order ?? (sIdx + 1),
             updated_at: new Date().toISOString(),
           },
           { onConflict: "slug" }
@@ -272,7 +274,12 @@ export async function seedDefaultPlannerData() {
   const supabase = await verifyAdmin();
 
   try {
+    const levelOrderCount: Record<string, number> = { foundation: 1, intermediate: 1, final: 1 };
+
     for (const sub of DEFAULT_SUBJECTS) {
+      const subjectOrder = levelOrderCount[sub.level] || 1;
+      levelOrderCount[sub.level] = subjectOrder + 1;
+
       // 1. Insert Subject
       const { error: subError } = await supabase
         .from("planner_subjects")
@@ -283,6 +290,7 @@ export async function seedDefaultPlannerData() {
             short_name: sub.shortName,
             level: sub.level,
             base_weight: sub.baseWeight,
+            sort_order: subjectOrder,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "slug" }
@@ -370,10 +378,32 @@ export async function upsertPlannerSubject(subject: {
   short_name: string;
   level: StudentLevel;
   base_weight: number;
+  sort_order?: number;
 }) {
   const supabase = await verifyAdmin();
 
-  const payload = {
+  let sortOrder = subject.sort_order;
+  if (!subject.id && (sortOrder === undefined || sortOrder === null)) {
+    // Determine the next highest sort_order for this level
+    const { data: maxRow } = await supabase
+      .from("planner_subjects")
+      .select("sort_order")
+      .eq("level", subject.level)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    sortOrder = (maxRow?.sort_order ?? 0) + 1;
+  }
+
+  const payload: {
+    slug: SubjectCategory;
+    name: string;
+    short_name: string;
+    level: StudentLevel;
+    base_weight: number;
+    sort_order?: number;
+    updated_at: string;
+  } = {
     slug: subject.slug,
     name: subject.name,
     short_name: subject.short_name,
@@ -381,6 +411,10 @@ export async function upsertPlannerSubject(subject: {
     base_weight: subject.base_weight,
     updated_at: new Date().toISOString(),
   };
+
+  if (sortOrder !== undefined && sortOrder !== null) {
+    payload.sort_order = sortOrder;
+  }
 
   let error;
   if (subject.id) {
@@ -404,6 +438,91 @@ export async function upsertPlannerSubject(subject: {
   revalidatePath("/study/practice-planner");
   revalidatePath("/study/study-planning");
   return { success: true };
+}
+
+/**
+ * Reorders planner subjects by updating sort_order for each subject ID provided
+ */
+export async function reorderPlannerSubjects(items: { id: string; sort_order: number }[]) {
+  const supabase = await verifyAdmin();
+
+  try {
+    for (const item of items) {
+      const { error } = await supabase
+        .from("planner_subjects")
+        .update({ sort_order: item.sort_order, updated_at: new Date().toISOString() })
+        .eq("id", item.id);
+      if (error) throw error;
+    }
+
+    revalidatePath("/admin/practice-planner");
+    revalidatePath("/study/practice-planner");
+    revalidatePath("/study/study-planning");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to reorder planner subjects:", error);
+    return { success: false, error: error.message || "Failed to reorder subjects" };
+  }
+}
+
+/**
+ * Moves a subject up or down within its student level
+ */
+export async function movePlannerSubject(subjectId: string, direction: "up" | "down") {
+  const supabase = await verifyAdmin();
+
+  try {
+    const { data: targetSubject, error: getErr } = await supabase
+      .from("planner_subjects")
+      .select("id, level, sort_order")
+      .eq("id", subjectId)
+      .single();
+
+    if (getErr || !targetSubject) {
+      return { success: false, error: "Subject not found" };
+    }
+
+    // Fetch all subjects of the same level sorted by current sort_order, then name
+    const { data: levelSubjects, error: listErr } = await supabase
+      .from("planner_subjects")
+      .select("id, sort_order, name")
+      .eq("level", targetSubject.level)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (listErr || !levelSubjects) {
+      return { success: false, error: "Failed to fetch subjects for ordering" };
+    }
+
+    const currentIndex = levelSubjects.findIndex((s) => s.id === subjectId);
+    if (currentIndex === -1) return { success: false, error: "Subject not found in level list" };
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= levelSubjects.length) {
+      return { success: true }; // Already at top or bottom
+    }
+
+    // Create a new ordered list with cleanly assigned sequential 1..N order
+    const reorderedList = [...levelSubjects];
+    const [movedItem] = reorderedList.splice(currentIndex, 1);
+    reorderedList.splice(targetIndex, 0, movedItem);
+
+    for (let i = 0; i < reorderedList.length; i++) {
+      const { error: updateErr } = await supabase
+        .from("planner_subjects")
+        .update({ sort_order: i + 1, updated_at: new Date().toISOString() })
+        .eq("id", reorderedList[i].id);
+      if (updateErr) throw updateErr;
+    }
+
+    revalidatePath("/admin/practice-planner");
+    revalidatePath("/study/practice-planner");
+    revalidatePath("/study/study-planning");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to move subject:", error);
+    return { success: false, error: error.message || "Failed to move subject" };
+  }
 }
 
 export async function deletePlannerSubject(id: string) {
