@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(req: Request) {
   try {
@@ -71,7 +72,8 @@ export async function POST(req: Request) {
     }
 
     // Update Subscriptions table to track this as an active "one-time" subscription
-    const { error } = await supabase.from("subscriptions").upsert({
+    const supabaseAdmin = createAdminClient();
+    const { error } = await supabaseAdmin.from("subscriptions").upsert({
       id: user.id,
       razorpay_customer_id: razorpay_payment_id, // Store payment ID if no customer ID
       status: "active",

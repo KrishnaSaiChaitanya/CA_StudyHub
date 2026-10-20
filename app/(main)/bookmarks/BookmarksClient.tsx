@@ -337,7 +337,7 @@ const BookmarksClient = ({ userId }: BookmarksClientProps) => {
       <PageHeader gradientTitle="Bookmarks" description="All your saved resources, exam questions, and personal notes in one place." onBack={onBack} />
 
       <section className="container max-w-4xl py-10">
-        <ProFeatureLock label="Unlock Bookmarks with Pro Subscription">
+        <ProFeatureLock>
           <Tabs defaultValue="bookmarks" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
               <TabsList className="w-full max-w-xs mb-0">

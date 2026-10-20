@@ -93,7 +93,7 @@ const Practice = () => {
         <PageHeader title="Practice &" gradientTitle="Excel" description="Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills." />
         <section className="container py-10">
           <div className="block md:hidden mb-6">
-            <ProFeatureLock label="Unlock Mock Exams with a Pro Subscription">
+            <ProFeatureLock>
               <Button
                 onClick={() => router.push('/practice/mock-exams')}
                 className="w-full flex items-center justify-between p-4 h-auto bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 rounded-xl hover:bg-accent/15 transition-all text-left shadow-sm group"
@@ -103,7 +103,7 @@ const Practice = () => {
                     <Award className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-sm text-white">Take a MCQ Mock Exam</h3>
+                    <h3 className="font-semibold text-sm text-foreground">Take a MCQ Mock Exam</h3>
                     <p className="text-[11px] text-muted-foreground truncate">Simulate real exam pressure with online tests</p>
                   </div>
                 </div>
@@ -170,11 +170,11 @@ const Practice = () => {
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="relative overflow-hidden rounded-xl bg-zinc-950 dark:bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
+                className="relative overflow-hidden rounded-xl bg-card border border-border bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
               >
                 <Award className="mx-auto h-8 w-8 text-accent" />
-                <h3 className="mt-4 text-xl font-bold text-white">Take a MCQ Mock Exam</h3>
-                <p className="mt-2 text-xs text-primary-foreground/50"> Revise concepts, strengthen recall, and excel confidently.</p>
+                <h3 className="mt-4 text-xl font-bold text-card-foreground">Take a MCQ Mock Exam</h3>
+                <p className="mt-2 text-xs text-muted-foreground"> Revise concepts, strengthen recall, and excel confidently.</p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
                   <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent">View My Performance</Button>

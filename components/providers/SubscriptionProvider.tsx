@@ -52,7 +52,6 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       setPlanName(cached.planName || null);
       setExpiryDate(cached.expiryDate || null);
       setIsLoading(false);
-      return;
     }
     checkSubscription();
   }, [supabase.auth]);

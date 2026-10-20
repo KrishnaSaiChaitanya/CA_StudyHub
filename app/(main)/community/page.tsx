@@ -73,7 +73,7 @@ const Community = () => (
                 className="rounded-xl border border-border bg-card shadow-card"
               >
                 {isPro ? (
-                  <ProFeatureLock label="Unlock Group study sessions with Pro subscription">
+                  <ProFeatureLock>
                     {CardContent}
                   </ProFeatureLock>
                 ) : (

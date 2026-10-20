@@ -98,11 +98,14 @@ export const updateSession = async (request: NextRequest) => {
 
       const { data: subscriptionData } = await supabase
         .from("subscriptions")
-        .select("status")
+        .select("status, expiry_date")
         .eq("id", user.id)
         .single();
 
-      const isSubscribed = profile?.is_perminent_paid_user || subscriptionData?.status === "active";
+      const isExpired = subscriptionData?.expiry_date 
+        ? new Date(subscriptionData.expiry_date).getTime() < Date.now() 
+        : false;
+      const isSubscribed = Boolean(profile?.is_perminent_paid_user) || (subscriptionData?.status === "active" && !isExpired);
       
       if (!isSubscribed) {
         return NextResponse.redirect(new URL("/pricing", request.url));

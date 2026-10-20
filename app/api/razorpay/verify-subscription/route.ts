@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import Razorpay from "razorpay";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(req: Request) {
   try {
@@ -10,6 +12,7 @@ export async function POST(req: Request) {
       razorpay_subscription_id,
       razorpay_signature,
       plan_id: requestedPlanId,
+      plan_name = "Pro Plan",
     } = body;
 
     const supabase = await createClient();
@@ -19,7 +22,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const secret = process.env.RAZORPAY_KEY_SECRET!;
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!secret) {
+      return NextResponse.json({ error: "Razorpay secret not configured" }, { status: 500 });
+    }
 
     // Verify signature
     const generated_signature = crypto
@@ -34,52 +40,42 @@ export async function POST(req: Request) {
       );
     }
 
-    const plan_id = requestedPlanId || process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID;
-    const plan_name = body.plan_name || "Pro Plan";
+    const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    let customer_id: string | null = null;
+    let expiry_date: string | null = null;
 
-    let expiry_date = null;
-    if (plan_name.toLowerCase().includes("monthly")) {
-      expiry_date = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString();
-    } else if (plan_name.toLowerCase().includes("annual")) {
-      expiry_date = new Date(Date.now() + 366 * 24 * 60 * 60 * 1000).toISOString();
-    } else if (plan_name.toLowerCase().includes("attempt")) {
-      // Fetch user profile to get student_type
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("student_type")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.student_type) {
-        // Fetch exam date for this level
-        const { data: examData } = await supabase
-          .from("exam_dates")
-          .select("exam_date")
-          .eq("level", profile.student_type)
-          .single();
-        
-        if (examData?.exam_date) {
-          const baseDate = new Date(examData.exam_date);
-          let extraDays = 0;
-          
-          if (profile.student_type === "final") {
-            extraDays = 10 + 3;
-          } else if (profile.student_type === "foundation") {
-            extraDays = 6 + 3;
-          } else if (profile.student_type === "intermediate") {
-            extraDays = 14 + 3;
-          }
-
-          baseDate.setDate(baseDate.getDate() + extraDays);
-          expiry_date = baseDate.toISOString();
+    // Fetch subscription details from Razorpay for exact billing cycle & customer ID
+    if (key_id && secret) {
+      try {
+        const razorpay = new Razorpay({ key_id, key_secret: secret });
+        const subDetails: any = await razorpay.subscriptions.fetch(razorpay_subscription_id);
+        if (subDetails?.customer_id) {
+          customer_id = subDetails.customer_id;
         }
+        if (subDetails?.current_end) {
+          expiry_date = new Date(subDetails.current_end * 1000).toISOString();
+        }
+      } catch (fetchErr) {
+        console.warn("Could not fetch subscription details from Razorpay, falling back to calculation:", fetchErr);
       }
     }
 
-    // Signature is valid, update Supabase
-    const { error } = await supabase.from("subscriptions").upsert({
+    if (!expiry_date) {
+      if (plan_name.toLowerCase().includes("annual")) {
+        expiry_date = new Date(Date.now() + 366 * 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        expiry_date = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString();
+      }
+    }
+
+    const plan_id = requestedPlanId || process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID;
+    const supabaseAdmin = createAdminClient();
+
+    // Signature is valid, securely update Supabase using admin client
+    const { error } = await supabaseAdmin.from("subscriptions").upsert({
       id: user.id,
       razorpay_subscription_id,
+      razorpay_customer_id: customer_id,
       status: "active",
       plan_id: plan_id,
       plan_name,

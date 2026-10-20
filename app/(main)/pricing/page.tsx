@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Crown, Zap, Star, Upload, Gift, ArrowRight, Clock, Calendar, BookOpen, Sparkles, CheckCircle2 } from "lucide-react";
+import { Check, Crown, Zap, Star, Upload, Gift, ArrowRight, Clock, Calendar, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ const proFeatures = [
   "Priority Support",
 ];
 
-type ProPlan = "attempt" | "monthly" | "annual";
+type ProPlan = "monthly" | "annual";
 
 interface PlanInfo {
   id: ProPlan;
@@ -49,42 +49,31 @@ const proPlans: PlanInfo[] = [
     id: "monthly",
     name: "Monthly",
     price: "₹149",
-    sub: "Per month . Billed monthly",
+    sub: "Per month · Billed monthly",
     icon: <Calendar className="h-5 w-5" />,
     planId: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_MONTHLY,
     amount: 149,
   },
   {
-    id: "attempt",
-    name: "Attempt Based",
-    price: "₹499 ",
-    sub: "till last exam of upcoming attempt",
-    tag: "Most Popular",
-    tagVariant: "default",
-    icon: <BookOpen className="h-5 w-5" />,
-    planId: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_ATTEMPT || process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID,
-    amount: 499,
-  },
-  {
     id: "annual",
     name: "Annual",
-    price: "₹1,199",
-    sub: "₹99/month · billed yearly",
-    tag: "Best Value",
-    tagVariant: "secondary",
+    price: "₹899",
+    sub: "₹75/month · billed yearly",
+    tag: "Most Popular",
+    tagVariant: "default",
     icon: <Crown className="h-5 w-5" />,
     planId: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID_ANNUAL,
-    amount: 1199,
+    amount: 899,
   },
 ];
 
 const Pricing = () => {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<ProPlan>("attempt");
+  const [selectedPlan, setSelectedPlan] = useState<ProPlan>("annual");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const supabase = createClient();
-  const { checkSubscription, planName, expiryDate } = useSubscription();
+  const { checkSubscription, isSubscribed, planName, expiryDate } = useSubscription();
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_REQUIRE_PAYMENT !== 'true') {
@@ -126,41 +115,35 @@ const Pricing = () => {
       const res = await loadRazorpay();
       if (!res) {
         toast.error("Failed to load payment gateway");
+        setIsLoading(false);
         return;
       }
 
-      const isAttemptBased = selectedPlan === "attempt";
-      const apiUrl = isAttemptBased ? "/api/razorpay/create-order" : "/api/razorpay/create-subscription";
-      const requestBody = isAttemptBased 
-        ? { amount: currentPlan.amount, plan_name: currentPlan.name }
-        : { plan_id: currentPlan.planId };
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch("/api/razorpay/create-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ 
+          plan_id: currentPlan.planId,
+          plan_name: currentPlan.name,
+          plan_type: currentPlan.id
+        }),
       });
       
       const data = await response.json();
       
-      if (!data.subscriptionId && !data.orderId) {
+      if (!response.ok || !data.subscriptionId) {
         toast.error(data.error || "Could not initialize payment");
+        setIsLoading(false);
         return;
       }
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        ...(isAttemptBased ? { order_id: data.orderId } : { subscription_id: data.subscriptionId }),
+        subscription_id: data.subscriptionId,
         name: "Study Hub Pro",
-        description: `${currentPlan.name} ${isAttemptBased ? 'One-time Payment' : 'Subscription'}`,
+        description: `${currentPlan.name} Subscription`,
         handler: async function (response: any) {
-          const verifyPath = isAttemptBased ? "verify-order" : "verify-subscription";
-          const verifyBody = isAttemptBased ? {
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-            plan_name: currentPlan.name
-          } : {
+          const verifyBody = {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_subscription_id: response.razorpay_subscription_id,
             razorpay_signature: response.razorpay_signature,
@@ -168,7 +151,7 @@ const Pricing = () => {
             plan_name: currentPlan.name
           };
 
-          const verifyRes = await fetch(`/api/razorpay/${verifyPath}`, {
+          const verifyRes = await fetch("/api/razorpay/verify-subscription", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(verifyBody),
@@ -187,6 +170,11 @@ const Pricing = () => {
             toast.error(verifyData.error || "Payment verification failed");
           }
         },
+        modal: {
+          ondismiss: function () {
+            setIsLoading(false);
+          },
+        },
         prefill: {
           email: session.user.email,
         },
@@ -196,10 +184,13 @@ const Pricing = () => {
       };
 
       const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.on("payment.failed", function (failResponse: any) {
+        setIsLoading(false);
+        toast.error(failResponse.error?.description || "Payment failed. Please try again.");
+      });
       paymentObject.open();
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -411,15 +402,17 @@ const Pricing = () => {
                 </ul>
                 <Button 
                   onClick={handleSubscribe} 
-                  disabled={isLoading}
+                  disabled={isLoading || isSubscribed}
                   className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   {isLoading ? (
                     <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                  ) : isSubscribed ? (
+                    <Check className="mr-2 h-4 w-4" />
                   ) : (
                     <Clock className="mr-2 h-4 w-4" />
                   )}
-                  {isLoading ? "Processing..." : "Start Subscription"}
+                  {isSubscribed ? "Current Plan Active" : isLoading ? "Processing..." : "Start Subscription"}
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
                   Secure payment via Razorpay · Cancel anytime

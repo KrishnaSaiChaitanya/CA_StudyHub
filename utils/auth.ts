@@ -50,10 +50,20 @@ export const getCachedSubscription = () => {
   try {
     const rawSub = window.localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
     const rawData = window.localStorage.getItem(SUBSCRIPTION_DATA_CACHE_KEY);
+    const data = rawData ? JSON.parse(rawData) : null;
+    let isSubscribed = rawSub !== null ? JSON.parse(rawSub) : null;
+
+    if (isSubscribed && data?.expiryDate) {
+      const isExpired = new Date(data.expiryDate).getTime() < Date.now();
+      if (isExpired) {
+        isSubscribed = false;
+      }
+    }
+
     return {
-      isSubscribed: rawSub !== null ? JSON.parse(rawSub) : null,
-      planName: rawData ? JSON.parse(rawData).planName : null,
-      expiryDate: rawData ? JSON.parse(rawData).expiryDate : null
+      isSubscribed,
+      planName: data ? data.planName : null,
+      expiryDate: data ? data.expiryDate : null
     };
   } catch {
     return { isSubscribed: null, planName: null, expiryDate: null };
@@ -105,7 +115,10 @@ export const fetchAndCacheAuthState = async (supabase: SupabaseClient) => {
       .eq("id", user.id)
       .single();
 
-    const isSubscribed = profile?.is_perminent_paid_user || Boolean(subscriptionData?.status === "active");
+    const isExpired = subscriptionData?.expiry_date
+      ? new Date(subscriptionData.expiry_date).getTime() < Date.now()
+      : false;
+    const isSubscribed = Boolean(profile?.is_perminent_paid_user) || (subscriptionData?.status === "active" && !isExpired);
     const planName = profile?.is_perminent_paid_user ? (subscriptionData?.plan_name || "Lifetime Pro") : subscriptionData?.plan_name;
     
     cacheAuthState(user, isSubscribed, planName, subscriptionData?.expiry_date);

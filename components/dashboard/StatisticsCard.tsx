@@ -41,7 +41,7 @@ export const StatisticsCard = ({
           )}
         </div>
       </div>
-      <ProFeatureLock label="Unlock statistics with a Pro Subscription">
+      <ProFeatureLock>
         <div className="p-5 pt-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
