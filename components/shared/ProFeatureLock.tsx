@@ -7,15 +7,25 @@ import { useSubscription } from "@/components/providers/SubscriptionProvider";
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
 
-export const ProFeatureLock = ({
-  children,
-  label = "Unlock with a Pro Subscription",
-}: {
+interface ProFeatureLockProps {
   children: ReactNode;
   label?: string;
-}) => {
+  featureName?: string;
+}
+
+export const ProFeatureLock = ({
+  children,
+  label,
+  featureName,
+}: ProFeatureLockProps) => {
   const { isSubscribed, isLoading } = useSubscription();
   const router = useRouter();
+
+  const displayText =
+    label ??
+    (featureName
+      ? `Unlock ${featureName} with a Pro Subscription`
+      : "Unlock with a Pro Subscription");
 
   if (isLoading) {
     return (
@@ -59,7 +69,7 @@ export const ProFeatureLock = ({
         </div>
 
         <p className="text-xs sm:text-sm font-medium text-foreground text-center px-3 max-w-sm tracking-tight">
-          {label}
+          {displayText}
         </p>
 
         <Button

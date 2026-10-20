@@ -99,7 +99,7 @@ export const StudyTimerCard = ({
       <div className="p-6 pb-0">
         <h2 className="text-sm font-semibold">Study Timer</h2>
       </div>
-      <ProFeatureLock>
+      <ProFeatureLock featureName="Study Timer">
         <div className="p-6 flex flex-col items-center">
           <div className="flex justify-center mb-5">
             <div className="inline-flex rounded-lg border border-border bg-secondary p-1">

@@ -93,7 +93,7 @@ const Practice = () => {
         <PageHeader title="Practice &" gradientTitle="Excel" description="Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills." />
         <section className="container py-10">
           <div className="block md:hidden mb-6">
-            <ProFeatureLock>
+            <ProFeatureLock featureName="Mock Exams">
               <Button
                 onClick={() => router.push('/practice/mock-exams')}
                 className="w-full flex items-center justify-between p-4 h-auto bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 rounded-xl hover:bg-accent/15 transition-all text-left shadow-sm group"
@@ -165,7 +165,7 @@ const Practice = () => {
           </div>
 
           <div className="hidden md:block">
-            <ProFeatureLock>
+            <ProFeatureLock featureName="Mock Exams">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
