@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useStudyPlannerState } from "@/hooks/useStudyPlannerState";
 import { CalendarDays, ArrowRight, TrendingUp, Gauge, Settings2, BookOpen, Minus, Plus, Save, History } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { saveManualAllocations } from "./actions";
 import { toast } from "sonner";
 
@@ -155,7 +156,8 @@ const StudyPlanningPage = () => {
         size="md"
       />
 
-      <div className="container py-6 sm:py-8 px-4 sm:px-8 md:px-4 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <ProFeatureLock featureName="Study Planning">
+        <div className="container py-6 sm:py-8 px-4 sm:px-8 md:px-4 max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {state.examLabel && (
           <>
             {/* Countdown banner */}
@@ -456,6 +458,7 @@ const StudyPlanningPage = () => {
           </>
         )}
       </div>
+      </ProFeatureLock>
 
       {/* Floating Save Changes Banner */}
       {hasChanges && (

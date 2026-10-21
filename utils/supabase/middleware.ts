@@ -73,10 +73,8 @@ export const updateSession = async (request: NextRequest) => {
 
     // Premium paths that require a paid subscription
     const premiumPaths = [
-      "/practice/mock-exams",
       "/practice/performance",
-      "/bookmarks",
-      "/community/rooms"
+      "/bookmarks"
     ];
     const isPremiumPath = premiumPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
@@ -98,11 +96,14 @@ export const updateSession = async (request: NextRequest) => {
 
       const { data: subscriptionData } = await supabase
         .from("subscriptions")
-        .select("status")
+        .select("status, expiry_date")
         .eq("id", user.id)
         .single();
 
-      const isSubscribed = profile?.is_perminent_paid_user || subscriptionData?.status === "active";
+      const isExpired = subscriptionData?.expiry_date 
+        ? new Date(subscriptionData.expiry_date).getTime() < Date.now() 
+        : false;
+      const isSubscribed = Boolean(profile?.is_perminent_paid_user) || (subscriptionData?.status === "active" && !isExpired);
       
       if (!isSubscribed) {
         return NextResponse.redirect(new URL("/pricing", request.url));

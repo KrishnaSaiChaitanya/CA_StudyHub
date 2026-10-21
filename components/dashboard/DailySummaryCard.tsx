@@ -78,7 +78,7 @@ export const DailySummaryCard = ({
         <h2 className="text-sm font-semibold">Daily Summary</h2>
         {!effectiveIsSubscribed && <Lock className="h-3 w-3 text-muted-foreground/50" />}
       </div>
-      <ProFeatureLock label="Unlock daily summary with a Pro Subscription">
+      <ProFeatureLock featureName="Daily Summary">
         <div className="p-5 pt-4">
           <PieChart dailyData={dailyData} totalHours={totalHours} getSubjectColor={getSubjectColor} />
           <div className="mt-4 space-y-2">

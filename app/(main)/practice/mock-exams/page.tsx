@@ -196,9 +196,9 @@ export default function MockExamsPage() {
               </div>
               <Button
                 onClick={() => router.push('/practice/performance')}
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 flex items-center gap-1.5"
               >
-                View Performance
+                <Sparkles className="h-3.5 w-3.5" /> View Performance
               </Button>
             </div>
           </div>
