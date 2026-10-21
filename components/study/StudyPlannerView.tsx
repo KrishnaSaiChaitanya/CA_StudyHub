@@ -11,6 +11,8 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { saveOfflineItem, deleteOfflineItem, listOfflineItems } from "@/utils/offline-db";
 import { toast } from "sonner";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
+import { BookmarkProModal } from "@/components/shared/BookmarkProModal";
 
 interface PlannerType {
   id: string;
@@ -54,7 +56,9 @@ const StudyPlannerView = ({ onBack }: Props) => {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [plannerToUnbookmark, setPlannerToUnbookmark] = useState<string | null>(null);
+  const { isSubscribed } = useSubscription();
 
   const fetchOfflinePlanners = async () => {
     try {
@@ -117,18 +121,29 @@ const StudyPlannerView = ({ onBack }: Props) => {
   };
 
   const toggleBookmark = async (id: string) => {
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Please log in to bookmark study planners.");
+      return;
+    }
 
     const isBookmarked = bookmarks.includes(id);
     if (isBookmarked) {
       setPlannerToUnbookmark(id);
       setIsConfirmModalOpen(true);
-    } else {
-      setBookmarks(prev => [...prev, id]);
-      await supabase
-        .from('user_bookmarks')
-        .insert({ user_id: userId, planner_id: id });
+      return;
     }
+
+    const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+    if (requirePayment && !isSubscribed) {
+      setIsProModalOpen(true);
+      return;
+    }
+
+    setBookmarks(prev => [...prev, id]);
+    await supabase
+      .from('user_bookmarks')
+      .insert({ user_id: userId, planner_id: id });
+    toast.success("Study planner bookmarked!");
   };
 
   const confirmUnbookmark = async () => {
@@ -467,6 +482,11 @@ const StudyPlannerView = ({ onBack }: Props) => {
         title="Remove Bookmark?"
         description="Are you sure you want to remove this planner from your bookmarks?"
         confirmText="Remove"
+      />
+      <BookmarkProModal
+        open={isProModalOpen}
+        onOpenChange={setIsProModalOpen}
+        itemType="planner"
       />
     </div>
   );

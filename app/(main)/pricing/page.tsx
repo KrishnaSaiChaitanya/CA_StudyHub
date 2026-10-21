@@ -12,21 +12,25 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/components/providers/SubscriptionProvider";
 import { fetchAndCacheAuthState } from "@/utils/auth";
+import { ProFeaturesModal } from "@/components/pricing/ProFeaturesModal";
 
 const freeFeatures = [
   "MTP, RTP & PYQ Access",
+  "MCQ Mock Exams",
+  "Group Study Sessions",
+  "Leaderboard Rankings",
   "Faculty Database",
   "Exam Calendar",
-  "Study Planner",
-  "Progress Dashboard (Limited To-Do List)",
+  "Study Stopwatch Mode",
 ];
 
 const proFeatures = [
-  "Full Mock Exams with Analytics",
-  "Group Study Sessions",
-  "Complete Progress Dashboard",
+  "Study Planning & Subject Tracking",
+  "Request Flashcard Topics",
+  "Detailed Mock Exam Performance Analytics",
+  "Study Countdown Timer",
   "Notes & Bookmarks",
-  "Community Library Access",
+  "Complete Progress Analytics & Daily Summary",
   "Priority Support",
 ];
 
@@ -72,6 +76,7 @@ const Pricing = () => {
   const [selectedPlan, setSelectedPlan] = useState<ProPlan>("annual");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isFeaturesModalOpen, setIsFeaturesModalOpen] = useState(false);
   const supabase = createClient();
   const { checkSubscription, isSubscribed, planName, expiryDate } = useSubscription();
 
@@ -93,6 +98,13 @@ const Pricing = () => {
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
+  };
+
+  const scrollToPlans = () => {
+    const el = document.getElementById("pricing-plans");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const handleSubscribe = async () => {
@@ -283,30 +295,61 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <section className="border-b border-border py-16 text-center">
+      {/* Header with rich background for both dark and light modes */}
+      <section className="relative overflow-hidden border-b border-border/80 bg-gradient-to-b from-accent/[0.06] via-secondary/30 to-background dark:from-accent/[0.12] dark:via-background/95 dark:to-background py-16 sm:py-20 text-center">
+        {/* Subtle dot grid pattern */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
+          style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        {/* Ambient glow orbs */}
+        <div className="pointer-events-none absolute left-1/2 -top-20 -translate-x-1/2 h-72 w-[600px] rounded-full bg-accent/15 dark:bg-accent/20 blur-[100px]" />
+        <div className="pointer-events-none absolute -left-20 top-0 h-60 w-60 rounded-full bg-sky-400/10 dark:bg-accent/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -right-20 top-0 h-60 w-60 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 blur-[80px]" />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="container"
+          transition={{ duration: 0.4 }}
+          className="container relative z-10"
         >
-          <Badge variant="outline" className="mb-4 border-accent/30 text-accent">
-            <Zap className="mr-1 h-3 w-3" /> Simple Pricing
+          <Badge
+            variant="outline"
+            className="mb-4 border-accent/40 bg-accent/10 text-accent px-3 py-1 shadow-sm backdrop-blur-sm text-xs font-medium"
+          >
+            <Zap className="mr-1.5 h-3.5 w-3.5 fill-accent/20" /> Transparent & Simple Pricing
           </Badge>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-            Choose Your Plan
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Choose Your <span className="bg-gradient-to-r from-accent via-sky-500 to-indigo-500 bg-clip-text text-transparent">Plan</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Start free and upgrade when you're ready. 
-            {/* Every Pro plan includes a{" "}
-            <span className="font-semibold text-accent">7-day free trial</span>. */}
+          <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Start free and upgrade when you're ready. Everything you need to crack your CA exams with total clarity.
           </p>
+
+          {/* Clickable prompt to view Pro features modal */}
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsFeaturesModalOpen(true)}
+              className="group inline-flex items-center gap-2 rounded-full border border-accent/40 bg-card/80 px-4 py-2 text-xs sm:text-sm font-semibold text-foreground backdrop-blur-md transition-all hover:border-accent hover:bg-accent/10 hover:scale-[1.02] active:scale-[0.98] shadow-sm shadow-accent/5"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/15 text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
+                <Sparkles className="h-3 w-3" />
+              </span>
+              <span>Click to see what features you get with Pro</span>
+              <ArrowRight className="h-3.5 w-3.5 text-accent transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </div>
         </motion.div>
       </section>
 
       <div className="container py-16">
         {/* Tier Cards */}
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2">
+        <div id="pricing-plans" className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 scroll-mt-10">
           {/* Free Tier */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <Card className="h-full border-border">
@@ -354,8 +397,19 @@ const Pricing = () => {
                 </CardTitle>
                 <CardDescription>Unlock the full CA Study Hub experience</CardDescription>
 
+                {/* Click to see features text */}
+                <button
+                  type="button"
+                  onClick={() => setIsFeaturesModalOpen(true)}
+                  className="group mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline text-left"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>See what features you get with Pro</span>
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                </button>
+
                 {/* Pro Plan Selector */}
-                <div className="space-y-3 pt-4">
+                <div className="space-y-3 pt-3">
                   {proPlans.map((plan) => (
                     <button
                       key={plan.id}
@@ -421,6 +475,13 @@ const Pricing = () => {
             </Card>
           </motion.div>
         </div>
+
+        {/* Pro Features Modal */}
+        <ProFeaturesModal
+          open={isFeaturesModalOpen}
+          onOpenChange={setIsFeaturesModalOpen}
+          onUpgrade={scrollToPlans}
+        />
 
         {/* Contribute & Earn Section */}
         <motion.div

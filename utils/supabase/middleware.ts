@@ -74,8 +74,7 @@ export const updateSession = async (request: NextRequest) => {
     // Premium paths that require a paid subscription
     const premiumPaths = [
       "/practice/performance",
-      "/bookmarks",
-      "/community/rooms"
+      "/bookmarks"
     ];
     const isPremiumPath = premiumPaths.some(path => request.nextUrl.pathname.startsWith(path));
 

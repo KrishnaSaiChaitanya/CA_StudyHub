@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
+import { BookmarkProModal } from "@/components/shared/BookmarkProModal";
 
 interface Question {
   id: string;
@@ -51,7 +53,10 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [qToRemove, setQToRemove] = useState<string | null>(null);
+
+  const { isSubscribed } = useSubscription();
 
   const supabase = createClient();
 
@@ -170,6 +175,12 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
     if (isBookmarked) {
       setQToRemove(qId);
       setIsConfirmModalOpen(true);
+      return;
+    }
+
+    const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+    if (requirePayment && !isSubscribed) {
+      setIsProModalOpen(true);
       return;
     }
 
@@ -519,6 +530,11 @@ const MockExam = ({ testId, onExit }: MockExamProps) => {
         description="Are you sure you want to exit? Your progress for this attempt will not be saved."
         confirmText="Exit Anyway"
         variant="destructive"
+      />
+      <BookmarkProModal
+        open={isProModalOpen}
+        onOpenChange={setIsProModalOpen}
+        itemType="question"
       />
     </div>
   );

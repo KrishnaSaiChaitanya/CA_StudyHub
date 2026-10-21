@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
+import { BookmarkProModal } from "@/components/shared/BookmarkProModal";
 
 interface Attempt {
   id: string;
@@ -65,7 +67,10 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
   const [bookmarkedQs, setBookmarkedQs] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [qToRemove, setQToRemove] = useState<string | null>(null);
+
+  const { isSubscribed } = useSubscription();
 
   const supabase = createClient();
 
@@ -164,6 +169,12 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
     if (isBookmarked) {
       setQToRemove(qId);
       setIsConfirmModalOpen(true);
+      return;
+    }
+
+    const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+    if (requirePayment && !isSubscribed) {
+      setIsProModalOpen(true);
       return;
     }
 
@@ -468,6 +479,11 @@ const PerformanceHistory = ({ onBack }: PerformanceHistoryProps) => {
               title="Remove Bookmark?"
               description="Are you sure you want to remove this question from your bookmarks?"
               confirmText="Remove"
+            />
+            <BookmarkProModal
+              open={isProModalOpen}
+              onOpenChange={setIsProModalOpen}
+              itemType="question"
             />
           </>
         )}

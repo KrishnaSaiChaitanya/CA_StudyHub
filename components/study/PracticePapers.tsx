@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import { StudentLevel, SubjectCategory } from "@/utils/supabase/types";
 import { useSearchParams } from "next/navigation";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
+import { BookmarkProModal } from "@/components/shared/BookmarkProModal";
 
 type DbPaper = {
   id: string;
@@ -58,6 +60,7 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
   const { studentLevel, subjects: studentSubjects } = useStudent();
+  const { isSubscribed } = useSubscription();
 
   const [papers, setPapers] = useState<DbPaper[]>([]);
   const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
@@ -70,6 +73,7 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [paperToRemove, setPaperToRemove] = useState<{ id: string, title: string } | null>(null);
 
   useEffect(() => {
@@ -139,6 +143,12 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
     if (isCurrentlyBookmarked) {
       setPaperToRemove({ id, title: paperTitle });
       setIsConfirmModalOpen(true);
+      return;
+    }
+
+    const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+    if (requirePayment && !isSubscribed) {
+      setIsProModalOpen(true);
       return;
     }
 
@@ -352,6 +362,11 @@ const PaperBrowser = ({ title, subtitle, paperType }: PaperBrowserProps) => {
         title="Remove Bookmark?"
         description={`Are you sure you want to remove the bookmark for "${paperToRemove?.title}"?`}
         confirmText="Remove"
+      />
+      <BookmarkProModal
+        open={isProModalOpen}
+        onOpenChange={setIsProModalOpen}
+        itemType="paper"
       />
     </div>
   );

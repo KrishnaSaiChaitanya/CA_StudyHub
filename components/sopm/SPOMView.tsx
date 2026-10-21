@@ -27,6 +27,8 @@ import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import { ObservationsTab } from "./ObservationsTab";
 import { Tab, PAPER_FILTERS, PaperMaterial } from "./types";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
+import { BookmarkProModal } from "@/components/shared/BookmarkProModal";
 
 const SPOMView = ({ onBack }: { onBack: () => void }) => {
   const supabase = createClient();
@@ -42,6 +44,8 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const { isSubscribed } = useSubscription();
 
   useEffect(() => {
     async function fetchContentAndBookmarks() {
@@ -93,6 +97,14 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
     }
 
     const isCurrentlyBookmarked = bookmarked.has(id);
+
+    if (!isCurrentlyBookmarked) {
+      const requirePayment = process.env.NEXT_PUBLIC_REQUIRE_PAYMENT === "true";
+      if (requirePayment && !isSubscribed) {
+        setIsProModalOpen(true);
+        return;
+      }
+    }
 
     // Optimistic UI Update
     setBookmarked((prev) => {
@@ -418,6 +430,12 @@ const SPOMView = ({ onBack }: { onBack: () => void }) => {
 
       {/* OBSERVATIONS */}
       {tab === "observations" && <ObservationsTab />}
+
+      <BookmarkProModal
+        open={isProModalOpen}
+        onOpenChange={setIsProModalOpen}
+        itemType="material"
+      />
     </section>
   );
 };
