@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SUBJECT_MAPPING, SUBJECT_ABBREVIATIONS, formatSubjectName } from "@/utils/subjects";
 import { useStudent } from "@/components/providers/StudentTypeProvider";
+import { useSubscription } from "@/components/providers/SubscriptionProvider";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ let cacheSets: any[] | null = null;
 export default function FlashcardsDashboard() {
   const router = useRouter();
   const supabase = createClient();
+  const { isSubscribed } = useSubscription();
   const { subjects: studentSubjects } = useStudent();
   const [folders, setFolders] = useState<any[]>(cacheFolders || []);
   const [sets, setSets] = useState<any[]>(cacheSets || []);
@@ -311,6 +313,9 @@ export default function FlashcardsDashboard() {
               onClick={() => setRequestOpen(true)}
             >
               <Send className="h-3.5 w-3.5" /> Request a topic
+              {!isSubscribed && (
+                <Sparkles className="h-3 w-3 text-accent ml-0.5" />
+              )}
             </Button>
             <Button
               size="sm"

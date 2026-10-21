@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { useToast } from "@/components/ui/use-toast";
 import { Send, Loader2 } from "lucide-react";
 import { syncFlashcardRequestAction } from "@/app/public-api-actions";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 
 /** Map Supabase student_type enum to a human-readable exam level string. */
 function toExamLevel(studentType: string | null | undefined): string {
@@ -97,40 +98,42 @@ export default function RequestTopicDialog({ open, onOpenChange }: RequestTopicD
             Can't find a set for a topic? Submit a request, and our admin team will publish it.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-3">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Topic / Concept</label>
-            <Input
-              placeholder="e.g. Ind AS 116 Leases, Audit of banks"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={submitting}
-              className="h-10"
-            />
+        <ProFeatureLock featureName="Flashcard Requests">
+          <div className="space-y-4 py-3">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Topic / Concept</label>
+              <Input
+                placeholder="e.g. Ind AS 116 Leases, Audit of banks"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                disabled={submitting}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Specific areas or notes (Optional)</label>
+              <Textarea
+                placeholder="e.g. Focus on recognition criteria and lessee accounting formulas..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                disabled={submitting}
+                className="min-h-[80px] resize-none"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Specific areas or notes (Optional)</label>
-            <Textarea
-              placeholder="e.g. Focus on recognition criteria and lessee accounting formulas..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting} className="h-10">
+              Cancel
+            </Button>
+            <Button
+              className="bg-accent text-accent-foreground hover:bg-accent/90 h-10 font-bold"
+              onClick={handleSubmit}
               disabled={submitting}
-              className="min-h-[80px] resize-none"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting} className="h-10">
-            Cancel
-          </Button>
-          <Button
-            className="bg-accent text-accent-foreground hover:bg-accent/90 h-10 font-bold"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting…</> : "Submit Request"}
-          </Button>
-        </DialogFooter>
+            >
+              {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting…</> : "Submit Request"}
+            </Button>
+          </DialogFooter>
+        </ProFeatureLock>
       </DialogContent>
     </Dialog>
   );

@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useStudyPlanner, type TrackerPhase, type ChapterStatus } from "@/hooks/useStudyPlanner";
 import { getSubject } from "@/lib/studyData";
 import { ArrowLeft, CheckCircle2, Circle, SkipForward, AlertTriangle, BookOpen, ChevronDown, Save, Loader2 } from "lucide-react";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 import { saveBatchChapterRemarks } from "../actions";
 import { toast } from "sonner";
 
@@ -190,13 +191,14 @@ const SubjectTrackerPage = ({ params }: Props) => {
 
   return (
     <div className="min-h-screen bg-background pb-20 relative">
-      <section className="container py-8 px-8 md:px-4 max-w-7xl mx-auto space-y-6">
-        <button
-          onClick={() => router.push("/study/study-planning")}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Planning
-        </button>
+      <ProFeatureLock featureName="Study Planning">
+        <section className="container py-8 px-8 md:px-4 max-w-7xl mx-auto space-y-6">
+          <button
+            onClick={() => router.push("/study/study-planning")}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-semibold"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Study Planning
+          </button>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-6">
@@ -430,6 +432,7 @@ const SubjectTrackerPage = ({ params }: Props) => {
           ))}
         </Tabs>
       </section>
+      </ProFeatureLock>
 
       {/* Floating Save Changes Banner for Remarks */}
       {hasUnsavedRemarks && (

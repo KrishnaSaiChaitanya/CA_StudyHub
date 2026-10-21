@@ -35,7 +35,7 @@ const Community = () => (
       <section className="container py-12">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {sections.map((s, i) => {
-            const isPro = s.title === "Group Study Sessions";
+            const isPro = s.title === "Group Study Sessions" || s.title === "Leaderboard";
             const CardContent = (
               <div className="p-6 flex flex-col h-full">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
@@ -73,7 +73,7 @@ const Community = () => (
                 className="rounded-xl border border-border bg-card shadow-card"
               >
                 {isPro ? (
-                  <ProFeatureLock featureName="Group Study Sessions">
+                  <ProFeatureLock featureName={s.title}>
                     {CardContent}
                   </ProFeatureLock>
                 ) : (

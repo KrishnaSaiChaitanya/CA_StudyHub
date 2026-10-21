@@ -18,6 +18,7 @@ import StatsBanner from "@/components/leader-board/StatsBanner";
 import LeaderboardPodium from "@/components/leader-board/LeaderboardPodium";
 import LeaderboardTable from "@/components/leader-board/LeaderboardTable";
 import MotivationBanner from "@/components/leader-board/MotivationBanner";
+import { ProFeatureLock } from "@/components/shared/ProFeatureLock";
 
 export default function LeaderboardPage() {
   const supabase = createClient();
@@ -176,7 +177,7 @@ export default function LeaderboardPage() {
           <p className="mt-4 text-sm text-muted-foreground font-semibold">Gathering scores and rankings...</p>
         </div>
       ) : (
-        <>
+        <ProFeatureLock featureName="Leaderboard">
           {/* Your Stats Banner */}
           <StatsBanner
             userRank={userRank || null}
@@ -208,7 +209,7 @@ export default function LeaderboardPage() {
 
           {/* Motivation Banner / Rules Breakdown */}
           <MotivationBanner />
-        </>
+        </ProFeatureLock>
       )}
 
       {/* Rules & Info Dialog Modal */}

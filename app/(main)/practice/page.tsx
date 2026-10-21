@@ -92,26 +92,32 @@ const Practice = () => {
       <main className="pb-12">
         <PageHeader title="Practice &" gradientTitle="Excel" description="Access MTPs, RTPs, PYQs, and take mock exams to sharpen your skills." />
         <section className="container py-10">
-          <div className="block md:hidden mb-6">
-            <ProFeatureLock featureName="Mock Exams">
-              <Button
-                onClick={() => router.push('/practice/mock-exams')}
-                className="w-full flex items-center justify-between p-4 h-auto bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 rounded-xl hover:bg-accent/15 transition-all text-left shadow-sm group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                    <Award className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-sm text-foreground">Take a MCQ Mock Exam</h3>
-                    <p className="text-[11px] text-muted-foreground truncate">Simulate real exam pressure with online tests</p>
-                  </div>
+          <div className="block md:hidden mb-6 space-y-2">
+            <Button
+              onClick={() => router.push('/practice/mock-exams')}
+              className="w-full flex items-center justify-between p-4 h-auto bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 rounded-xl hover:bg-accent/15 transition-all text-left shadow-sm group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Award className="h-5 w-5" />
                 </div>
-                <div className="h-7 w-7 rounded-full bg-accent/10 flex items-center justify-center text-accent group-hover:translate-x-0.5 transition-transform shrink-0">
-                  <ChevronRight className="h-4 w-4" />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm text-foreground">Take a MCQ Mock Exam</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">Simulate real exam pressure with online tests</p>
                 </div>
-              </Button>
-            </ProFeatureLock>
+              </div>
+              <div className="h-7 w-7 rounded-full bg-accent/10 flex items-center justify-center text-accent group-hover:translate-x-0.5 transition-transform shrink-0">
+                <ChevronRight className="h-4 w-4" />
+              </div>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/practice/performance')}
+              className="w-full border-accent/30 text-accent flex items-center justify-center gap-1.5 text-xs py-2"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> View My Performance
+            </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 mb-12">
             {resources.map((res, i) => (
@@ -165,22 +171,22 @@ const Practice = () => {
           </div>
 
           <div className="hidden md:block">
-            <ProFeatureLock featureName="Mock Exams">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="relative overflow-hidden rounded-xl bg-card border border-border bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
-              >
-                <Award className="mx-auto h-8 w-8 text-accent" />
-                <h3 className="mt-4 text-xl font-bold text-card-foreground">Take a MCQ Mock Exam</h3>
-                <p className="mt-2 text-xs text-muted-foreground"> Revise concepts, strengthen recall, and excel confidently.</p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
-                  <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent">View My Performance</Button>
-                </div>
-              </motion.div>
-            </ProFeatureLock>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="relative overflow-hidden rounded-xl bg-card border border-border bg-gradient-to-br from-accent/10 via-card to-card p-8 text-center"
+            >
+              <Award className="mx-auto h-8 w-8 text-accent" />
+              <h3 className="mt-4 text-xl font-bold text-card-foreground">Take a MCQ Mock Exam</h3>
+              <p className="mt-2 text-xs text-muted-foreground"> Revise concepts, strengthen recall, and excel confidently.</p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button size="lg" onClick={() => router.push('/practice/mock-exams')} className="bg-accent text-accent-foreground shadow-accent hover:bg-accent/90">View Mock Exams</Button>
+                <Button size="lg" variant="outline" onClick={() => router.push('/practice/performance')} className="border-accent/30 text-accent flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-accent" /> View My Performance
+                </Button>
+              </div>
+            </motion.div>
           </div>
         </section>
       </main>

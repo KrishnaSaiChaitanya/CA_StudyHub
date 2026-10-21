@@ -73,7 +73,6 @@ export const updateSession = async (request: NextRequest) => {
 
     // Premium paths that require a paid subscription
     const premiumPaths = [
-      "/practice/mock-exams",
       "/practice/performance",
       "/bookmarks",
       "/community/rooms"
